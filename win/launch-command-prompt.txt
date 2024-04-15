@@ -1,0 +1,1 @@
+powershell.exe -noe -c "&{Import-Module """E:\IDE\VisualStudio2019\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"""; Enter-VsDevShell 953b95c2 -DevCmdArguments """-arch=x64"""}"

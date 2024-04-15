@@ -1075,6 +1075,10 @@ if(BUILD_IFCPYTHON)
     add_subdirectory(../src/ifcwrap ifcwrap)
 endif()
 
+if(BUILD_IFCPYTHON)
+    add_subdirectory(../src/ifcwrap-csharp ifcwrap-csharp)
+endif()
+
 if(BUILD_EXAMPLES)
     add_subdirectory(../src/examples examples)
 endif()
