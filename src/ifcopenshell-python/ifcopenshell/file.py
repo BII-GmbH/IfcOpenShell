@@ -28,7 +28,7 @@ import numbers
 import zipfile
 import functools
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional, Any
 
 import ifcopenshell.util.element
 import ifcopenshell.util.file
@@ -52,7 +52,7 @@ class Transaction:
         self.batch_delete_ids = set()
         self.batch_inverses = []
 
-    def serialise_entity_instance(self, element):
+    def serialise_entity_instance(self, element: ifcopenshell.entity_instance) -> dict[str, Any]:
         info = element.get_info()
         for key, value in info.items():
             info[key] = self.serialise_value(element, value)
@@ -103,7 +103,7 @@ class Transaction:
                 }
             )
 
-    def store_delete(self, element):
+    def store_delete(self, element: ifcopenshell.entity_instance) -> None:
         inverses = {}
         if self.is_batched:
             if element.id() not in self.batch_delete_ids:
@@ -259,7 +259,7 @@ class file(object):
         self.history_size = 64
         self.history = []
         self.future = []
-        self.transaction = None
+        self.transaction: Optional[Transaction] = None
 
         import weakref
 
@@ -457,6 +457,9 @@ class file(object):
         :type type: string
         :param include_subtypes: Whether or not to return subtypes of the IFC class
         :type include_subtypes: bool
+
+        :raises RuntimeError: If `type` is not found in IFC schema.
+
         :returns: A list of ifcopenshell.entity_instance.entity_instance objects
         :rtype: list[ifcopenshell.entity_instance.entity_instance]
         """

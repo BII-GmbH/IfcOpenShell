@@ -91,6 +91,17 @@ class Geometry(blenderbim.core.tool.Geometry):
         if element.is_a("IfcRelSpaceBoundary"):
             ifcopenshell.api.run("boundary.remove_boundary", tool.Ifc.get(), boundary=element)
             return bpy.data.objects.remove(obj)
+        if element.is_a("IfcGridAxis"):
+            is_last_axis = False
+            # Deleting the last W axis is OK
+            if ((grid := element.PartOfU) and len(grid[0].UAxes) == 1) or (
+                (grid := element.PartOfV) and len(grid[0].VAxes) == 1
+            ):
+                is_last_axis = True
+            if is_last_axis:
+                return
+            ifcopenshell.api.run("grid.remove_grid_axis", tool.Ifc.get(), axis=element)
+            return bpy.data.objects.remove(obj)
 
         collection = obj.BIMObjectProperties.collection
         if collection:
@@ -611,7 +622,7 @@ class Geometry(blenderbim.core.tool.Geometry):
         obj.data.BIMMeshProperties.material_checksum = str([s.id() for s in cls.get_styles(obj) if s])
 
     @classmethod
-    def record_object_position(cls, obj):
+    def record_object_position(cls, obj: bpy.types.Object) -> None:
         # These are recorded separately because they have different numerical tolerances
         obj.BIMObjectProperties.location_checksum = repr(np.array(obj.matrix_world.translation).tobytes())
         obj.BIMObjectProperties.rotation_checksum = repr(np.array(obj.matrix_world.to_3x3()).tobytes())

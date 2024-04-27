@@ -30,7 +30,7 @@ import functools
 import subprocess
 import sys
 import time
-from typing import Union, Any, Callable, TypeVar
+from typing import Union, Any, Callable, TypeVar, overload
 
 from . import ifcopenshell_wrapper
 from . import settings
@@ -67,8 +67,9 @@ def set_unsupported_attribute(*args):
 _method_dict = {}
 
 
-def register_schema_attributes(schema):
+def register_schema_attributes(schema: ifcopenshell_wrapper.schema_definition) -> None:
     for decl in schema.declarations():
+        decl: ifcopenshell_wrapper.declaration
         if hasattr(decl, "argument_types"):
             fq_name = ".".join((schema.name(), decl.name()))
 
@@ -276,7 +277,15 @@ class entity_instance(object):
 
     def __setattr__(self, key: str, value: Any) -> None:
         index = self.wrapped_data.get_argument_index(key)
-        self[index] = value
+        try:
+            self[index] = value
+        except IndexError as e:
+            # get_argument_index returns 0xFFFFFFFF if attribute is not found
+            if index == 0xFFFFFFFF:
+                raise AttributeError(
+                    "entity instance of type '%s' has no attribute '%s'" % (self.wrapped_data.is_a(True), key)
+                )
+            raise e
 
     def __getitem__(self, key: int) -> Any:
         if key < 0 or key >= len(self):
@@ -294,7 +303,15 @@ class entity_instance(object):
 
         if value is None:
             if method is not set_derived_attribute:
-                self.wrapped_data.setArgumentAsNull(idx)
+                try:
+                    self.wrapped_data.setArgumentAsNull(idx)
+                except RuntimeError as e:
+                    if e.args == ("Attribute not set",):
+                        raise ValueError(
+                            "attribute '%s' is not optional for entity instance of type '%s'"
+                            % (self.wrapped_data.get_argument_name(idx), self.wrapped_data.is_a(True))
+                        )
+                    raise e
         else:
             self.method_list[idx](self.wrapped_data, idx, entity_instance.unwrap_value(value))
 
@@ -317,15 +334,25 @@ class entity_instance(object):
 
         return self.wrapped_data.to_string(valid_spf)
 
-    def is_a(self, *args) -> Union[str, bool]:
+    @overload
+    def is_a(self) -> str: ...
+    @overload
+    def is_a(self, ifc_class: str) -> bool: ...
+    @overload
+    def is_a(self, with_schema: bool) -> str: ...
+    def is_a(self, *args: Union[str, bool]) -> Union[str, bool]:
         """Return the IFC class name of an instance, or checks if an instance belongs to a class.
 
         The check will also return true if a parent class name is provided.
 
         :param args: If specified, is a case insensitive IFC class name to check
-        :type args: string
+            or if specified as a boolean then will define whether
+            returned IFC class name should include schema name
+            (e.g. "IFC4.IfcWall" if `True` and "IfcWall" if `False`).
+            If omitted will act as `False`.
+        :type args: Union[str, bool]
         :returns: Either the name of the class, or a boolean if it passes the check
-        :rtype: string|bool
+        :rtype: Union[str, bool]
 
         Example:
 

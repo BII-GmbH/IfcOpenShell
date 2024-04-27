@@ -105,6 +105,18 @@ ARGUMENTS_DEPRECATION = {
     "document.unassign_document": partial(
         batching_argument_deprecation, prev_argument="product", new_argument="products"
     ),
+    "spatial.reference_structure": partial(
+        batching_argument_deprecation, prev_argument="product", new_argument="products"
+    ),
+    "spatial.dereference_structure": partial(
+        batching_argument_deprecation, prev_argument="product", new_argument="products"
+    ),
+    "constraint.assign_constraint": partial(
+        batching_argument_deprecation, prev_argument="product", new_argument="products"
+    ),
+    "constraint.unassign_constraint": partial(
+        batching_argument_deprecation, prev_argument="product", new_argument="products"
+    ),
 }
 
 

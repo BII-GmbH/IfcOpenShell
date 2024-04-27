@@ -32,7 +32,7 @@ def reference_structure(
     element: Optional[ifcopenshell.entity_instance] = None,
 ) -> Union[ifcopenshell.entity_instance, None]:
     if spatial.can_reference(structure, element):
-        return ifc.run("spatial.reference_structure", product=element, relating_structure=structure)
+        return ifc.run("spatial.reference_structure", products=[element], relating_structure=structure)
 
 
 def dereference_structure(
@@ -42,7 +42,7 @@ def dereference_structure(
     element: Optional[ifcopenshell.entity_instance] = None,
 ) -> None:
     if spatial.can_reference(structure, element):
-        return ifc.run("spatial.dereference_structure", product=element, relating_structure=structure)
+        return ifc.run("spatial.dereference_structure", products=[element], relating_structure=structure)
 
 
 def assign_container(
@@ -189,7 +189,8 @@ def generate_space(ifc, spatial, model, Type):
             name = "Space"
 
         obj = spatial.get_named_obj_from_mesh(name, mesh)
-        spatial.set_obj_origin_to_cursor_position(obj)
+        spatial.set_obj_origin_to_cursor_position_and_zero_elevation(obj)
+        spatial.traslate_obj_to_z_location(obj, z)
         spatial.link_obj_to_active_collection(obj)
         spatial.assign_ifcspace_class_to_obj(obj)
 
@@ -214,7 +215,7 @@ def generate_spaces_from_walls(ifc, spatial, collector):
 
         obj = spatial.get_named_obj_from_bmesh(name, bmesh=bm)
 
-        spatial.set_obj_origin_to_bboxcenter(obj)
+        spatial.set_obj_origin_to_bboxcenter_and_zero_elevation(obj)
         spatial.traslate_obj_to_z_location(obj, z)
 
         spatial.link_obj_to_active_collection(obj)
