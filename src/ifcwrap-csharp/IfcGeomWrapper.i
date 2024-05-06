@@ -21,50 +21,7 @@
 
 %ignore stream_or_filename::stream;
 
-// This is only used for RGB colours, hence the size of 3
-%typemap(out) const double* {
-	$result = PyTuple_New(3);
-	for (int i = 0; i < 3; ++i) {
-		PyTuple_SetItem($result, i, PyFloat_FromDouble($1[i]));
-	}
-}
-
-// SWIG does not support bool references in a meaningful way, so the
-// IfcGeom::IteratorSettings functions degrade to return a read only value
-%typemap(out) double& {
-	$result = SWIG_From_double(*$1);
-}
-%typemap(out) bool& {
-	$result = PyBool_FromLong(static_cast<long>(*$1));
-}
-
 %ignore IfcGeom::impl::tree::selector;
-
-// Using RTTI return a more specialized type of Element
-// Note that these elements are not to be owned by SWIG/Python as they will be freed automatically upon the next iteration
-// except for the IfcGeom::Element instances which are returned by Iterator::getObject() calls
-%typemap(out) IfcGeom::Element* {
-	IfcGeom::SerializedElement* serialized_elem = dynamic_cast<IfcGeom::SerializedElement*>($1);
-	IfcGeom::TriangulationElement* triangulation_elem = dynamic_cast<IfcGeom::TriangulationElement*>($1);
-	IfcGeom::BRepElement* brep_elem = dynamic_cast<IfcGeom::BRepElement*>($1);
-	if (triangulation_elem) {
-		$result = SWIG_NewPointerObj(SWIG_as_voidptr(triangulation_elem), SWIGTYPE_p_IfcGeom__TriangulationElement, 0);
-	} else if (serialized_elem) {
-		$result = SWIG_NewPointerObj(SWIG_as_voidptr(serialized_elem), SWIGTYPE_p_IfcGeom__SerializedElement, 0);
-	} else if (brep_elem) {
-		$result = SWIG_NewPointerObj(SWIG_as_voidptr(brep_elem), SWIGTYPE_p_IfcGeom__BRepElement, 0);
-	} else {
-		$result = SWIG_NewPointerObj(SWIG_as_voidptr($1), SWIGTYPE_p_IfcGeom__Element, SWIG_POINTER_OWN);
-	}
-}
-
-%inline %{
-template <typename T>
-std::pair<char const*, size_t> vector_to_buffer(const T& t) {
-    using V = typename std::remove_reference<decltype(t)>::type;
-    return { reinterpret_cast<const char*>(t.data()), t.size() * sizeof(typename V::value_type) };
-}
-%}
 
 %include "../ifcgeom_schema_agnostic/ifc_geom_api.h"
 %include "../ifcgeom_schema_agnostic/IfcGeomIteratorSettings.h"
@@ -145,72 +102,6 @@ std::pair<char const*, size_t> vector_to_buffer(const T& t) {
 }
 
 // A visitor
-%{
-struct ShapeRTTI : public boost::static_visitor<PyObject*>
-{
-    PyObject* operator()(IfcGeom::Element* elem) const {
-		IfcGeom::SerializedElement* serialized_elem = dynamic_cast<IfcGeom::SerializedElement*>(elem);
-		IfcGeom::TriangulationElement* triangulation_elem = dynamic_cast<IfcGeom::TriangulationElement*>(elem);
-		IfcGeom::BRepElement* brep_elem = dynamic_cast<IfcGeom::BRepElement*>(elem);
-		if (triangulation_elem) {
-			return SWIG_NewPointerObj(SWIG_as_voidptr(triangulation_elem), SWIGTYPE_p_IfcGeom__TriangulationElement, SWIG_POINTER_OWN);
-		} else if (serialized_elem) {
-			return SWIG_NewPointerObj(SWIG_as_voidptr(serialized_elem), SWIGTYPE_p_IfcGeom__SerializedElement, SWIG_POINTER_OWN);
-		} else if (brep_elem) {
-			return SWIG_NewPointerObj(SWIG_as_voidptr(brep_elem), SWIGTYPE_p_IfcGeom__BRepElement, SWIG_POINTER_OWN);
-		} else {
-			return SWIG_Py_Void();
-		}
-	}
-    PyObject* operator()(IfcGeom::Representation::Representation* representation) const {
-		IfcGeom::Representation::Serialization* serialized_representation = dynamic_cast<IfcGeom::Representation::Serialization*>(representation);
-		IfcGeom::Representation::Triangulation* triangulated_representation = dynamic_cast<IfcGeom::Representation::Triangulation*>(representation);
-		IfcGeom::Representation::BRep* brep_representation = dynamic_cast<IfcGeom::Representation::BRep*>(representation);
-		if (serialized_representation) {
-			return SWIG_NewPointerObj(SWIG_as_voidptr(serialized_representation), SWIGTYPE_p_IfcGeom__Representation__Serialization, SWIG_POINTER_OWN);
-		} else if (triangulated_representation) {
-			return SWIG_NewPointerObj(SWIG_as_voidptr(triangulated_representation), SWIGTYPE_p_IfcGeom__Representation__Triangulation, SWIG_POINTER_OWN);
-		} else if (brep_representation) {
-			return SWIG_NewPointerObj(SWIG_as_voidptr(brep_representation), SWIGTYPE_p_IfcGeom__Representation__BRep, SWIG_POINTER_OWN);
-		} else {
-			return SWIG_Py_Void();
-		}
-	}
-};
-%}
-
-// Note that these elements ARE to be owned by SWIG/Python
-%typemap(out) boost::variant<IfcGeom::Element*, IfcGeom::Representation::Representation*> {
-	// See which type is set and return appropriate
-	$result = boost::apply_visitor(ShapeRTTI(), $1);
-}
-
-%extend SerializerSettings {
-	%pythoncode %{
-
-	old_init = __init__
-
-	def __init__(self, **kwargs):
-    	self.old_init()
-    	for k, v in kwargs.items():
-    		self.set(getattr(self, k), v)
-
-	def __repr__(self):
-		def d():
-			import numbers
-			for x in dir(self):
-				if x.isupper() and x not in {"NUM_SETTINGS", "USE_PYTHON_OPENCASCADE", "DEFAULT_PRECISION"}:
-					v = getattr(self, x)
-					if isinstance(v, numbers.Integral):
-						yield x
-
-		return "%s(%s)" % (
-			type(self).__name__,
-			(", ".join(map(lambda x: "%s = %r" % (x, self.get(getattr(self, x))), d())))
-		)
-
-	%}
-}
 
 %newobject construct_iterator_with_include_exclude;
 %newobject construct_iterator_with_include_exclude_globalid;
@@ -241,126 +132,21 @@ struct ShapeRTTI : public boost::static_visitor<PyObject*>
 	}
 %}
 
-%extend IfcGeom::Representation::Triangulation {
-	
-	std::pair<const char*, size_t> faces_buffer() const {
-		return vector_to_buffer(self->faces());
-	}
-
-	std::pair<const char*, size_t> edges_buffer() const {
-		return vector_to_buffer(self->edges());
-	}
-
-	std::pair<const char*, size_t> material_ids_buffer() const {
-		return vector_to_buffer(self->material_ids());
-	}
-
-	std::pair<const char*, size_t> item_ids_buffer() const {
-		return vector_to_buffer(self->item_ids());
-	}
-
-	std::pair<const char*, size_t> verts_buffer() const {
-		return vector_to_buffer(self->verts());
-	}
-
-	std::pair<const char*, size_t> normals_buffer() const {
-		return vector_to_buffer(self->normals());
-	}
-
-    PyObject* colors_buffer() const {
-        std::vector<double> clrs;
-        clrs.reserve(self->materials().size() * 4);
-        for (auto& m : self->materials()) {
-            if (m.hasDiffuse()) {
-                clrs.push_back(m.diffuse()[0]);
-                clrs.push_back(m.diffuse()[1]);
-                clrs.push_back(m.diffuse()[2]);
-            } else {
-                clrs.push_back(0.);
-                clrs.push_back(0.);
-                clrs.push_back(0.);
-            }
-            if (m.hasTransparency()) {
-                clrs.push_back(1. - m.transparency());
-            } else {
-                clrs.push_back(1.);
-            }
-        }
-        auto p = vector_to_buffer(clrs);
-        return PyBytes_FromStringAndSize(p.first, p.second);
-    }
-
-	%pythoncode %{
-        # Hide the getters with read-only property implementations
-        id = property(id)
-        faces = property(faces)
-        edges = property(edges)
-        material_ids = property(material_ids)
-        materials = property(materials)
-        item_ids = property(item_ids)
-        # Hide the getters with read-only property implementations
-        verts = property(verts)
-        normals = property(normals)
-
-        faces_buffer = property(faces_buffer)
-        edges_buffer = property(edges_buffer)
-        material_ids_buffer = property(material_ids_buffer)
-        item_ids_buffer = property(item_ids_buffer)
-        verts_buffer = property(verts_buffer)
-        normals_buffer = property(normals_buffer)
-        colors_buffer = property(colors_buffer)
-	%}
-};
-
-%extend IfcGeom::Representation::Serialization {
-	%pythoncode %{
-        # Hide the getters with read-only property implementations
-        id = property(id)
-        brep_data = property(brep_data)
-        surface_styles = property(surface_styles)
-        surface_style_ids = property(surface_style_ids)
-	%}
-};
-
-%extend IfcGeom::Element {
-	std::pair<const char*, size_t> transformation_buffer() const {
-		return vector_to_buffer(self->transformation().matrix().data());
-	}
-
-	IfcUtil::IfcBaseClass* product_() const {
-		return $self->product();
-	}
-
-	%pythoncode %{
-        # Hide the getters with read-only property implementations
-        id = property(id)
-        parent_id = property(parent_id)
-        name = property(name)
-        type = property(type)
-        guid = property(guid)
-        context = property(context)
-        unique_id = property(unique_id)
-        transformation = property(transformation)
-        product = property(product_)
-        transformation_buffer = property(transformation_buffer)
-	%}
-
-};
-
-%extend IfcGeom::TriangulationElement {
+/*%extend IfcGeom::TriangulationElement {
 	%pythoncode %{
         # Hide the getters with read-only property implementations
         geometry = property(geometry)
 	%}
 };
-
+*/
+/*
 %extend IfcGeom::SerializedElement {
 	%pythoncode %{
         # Hide the getters with read-only property implementations
         geometry = property(geometry)
 	%}
 };
-
+*/
 %extend IfcGeom::BRepElement {
     double calc_volume_() const {
         double v;
@@ -379,15 +165,16 @@ struct ShapeRTTI : public boost::static_visitor<PyObject*>
             return std::numeric_limits<double>::quiet_NaN();
         }
     }
-
+/*
     %pythoncode %{
         # Hide the getters with read-only property implementations
         geometry = property(geometry)
         volume = property(calc_volume_)
         surface_area = property(calc_surface_area_)
     %}    
+	*/
 };
-
+/*
 %extend IfcGeom::Material {
 	%pythoncode %{
         # Hide the getters with read-only property implementations
@@ -416,7 +203,7 @@ struct ShapeRTTI : public boost::static_visitor<PyObject*>
         data = property(data)
 	%}
 };
-
+*/
 %{
 	template <typename T>
 	std::string to_locale_invariant_string(const T& t) {
@@ -712,7 +499,7 @@ struct ShapeRTTI : public boost::static_visitor<PyObject*>
 %template(svg_line_segments) std::vector<std::array<svgfill::point_2, 2>>;
 %template(svg_groups_of_line_segments) std::vector<std::vector<std::array<svgfill::point_2, 2>>>;
 %template(svg_point) std::array<double, 2>;
-%template(line_segment) std::array<svgfill::point_2, 2>;
+//%template(line_segment) std::array<svgfill::point_2, 2>;
 %template(svg_polygons) std::vector<svgfill::polygon_2>;
 %template(svg_groups_of_polygons) std::vector<std::vector<svgfill::polygon_2>>;
 %template(svg_loop) std::vector<std::array<double, 2>>;

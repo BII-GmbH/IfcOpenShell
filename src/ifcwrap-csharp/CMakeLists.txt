@@ -24,21 +24,21 @@ ENDIF()
 include(GNUInstallDirs)
 INCLUDE(${SWIG_USE_FILE})
 
-IF(NOT "$ENV{PYTHON_INCLUDE_DIR}" STREQUAL "")
-	SET(PYTHON_INCLUDE_DIR $ENV{PYTHON_INCLUDE_DIR} CACHE FILEPATH "Python header files")
-	MESSAGE(STATUS "Looking for Python header files in: ${PYTHON_INCLUDE_DIR}")
-ENDIF()
-IF(NOT "$ENV{PYTHON_LIBRARY}" STREQUAL "")
-	SET(PYTHON_LIBRARY $ENV{PYTHON_LIBRARY} CACHE FILEPATH "Python library file")
-	MESSAGE(STATUS "Looking for Python library file in: ${PYTHON_LIBRARY}")
-ENDIF()
+#IF(NOT "$ENV{PYTHON_INCLUDE_DIR}" STREQUAL "")
+#	SET(PYTHON_INCLUDE_DIR $ENV{PYTHON_INCLUDE_DIR} CACHE FILEPATH "Python header files")
+#	MESSAGE(STATUS "Looking for Python header files in: ${PYTHON_INCLUDE_DIR}")
+#ENDIF()
+#IF(NOT "$ENV{PYTHON_LIBRARY}" STREQUAL "")#
+#	SET(PYTHON_LIBRARY $ENV{PYTHON_LIBRARY} CACHE FILEPATH "Python library file")
+#	MESSAGE(STATUS "Looking for Python library file in: ${PYTHON_LIBRARY}")
+#ENDIF()
 
 # NOTE PYTHONLIBS_FOUND and PYTHONINTERP_FOUND cannot seem to be trusted so
 # we need further checks to see whether the packages were actually found or not.
-FIND_PACKAGE(PythonLibs)
-IF(NOT PYTHONLIBS_FOUND OR "$PYTHON_INCLUDE_DIRS}" STREQUAL "")
-	MESSAGE(FATAL_ERROR "BUILD_IFCPYTHON enabled, but unable to find Python lib or header. Disable BUILD_IFCPYTHON or fix Python paths to proceed.")
-ENDIF()
+#FIND_PACKAGE(PythonLibs)
+#IF(NOT PYTHONLIBS_FOUND OR "$PYTHON_INCLUDE_DIRS}" STREQUAL "")
+#	MESSAGE(FATAL_ERROR "BUILD_IFCPYTHON enabled, but unable to find Python lib or header. Disable BUILD_IFCPYTHON or fix Python paths to proceed.")
+#ENDIF()
 
 INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_DIRS})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
@@ -47,10 +47,10 @@ SET(CMAKE_SWIG_FLAGS ${SWIG_DEFINES})
 # NOTE Workaround for most likely missing debug Python libraries on Windows (requires Python built from the source).
 # Python 3.5 intaller and onwards will have an option to install the debug libraries too.
 # NOTE PYTHON_DEBUG_LIBRARIES appears to be a deprecated variable
-IF (WIN32 AND NOT PYTHON_DEBUG_LIBRARIES)
-	MESSAGE(STATUS "PYTHON_DEBUG_LIBRARIES not found, defining SWIG_PYTHON_INTERPRETER_NO_DEBUG workaround for IfcWrap.")
-	ADD_DEFINITIONS(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
-ENDIF()
+#IF (WIN32 AND NOT PYTHON_DEBUG_LIBRARIES)
+#	MESSAGE(STATUS "PYTHON_DEBUG_LIBRARIES not found, defining SWIG_PYTHON_INTERPRETER_NO_DEBUG workaround for IfcWrap.")
+#	ADD_DEFINITIONS(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
+#ENDIF()
 
 SET_SOURCE_FILES_PROPERTIES(IfcPython.i PROPERTIES CPLUSPLUS ON)
 swig_add_library(ifcopenshell_wrapper_csharp LANGUAGE csharp SOURCES IfcPython.i)

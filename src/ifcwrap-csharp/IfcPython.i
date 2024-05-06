@@ -55,22 +55,22 @@
 
 // General python-specific rename rules for comparison operators.
 // Mostly to silence warnings, but might be of use some time.
-%rename("__eq__") operator ==;
-%rename("__lt__") operator <;
+//%rename("__eq__") operator ==;
+//%rename("__lt__") operator <;
 
-%exception {
-	try {
-		$action
-	} catch(const IfcParse::IfcAttributeOutOfRangeException& e) {
-		SWIG_exception(SWIG_IndexError, e.what());
-	} catch(const IfcParse::IfcException& e) {
-		SWIG_exception(SWIG_RuntimeError, e.what());
-	} catch(const std::runtime_error& e) {
-		SWIG_exception(SWIG_RuntimeError, e.what());
-	} catch(...) {
-		SWIG_exception(SWIG_RuntimeError, "An unknown error occurred");
-	}
-}
+//%exception {
+//	try {
+//		$action
+//	} catch(const IfcParse::IfcAttributeOutOfRangeException& e) {
+//		SWIG_exception(SWIG_IndexError, e.what());
+//	} catch(const IfcParse::IfcException& e) {
+//		SWIG_exception(SWIG_RuntimeError, e.what());
+//	} catch(const std::runtime_error& e) {
+//		SWIG_exception(SWIG_RuntimeError, e.what());
+//	} catch(...) {
+//		SWIG_exception(SWIG_RuntimeError, "An unknown error occurred");
+//	}
+//}
 
 %include "../serializers/serializers_api.h"
 
@@ -137,11 +137,11 @@
 // Create docstrings for generated python code.
 %feature("autodoc", "1");
 
-%include "utils/type_conversion.i"
+//%include "utils/type_conversion.i"
 
-%include "utils/typemaps_in.i"
+//%include "utils/typemaps_in.i"
 
-%include "utils/typemaps_out.i"
+//%include "utils/typemaps_out.i"
 
 %module ifcopenshell_wrapper %{
 	#include "../ifcgeom_schema_agnostic/IfcGeomIterator.h"

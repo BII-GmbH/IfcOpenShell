@@ -58,34 +58,14 @@ class attribute_value_derived {};
 %{
 class attribute_value_derived {};
 %}
-
+/*
 %extend attribute_value_derived {
 	%pythoncode %{
 		def __bool__(self): return False
 		def __repr__(self): return '*'
 	%}
 }
-
-%inline %{
-static bool feature_use_attribute_value_derived = false;
-
-void set_feature(const std::string& x, PyObject* v) {
-	if (PyBool_Check(v) && x == "use_attribute_value_derived") {
-		feature_use_attribute_value_derived = v == Py_True;
-	} else {
-		throw std::runtime_error("Invalid feature specification");
-	}
-}
-
-PyObject* get_feature(const std::string& x) {
-	if (x == "use_attribute_value_derived") {
-		return PyBool_FromLong(feature_use_attribute_value_derived);
-	} else {
-		throw std::runtime_error("Invalid feature specification");
-	}
-}
-
-%}
+*/
 
 %{
 
@@ -178,12 +158,13 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 		if ($self->schema() == 0) return "";
 		return $self->schema()->name();
 	}
-
+/*
 	%pythoncode %{
         # Hide the getters with read-only property implementations
         header = property(header)
         schema = property(schema_name)
 	%}
+	*/
 }
 
 %extend IfcUtil::IfcBaseClass {
@@ -532,7 +513,7 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 		}
 	}
 }
-
+/*
 %extend IfcParse::IfcSpfHeader {
 	%pythoncode %{
         # Hide the getters with read-only property implementations
@@ -568,6 +549,7 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
         schema_identifiers = property(schema_identifiers, schema_identifiers)
 	%}
 };
+*/
 
 %include "../ifcparse/ifc_parse_api.h"
 %include "../ifcparse/IfcSpfHeader.h"
@@ -583,9 +565,9 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 %inline %{
 	IfcParse::IfcFile* open(const std::string& fn) {
 		IfcParse::IfcFile* f;
-		Py_BEGIN_ALLOW_THREADS;
+		//Py_BEGIN_ALLOW_THREADS;
 		f = new IfcParse::IfcFile(fn);
-		Py_END_ALLOW_THREADS;
+		//Py_END_ALLOW_THREADS;
 		return f;
 	}
 
@@ -593,9 +575,9 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 		char* copiedData = new char[data.length()];
 		memcpy(copiedData, data.c_str(), data.length());
 		IfcParse::IfcFile* f;
-		Py_BEGIN_ALLOW_THREADS;
+		//Py_BEGIN_ALLOW_THREADS;
 		f = new IfcParse::IfcFile((void *)copiedData, data.length());
-		Py_END_ALLOW_THREADS;
+		//Py_END_ALLOW_THREADS;
 		return f;
 	}
 
@@ -629,7 +611,7 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 		return schema->instantiate(data);
 	}
 %}
-
+/*
 %extend IfcParse::named_type {
 	%pythoncode %{
 		def __repr__(self):
@@ -643,12 +625,13 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 			return "<%s>" % self.declared_type()
 	%}
 }
-
+*/
 %extend IfcParse::aggregation_type {
 	std::string type_of_aggregation_string() const {
 		static const char* const aggr_strings[] = {"array", "bag", "list", "set"};
 		return aggr_strings[(int) $self->type_of_aggregation()];
 	}
+	/*
 	%pythoncode %{
 		def __repr__(self):
 			format_bound = lambda i: "?" if i == -1 else str(i)
@@ -659,8 +642,9 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 				self.type_of_element()
 			)
 	%}
+	*/
 }
-
+/*
 %extend IfcParse::type_declaration {
 	%pythoncode %{
 		def __repr__(self):
@@ -677,6 +661,7 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 		return r;
 	}
 }
+
 
 %extend IfcParse::select_type {
 	%pythoncode %{
@@ -703,12 +688,14 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 			return "<attribute %s%s: %s>" % (self.name(), "?" if self.optional() else "", self.type_of_attribute())
 	%}
 }
+*/
 
 %extend IfcParse::inverse_attribute {
 	std::string type_of_aggregation_string() const {
 		static const char* const aggr_strings[] = {"bag", "set", ""};
 		return aggr_strings[(int) $self->type_of_aggregation()];
 	}
+	/*
 	%pythoncode %{
 		def __repr__(self):
 			format_bound = lambda i: "?" if i == -1 else str(i)
@@ -721,13 +708,16 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 				self.attribute_reference()
 			)
 	%}
+	*/
 }
 
 %extend IfcParse::entity {
+/*
 	%pythoncode %{
 		def __repr__(self):
 			return "<entity %s>" % (self.name())
 	%}
+*/
 	std::vector<std::string> argument_types() {
 		size_t i = 0;
 		std::vector<std::string> r;
@@ -746,19 +736,16 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 		return r;
 	}
 }
-
+/*
 %extend IfcParse::schema_definition {
 	%pythoncode %{
 		def __repr__(self):
 			return "<schema %s>" % (self.name())
 	%}
 }
-
+*/
 %{
 	static std::stringstream ifcopenshell_log_stream;
-%}
-%init %{
-	Logger::SetOutput(0, &ifcopenshell_log_stream);
 %}
 %inline %{
 	std::string get_log() {
@@ -781,149 +768,6 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 	void set_log_format_text() {
 		ifcopenshell_log_stream.str("");
 		Logger::OutputFormat(Logger::FMT_PLAIN);
-	}
-%}
-
-%{
-	PyObject* get_info_cpp(IfcUtil::IfcBaseClass* v);
-
-	// @todo refactor this to remove duplication with the typemap. 
-	// except this is calls the above function in case of instances.
-	PyObject* convert_cpp_attribute_to_python(IfcUtil::ArgumentType type, Argument& arg) {
-		if (!arg.isNull() && type != IfcUtil::Argument_DERIVED) {
-		try {
-		switch(type) {
-			case IfcUtil::Argument_INT: {
-				int v = arg;
-				return pythonize(v);
-			break; }
-			case IfcUtil::Argument_BOOL: {
-				bool v = arg;
-				return pythonize(v);
-			break; }
-			case IfcUtil::Argument_LOGICAL: {
-				boost::logic::tribool v = arg;
-				return pythonize(v);
-			break; }
-			case IfcUtil::Argument_DOUBLE: {
-				double v = arg;
-				return pythonize(v);
-			break; }
-			case IfcUtil::Argument_ENUMERATION:
-			case IfcUtil::Argument_STRING: {
-				std::string v = arg;
-				return pythonize(v);
-			break; }
-			case IfcUtil::Argument_BINARY: {
-				boost::dynamic_bitset<> v = arg;
-				return pythonize(v);
-			break; }
-			case IfcUtil::Argument_AGGREGATE_OF_INT: {
-				std::vector<int> v = arg;
-				return pythonize_vector(v);
-			break; }
-			case IfcUtil::Argument_AGGREGATE_OF_DOUBLE: {
-				std::vector<double> v = arg;
-				return pythonize_vector(v);
-			break; }
-			case IfcUtil::Argument_AGGREGATE_OF_STRING: {
-				std::vector<std::string> v = arg;
-				return pythonize_vector(v);
-			break; }
-			case IfcUtil::Argument_ENTITY_INSTANCE: {
-				IfcUtil::IfcBaseClass* v = arg;
-				return get_info_cpp(v);
-			break; }
-			case IfcUtil::Argument_AGGREGATE_OF_ENTITY_INSTANCE: {
-				aggregate_of_instance::ptr v = arg;
-				auto r = PyTuple_New(v->size());
-				for (unsigned i = 0; i < v->size(); ++i) {
-					PyTuple_SetItem(r, i, get_info_cpp((*v)[i]));
-				}				
-				return r;
-			break; }
-			case IfcUtil::Argument_AGGREGATE_OF_BINARY: {
-				std::vector< boost::dynamic_bitset<> > v = arg;
-				return pythonize_vector(v);
-			break; }
-			case IfcUtil::Argument_AGGREGATE_OF_AGGREGATE_OF_INT: {
-				std::vector< std::vector<int> > v = arg;
-				return pythonize_vector2(v);
-			break; }
-			case IfcUtil::Argument_AGGREGATE_OF_AGGREGATE_OF_DOUBLE: {
-				std::vector< std::vector<double> > v = arg;
-				return pythonize_vector2(v);
-			break; }
-			case IfcUtil::Argument_AGGREGATE_OF_AGGREGATE_OF_ENTITY_INSTANCE: {
-				aggregate_of_aggregate_of_instance::ptr vs = arg;
-				auto rs = PyTuple_New(vs->size());
-				for (auto it = vs->begin(); it != vs->end(); ++it) {
-					aggregate_of_instance::ptr v_i = arg;
-					auto r = PyTuple_New(v_i->size());
-					for (unsigned i = 0; i < v_i->size(); ++i) {
-						PyTuple_SetItem(r, i, get_info_cpp((*v_i)[i]));
-					}
-					PyTuple_SetItem(rs, std::distance(vs->begin(), it), r);
-				}				
-				return rs;
-			break; }
-			case IfcUtil::Argument_EMPTY_AGGREGATE: {
-				return PyTuple_New(0);
-			break; }
-		}
-		} catch(...) {}
-		}
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-%}
-%inline %{
-	PyObject* get_info_cpp(IfcUtil::IfcBaseClass* v) {
-		PyObject *d = PyDict_New();
-
-		if (v->declaration().as_entity()) {
-			const std::vector<const IfcParse::attribute*> attrs = v->declaration().as_entity()->all_attributes();
-			std::vector<const IfcParse::attribute*>::const_iterator it = attrs.begin();
-			auto dit = v->declaration().as_entity()->derived().begin();
-			for (; it != attrs.end(); ++it, ++dit) {
-				const std::string& name_cpp = (*it)->name();
-				auto name_py = pythonize(name_cpp);
-				auto attr_type = *dit
-					? IfcUtil::Argument_DERIVED
-					: IfcUtil::from_parameter_type((*it)->type_of_attribute());
-				auto value_cpp = v->data().getArgument(std::distance(attrs.begin(), it));
-				auto value_py = convert_cpp_attribute_to_python(attr_type, *value_cpp);
-				PyDict_SetItem(d, name_py, value_py);
-				Py_DECREF(name_py);
-				Py_DECREF(value_py);
-			}
-
-			const std::string& id_cpp = "id";
-			auto id_py = pythonize(id_cpp);
-			auto id_v_py = pythonize(v->data().id());
-			PyDict_SetItem(d, id_py, id_v_py);
-			Py_DECREF(id_py);
-			Py_DECREF(id_v_py);
-		} else {
-			const std::string& name_cpp = "wrappedValue";
-			auto name_py = pythonize(name_cpp);
-			auto value_cpp = v->data().getArgument(0);
-			auto value_py = convert_cpp_attribute_to_python(value_cpp->type(), *value_cpp);
-			PyDict_SetItem(d, name_py, value_py);
-			Py_DECREF(name_py);
-			Py_DECREF(value_py);
-		}
-
-		// @todo type and id can be static?
-		const std::string& type_cpp = "type";
-		auto type_py = pythonize(type_cpp);
-		const std::string& type_v_cpp = v->declaration().name();
-		auto type_v_py = pythonize(type_v_cpp);
-		PyDict_SetItem(d, type_py, type_v_py);
-		Py_DECREF(type_py);
-		Py_DECREF(type_v_py);
-
-		return d;
 	}
 %}
 
