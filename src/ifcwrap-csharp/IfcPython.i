@@ -36,7 +36,6 @@
 # include <time.h>
 # include <wchar.h>
 #endif
-
 #ifdef _MSC_VER
 # pragma warning(push)
 # pragma warning(disable : 4127 4244 4702 4510 4512 4610)

@@ -17,6 +17,7 @@
 #                                                                              #
 ################################################################################
 
+message ("SWIG: ${SWIG_DIR}")
 FIND_PACKAGE(SWIG)
 IF(NOT SWIG_FOUND)
 	MESSAGE(FATAL_ERROR "BUILD_IFCPYTHON enabled, but unable to find SWIG. Disable BUILD_IFCPYTHON or fix SWIG paths to proceed.")
