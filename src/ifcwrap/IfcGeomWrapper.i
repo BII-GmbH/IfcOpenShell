@@ -261,7 +261,7 @@ struct ShapeRTTI : public boost::static_visitor<PyObject*>
 	$result = boost::apply_visitor(ShapeRTTI(), $1);
 }
 
-%extend SerializerSettings {
+/*%extend SerializerSettings {
 	%pythoncode %{
 
 	old_init = __init__
@@ -286,7 +286,7 @@ struct ShapeRTTI : public boost::static_visitor<PyObject*>
 		)
 
 	%}
-}
+}*/
 
 %newobject construct_iterator_with_include_exclude;
 %newobject construct_iterator_with_include_exclude_globalid;

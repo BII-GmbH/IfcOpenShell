@@ -496,10 +496,10 @@
 %ignore svgfill::svg_to_line_segments;
 %ignore svgfill::line_segments_to_polygons;
 
-%template(svg_line_segments) std::vector<std::array<svgfill::point_2, 2>>;
-%template(svg_groups_of_line_segments) std::vector<std::vector<std::array<svgfill::point_2, 2>>>;
+%template(svg_line_segments) std::vector<std::vector<svgfill::point_2>>;
+%template(svg_groups_of_line_segments) std::vector<std::vector<std::vector<svgfill::point_2>>>;
 %template(svg_point) std::array<double, 2>;
-//%template(line_segment) std::array<svgfill::point_2, 2>;
+%template(line_segment) std::vector<svgfill::point_2>;
 %template(svg_polygons) std::vector<svgfill::polygon_2>;
 %template(svg_groups_of_polygons) std::vector<std::vector<svgfill::polygon_2>>;
 %template(svg_loop) std::vector<std::array<double, 2>>;

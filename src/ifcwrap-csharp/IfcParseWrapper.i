@@ -157,14 +157,7 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 	std::string schema_name() const {
 		if ($self->schema() == 0) return "";
 		return $self->schema()->name();
-	}
-/*
-	%pythoncode %{
-        # Hide the getters with read-only property implementations
-        header = property(header)
-        schema = property(schema_name)
-	%}
-	*/
+	}	
 }
 
 %extend IfcUtil::IfcBaseClass {
