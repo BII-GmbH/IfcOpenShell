@@ -181,5 +181,55 @@
 %include "IfcParseWrapper.i"
 	
 namespace std {
-  %template(float_array_3) array<double, 3>;
+  %template(Vec3) std::array<double, 3>;
+  %template(Vec4) std::array<double, 4>;
+  %template(FloatVector) std::vector<float>;
+  %template(IntVector) std::vector<int>;
+  %template(DoubleVector) std::vector<double>;
+  %template(StringVector) std::vector<std::string>;
+  %template(FloatVectorVector) std::vector<std::vector<float>>;
+  %template(DoubleVectorVector) std::vector<std::vector<double>>;
 }
+
+%extend std::array<double, 3> {
+	const double X;
+	const double Y;
+	const double Z;
+}
+
+// %extend Vec4 {
+// 	const double X;
+// 	const double Y;
+// 	const double Z;
+// 	const double W;
+// }
+
+%{
+
+	double std_array_Sl_double_Sc_3_Sg__X_get(const std::array<double, 3>* vec) {
+		return (*vec)[0];
+	}
+
+	double std_array_Sl_double_Sc_3_Sg__Y_get(const std::array<double, 3>* vec) {
+		return (*vec)[1];
+	}
+
+	double std_array_Sl_double_Sc_3_Sg__Z_get(const std::array<double, 3>* vec) {
+		return (*vec)[2];
+	}
+
+	// double Vec4_X_get(const Vec4* vec) {
+	// 	return (*vec)[0];
+	// }
+
+	// double Vec4_Y_get(const Vec4* vec) {
+	// 	return (*vec)[1];
+	// }
+
+	// double Vec4_Z_get(const Vec4* vec) {
+	// 	return (*vec)[2];
+	// }
+	// double Vec4_W_get(const Vec4* vec) {
+	// 	return (*vec)[3];
+	// }
+%}

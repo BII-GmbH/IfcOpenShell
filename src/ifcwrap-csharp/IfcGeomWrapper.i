@@ -31,6 +31,31 @@
 %include "../ifcgeom_schema_agnostic/IfcGeomIterator.h"
 %include "../ifcgeom_schema_agnostic/GeometrySerializer.h"
 
+%extend IfcGeom::Element* {
+	bool IfcGeom_Element_TryGetAsSerializedElement(IfcGeom::Element* elem, IfcGeom::SerializedElement* serializedElement)
+	{
+		serializedElement = nullptr;
+		serializedElement = dynamic_cast<IfcGeom::SerializedElement*>(elem);
+		return serializedElement != nullptr;
+	}
+
+	bool IfcGeom_Element_TryGetAsTriangulationElement(IfcGeom::Element* elem, IfcGeom::TriangulationElement* serializedElement)
+	{
+		serializedElement = nullptr;
+		serializedElement = dynamic_cast<IfcGeom::TriangulationElement*>(elem);
+		return serializedElement != nullptr;
+	}
+
+	bool IfcGeom_Element_TryGetAsBRepElement(IfcGeom::Element* elem, IfcGeom::BRepElement* serializedElement)
+	{
+		serializedElement = nullptr;
+		serializedElement = dynamic_cast<IfcGeom::BRepElement*>(elem);
+		return serializedElement != nullptr;
+	}
+
+}
+
+
 %include "../serializers/SvgSerializer.h"
 %include "../serializers/HdfSerializer.h"
 %include "../serializers/WavefrontObjSerializer.h"

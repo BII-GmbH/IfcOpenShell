@@ -456,12 +456,12 @@ struct ShapeRTTI : public boost::static_visitor<PyObject*>
         }
     }
 
-    %pythoncode %{
-        # Hide the getters with read-only property implementations
-        geometry = property(geometry)
-        volume = property(calc_volume_)
-        surface_area = property(calc_surface_area_)
-    %}    
+    //%pythoncode %{
+    //    # Hide the getters with read-only property implementations
+    //    geometry = property(geometry)
+    //    volume = property(calc_volume_)
+    //    surface_area = property(calc_surface_area_)
+    //%}    
 };
 
 %extend IfcGeom::Material {
