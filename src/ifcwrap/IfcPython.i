@@ -203,7 +203,6 @@
 
 %include "IfcGeomWrapper.i"
 %include "IfcParseWrapper.i"
-%include "std_vector.i"
 	
 namespace std {
   %template(float_array_3) array<double, 3>;

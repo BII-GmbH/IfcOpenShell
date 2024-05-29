@@ -34,21 +34,25 @@
 %include "std_string.i"
 %include "exception.i"
 
-//%exception {
-//	try {
-//		$action
-//	} catch(const IfcParse::IfcAttributeOutOfRangeException& e) {
-//		SWIG_exception(SWIG_IndexError, e.what());
-//	} catch(const IfcParse::IfcException& e) {
-//		SWIG_exception(SWIG_RuntimeError, e.what());
-//	} catch(const std::runtime_error& e) {
-//		SWIG_exception(SWIG_RuntimeError, e.what());
-//	} catch(...) {
-//		SWIG_exception(SWIG_RuntimeError, "An unknown error occurred");
-//	}
-//}
+// TODO: operator()
+
+%exception {
+	try {
+		$action
+	} catch(const IfcParse::IfcAttributeOutOfRangeException& e) {
+		SWIG_exception(SWIG_IndexError, e.what());
+	} catch(const IfcParse::IfcException& e) {
+		SWIG_exception(SWIG_RuntimeError, e.what());
+	} catch(const std::runtime_error& e) {
+		SWIG_exception(SWIG_RuntimeError, e.what());
+	} catch(...) {
+		SWIG_exception(SWIG_RuntimeError, "An unknown error occurred");
+	}
+}
 
 %include "../serializers/serializers_api.h"
+
+%typemap(csbase) IfcGeom::IteratorSettings::Settings "long"
 
 // Include headers for the typemaps to function. This set of includes,
 // can probably be reduced, but for now it's identical to the includes
@@ -114,10 +118,8 @@
 %feature("autodoc", "1");
 
 //%include "utils/type_conversion.i"
-
 //%include "utils/typemaps_in.i"
-
-//%include "utils/typemaps_out.i"
+%include "utils/typemaps_out.i"
 
 %module ifcopenshell_wrapper %{
 	#include "../ifcgeom_schema_agnostic/IfcGeomIterator.h"
@@ -189,7 +191,11 @@ namespace std {
   %template(StringVector) std::vector<std::string>;
   %template(FloatVectorVector) std::vector<std::vector<float>>;
   %template(DoubleVectorVector) std::vector<std::vector<double>>;
+
+  %template(MaterialVector) std::vector<IfcGeom::Material>;
 }
+
+// TODO: Decide if these should stay
 
 %extend std::array<double, 3> {
 	const double X;

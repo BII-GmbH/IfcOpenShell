@@ -31,29 +31,78 @@
 %include "../ifcgeom_schema_agnostic/IfcGeomIterator.h"
 %include "../ifcgeom_schema_agnostic/GeometrySerializer.h"
 
-%extend IfcGeom::Element* {
-	bool IfcGeom_Element_TryGetAsSerializedElement(IfcGeom::Element* elem, IfcGeom::SerializedElement* serializedElement)
-	{
-		serializedElement = nullptr;
-		serializedElement = dynamic_cast<IfcGeom::SerializedElement*>(elem);
-		return serializedElement != nullptr;
-	}
+// Declare an input typemap that suppresses requiring any input and
+// declare a temporary stack variable to hold the return data.
+// %typemap(in,numinputs=0) IfcGeom::SerializedElement* serializedElement (IfcGeom::SerializedElement tmp) {
+//     $1 = &tmp;
+// }
 
-	bool IfcGeom_Element_TryGetAsTriangulationElement(IfcGeom::Element* elem, IfcGeom::TriangulationElement* serializedElement)
-	{
-		serializedElement = nullptr;
-		serializedElement = dynamic_cast<IfcGeom::TriangulationElement*>(elem);
-		return serializedElement != nullptr;
-	}
+// // Declare an output argument typemap.  In this case, we'll use
+// // a tuple to hold the structure data (no error checking).
+// %typemap(argout) IfcGeom::SerializedElement* serializedElement (IfcGeom::SerializedElement* o) {
+//     o = $1;
+// }
 
-	bool IfcGeom_Element_TryGetAsBRepElement(IfcGeom::Element* elem, IfcGeom::BRepElement* serializedElement)
-	{
-		serializedElement = nullptr;
-		serializedElement = dynamic_cast<IfcGeom::BRepElement*>(elem);
-		return serializedElement != nullptr;
-	}
+// // Declare an input typemap that suppresses requiring any input and
+// // declare a temporary stack variable to hold the return data.
+// %typemap(in,numinputs=0) IfcGeom::SerializedElement* OUTPUT {
+//     $1 = nullptr;
+// }
 
+// // Declare an output argument typemap.  In this case, we'll use
+// // a tuple to hold the structure data (no error checking).
+
+
+
+%include <typemaps.i>
+// %typemap(argout) IfcGeom::SerializedElement* OUTPUT (IfcGeom::SerializedElement* o) %{
+//     $1 = ($1_ltype)$input;
+// %}
+
+
+%apply double* OUTPUT { double* out };
+
+%apply double* OUTPUT { double* out };
+//%apply IfcGeom::SerializedElement* OUTPUT { IfcGeom::SerializedElement* out };
+
+//const double HelloWhereAreYou(double* OUTPUT);
+//const double HelloWhereAreYou2(double* out);
+
+// %inline %{ 
+// 	const double HelloWhereAreYou(double* OUTPUT);
+// 	const double HelloWhereAreYou2(double* out);
+// %}
+
+// %inline %{
+// 	//const double test(double* OUTPUT);
+// 	bool TryGetAsSerializedElement1(IfcGeom::Element* elem, IfcGeom::SerializedElement* OUTPUT);
+// %}
+
+
+%extend IfcGeom::Element {
+	IfcGeom::SerializedElement* TryGetAsSerializedElement();
+	IfcGeom::TriangulationElement* TryGetAsTriangulationElement();
+	IfcGeom::BRepElement* TryGetAsBRepElement();
 }
+
+
+%inline %{
+	IfcGeom::SerializedElement* IfcGeom_Element_TryGetAsSerializedElement(IfcGeom::Element* elem)
+	{
+		return dynamic_cast<IfcGeom::SerializedElement*>(elem);
+	}
+
+	IfcGeom::TriangulationElement* IfcGeom_Element_TryGetAsTriangulationElement(IfcGeom::Element* elem)
+	{
+		return dynamic_cast<IfcGeom::TriangulationElement*>(elem);
+	}
+
+	IfcGeom::BRepElement* IfcGeom_Element_TryGetAsBRepElement(IfcGeom::Element* elem)
+	{
+		return dynamic_cast<IfcGeom::BRepElement*>(elem);
+	}
+
+%}
 
 
 %include "../serializers/SvgSerializer.h"
