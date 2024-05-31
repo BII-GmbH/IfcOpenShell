@@ -53,7 +53,7 @@ SET(CMAKE_SWIG_FLAGS ${SWIG_DEFINES})
 #ENDIF()
 
 
-set(CMAKE_SWIG_OUTDIR "${CMAKE_BINARY_DIR}/IfcOpenShell.Net/IfcOpenShell.Net")
+set(CMAKE_SWIG_OUTDIR "${CMAKE_BINARY_DIR}/IfcOpenShell.Net")
 SET_SOURCE_FILES_PROPERTIES(IfcPython.i PROPERTIES CPLUSPLUS ON)
 swig_add_library(ifcopenshell_wrapper_csharp LANGUAGE csharp SOURCES IfcPython.i)
 set_property(TARGET ifcopenshell_wrapper_csharp PROPERTY SWIG_COMPILE_OPTIONS -namespace IfcOpenShell)
@@ -66,3 +66,15 @@ endif()
 if ((NOT WIN32) AND BUILD_SHARED_LIBS)
     SET_INSTALL_RPATHS(${SWIG_MODULE_ifcopenshell_wrapper_REAL_NAME} "${IFCDIRS};${OCC_LIBRARY_DIR}")
 endif()
+
+message("OutDir:  ${CMAKE_SWIG_OUTDIR}")
+add_custom_target(ifcopenshell_net ALL 
+    #rm "${CMAKE_SWIG_OUTDIR}/*.cxx" "${CMAKE_SWIG_OUTDIR}/*.cs"
+    # COMMAND 
+    dotnet new sln --name "IfcOpenShell.Net" --output "${CMAKE_SWIG_OUTDIR}" --force
+    COMMAND dotnet new classlib --name "IfcOpenShell.Net" -f netstandard2.0 --output "${CMAKE_SWIG_OUTDIR}" --force
+    COMMAND dotnet sln "${CMAKE_SWIG_OUTDIR}/IfcOpenShell.Net.sln" add "${CMAKE_SWIG_OUTDIR}/IfcOpenShell.Net.csproj"
+    COMMAND dotnet build "${CMAKE_SWIG_OUTDIR}/IfcOpenShell.Net.sln"
+)
+
+link_libraries(ifcopenshell_net PUBLIC ifcopenshell_wrapper_csharp)
