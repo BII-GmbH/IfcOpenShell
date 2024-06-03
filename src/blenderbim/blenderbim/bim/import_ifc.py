@@ -299,6 +299,7 @@ class IfcImporter:
         if self.ifc_import_settings.should_setup_viewport_camera:
             self.setup_viewport_camera()
         self.setup_arrays()
+        self.profile_code("Setup arrays")
         self.update_progress(100)
         bpy.context.window_manager.progress_end()
 
@@ -602,6 +603,9 @@ class IfcImporter:
         return products
 
     def predict_dense_mesh(self):
+        if self.ifc_import_settings.should_use_native_meshes:
+            return
+
         threshold = 10000  # Just from experience.
 
         faces = [len(e.CfsFaces) for e in self.file.by_type("IfcClosedShell")]
@@ -698,15 +702,17 @@ class IfcImporter:
             mat = np.array(
                 ([m[0], m[3], m[6], m[9]], [m[1], m[4], m[7], m[10]], [m[2], m[5], m[8], m[11]], [0, 0, 0, 1])
             )
-            point = np.array(
+            point = mat @ np.array(
                 (
-                    shape.geometry.verts[0] / self.unit_scale,
-                    shape.geometry.verts[1] / self.unit_scale,
-                    shape.geometry.verts[2] / self.unit_scale,
+                    shape.geometry.verts[0],
+                    shape.geometry.verts[1],
+                    shape.geometry.verts[2],
                     0.0,
                 )
             )
-            return mat @ point
+            point = point / self.unit_scale
+            if self.is_point_far_away(point, is_meters=False):
+                return point
 
     def does_element_likely_have_geometry_far_away(self, element):
         for representation in element.Representation.Representations:
@@ -1494,7 +1500,10 @@ class IfcImporter:
             # Occurs when reloading a project
             pass
         project_collection = bpy.context.view_layer.layer_collection.children[self.project["blender"].name]
-        project_collection.children[self.type_collection.name].hide_viewport = True
+        types_collection = project_collection.children[self.type_collection.name]
+        types_collection.hide_viewport = False
+        for obj in types_collection.collection.objects:  # turn off all objects inside Types collection.
+            obj.hide_set(True)
 
     def clean_mesh(self):
         obj = None
@@ -1904,11 +1913,7 @@ class IfcImporter:
                 and geometry.verts
                 and self.is_point_far_away((geometry.verts[0], geometry.verts[1], geometry.verts[2]))
             ):
-                m = shape.transformation.matrix.data
-                mat = np.array(
-                    ([m[0], m[3], m[6], m[9]], [m[1], m[4], m[7], m[10]], [m[2], m[5], m[8], m[11]], [0, 0, 0, 1])
-                )
-                offset_point = np.linalg.inv(mat) @ np.array(
+                offset_point = np.array(
                     (
                         float(props.blender_eastings),
                         float(props.blender_northings),
@@ -1916,8 +1921,15 @@ class IfcImporter:
                         0.0,
                     )
                 )
+                if geometry != shape:
+                    m = shape.transformation.matrix.data
+                    mat = np.array(
+                        ([m[0], m[3], m[6], m[9]], [m[1], m[4], m[7], m[10]], [m[2], m[5], m[8], m[11]], [0, 0, 0, 1])
+                    )
+                    offset_point = np.linalg.inv(mat) @ offset_point
                 verts = [None] * len(geometry.verts)
                 for i in range(0, len(geometry.verts), 3):
+                    # Note: this enh2xyz call is crazy slow.
                     verts[i], verts[i + 1], verts[i + 2] = ifcopenshell.util.geolocation.enh2xyz(
                         geometry.verts[i],
                         geometry.verts[i + 1],
@@ -2041,7 +2053,7 @@ class IfcImporter:
 
 class IfcImportSettings:
     def __init__(self):
-        self.logger = None
+        self.logger: logging.Logger = None
         self.input_file = None
         self.diff_file = None
         self.should_use_cpu_multiprocessing = True

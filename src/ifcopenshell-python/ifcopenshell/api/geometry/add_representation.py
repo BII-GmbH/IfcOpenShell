@@ -15,49 +15,56 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with IfcOpenShell.  If not, see <http://www.gnu.org/licenses/>.
-
+from __future__ import annotations
 import bpy
 import math
 import bmesh
 import ifcopenshell.util.unit
 from mathutils import Vector, Matrix
-from blenderbim.bim.module.geometry.helper import Helper
+
 
 Z_AXIS = Vector((0, 0, 1))
 X_AXIS = Vector((1, 0, 0))
 EPSILON = 1e-6
 
 
-class Usecase:
-    def __init__(self, file, **settings):
-        # TODO: This usecase currently depends on Blender's data model
-        self.file = file
-        self.settings = {
-            "context": None,  # IfcGeometricRepresentationContext
-            "blender_object": None,  # This is (currently) a Blender object, hence this depends on Blender now
-            "geometry": None,  # This is (currently) a Blender data object, hence this depends on Blender now
-            "coordinate_offset": None,  # Optionally apply a vector offset to all coordinates
-            "total_items": 1,  # How many representation items to create
-            "unit_scale": None,  # A scale factor to apply for all vectors in case the unit is different
-            "should_force_faceted_brep": False,  # If we should force faceted breps for meshes
-            "should_force_triangulation": False,  # If we should force triangulation for meshes
-            "should_generate_uvs": False,  # If UV coordinates should also be generated
-            #  Possible IFC representation classes:
-            #  IfcExtrudedAreaSolid/IfcRectangleProfileDef
-            #  IfcExtrudedAreaSolid/IfcCircleProfileDef
-            #  IfcExtrudedAreaSolid/IfcArbitraryClosedProfileDef
-            #  IfcExtrudedAreaSolid/IfcArbitraryProfileDefWithVoids
-            #  IfcExtrudedAreaSolid/IfcMaterialProfileSetUsage
-            #  IfcGeometricCurveSet/IfcTextLiteral
-            #  IfcTextLiteral
-            "ifc_representation_class": None,  # Whether to cast a mesh into a particular class
-            "profile_set_usage": None,  # The material profile set if the extrusion requires it
-            "text_literal": None,  # The text literal if the representation requires it
-        }
-        self.ifc_vertices = []
-        for key, value in settings.items():
-            self.settings[key] = value
+def add_representation(file: ifcopenshell.file, **usecase_settings) -> ifcopenshell.entity_instance:
+    # lazy import Helper to avoid circular import
+    if "Helper" not in globals():
+        from blenderbim.bim.module.geometry.helper import Helper
 
+    usecase = Usecase()
+    # TODO: This usecase currently depends on Blender's data model
+    usecase.file = file
+    usecase.settings = {
+        "context": None,  # IfcGeometricRepresentationContext
+        "blender_object": None,  # This is (currently) a Blender object, hence this depends on Blender now
+        "geometry": None,  # This is (currently) a Blender data object, hence this depends on Blender now
+        "coordinate_offset": None,  # Optionally apply a vector offset to all coordinates
+        "total_items": 1,  # How many representation items to create
+        "unit_scale": None,  # A scale factor to apply for all vectors in case the unit is different
+        "should_force_faceted_brep": False,  # If we should force faceted breps for meshes
+        "should_force_triangulation": False,  # If we should force triangulation for meshes
+        "should_generate_uvs": False,  # If UV coordinates should also be generated
+        #  Possible IFC representation classes:
+        #  IfcExtrudedAreaSolid/IfcRectangleProfileDef
+        #  IfcExtrudedAreaSolid/IfcCircleProfileDef
+        #  IfcExtrudedAreaSolid/IfcArbitraryClosedProfileDef
+        #  IfcExtrudedAreaSolid/IfcArbitraryProfileDefWithVoids
+        #  IfcExtrudedAreaSolid/IfcMaterialProfileSetUsage
+        #  IfcGeometricCurveSet/IfcTextLiteral
+        #  IfcTextLiteral
+        "ifc_representation_class": None,  # Whether to cast a mesh into a particular class
+        "profile_set_usage": None,  # The material profile set if the extrusion requires it
+        "text_literal": None,  # The text literal if the representation requires it
+    }
+    usecase.ifc_vertices = []
+    for key, value in usecase_settings.items():
+        usecase.settings[key] = value
+    return usecase.execute()
+
+
+class Usecase:
     def execute(self):
         self.is_manifold = None
         if (
@@ -345,12 +352,10 @@ class Usecase:
         )
 
     def create_curve3d_representation(self):
-        return self.file.createIfcShapeRepresentation(
-            self.settings["context"],
-            self.settings["context"].ContextIdentifier,
-            "Curve3D",
-            self.create_curves(),
-        )
+        if curves := self.create_curves():
+            return self.file.createIfcShapeRepresentation(
+                self.settings["context"], self.settings["context"].ContextIdentifier, "Curve3D", curves
+            )
 
     def create_curve2d_representation(self):
         return self.file.createIfcShapeRepresentation(
@@ -374,12 +379,14 @@ class Usecase:
         return items
 
     def create_plane(self, polygon):
-        return self.file.createIfcPlane(Position=self.file.createIfcAxis2Placement3D(
-            Location=self.file.createIfcCartesianPoint(polygon.center),
-            Axis=self.file.createIfcDirection(polygon.normal),
-        ))
+        return self.file.createIfcPlane(
+            Position=self.file.createIfcAxis2Placement3D(
+                Location=self.file.createIfcCartesianPoint(polygon.center),
+                Axis=self.file.createIfcDirection(polygon.normal),
+            )
+        )
 
-    def create_annotation_fill_areas(self, is_2d=False):
+    def create_annotation_fill_areas(self, is_2d=False) -> list[ifcopenshell.entity_instance]:
         items = []
         if self.file.schema != "IFC2X3":
             points = self.create_cartesian_point_list_from_vertices(self.settings["geometry"].vertices, is_2d=is_2d)
@@ -391,7 +398,9 @@ class Usecase:
             items.append(self.file.createIfcAnnotationFillArea(OuterBoundary=curve))
         return items
 
-    def create_curve_from_polygon(self, points, polygon, is_2d=False):
+    def create_curve_from_polygon(
+        self, points: ifcopenshell.entity_instance, polygon: bpy.types.MeshPolygon, is_2d=False
+    ) -> ifcopenshell.entity_instance:
         indices = list(polygon.vertices)
         indices.append(indices[0])
         edge_loop = [self.file.createIfcLineIndex((v1 + 1, v2 + 1)) for v1, v2 in zip(indices, indices[1:])]
@@ -414,7 +423,7 @@ class Usecase:
             results.append(self.file.createIfcSweptDiskSolid(curve, radius))
         return results
 
-    def is_mesh_curve_consequtive(self, geom_data):
+    def is_mesh_curve_consecutive(self, geom_data):
         import blenderbim.tool as tool
 
         bm = tool.Blender.get_bmesh_for_mesh(geom_data)
@@ -460,15 +469,15 @@ class Usecase:
             return False
         return True
 
-    def create_curves(self, should_exclude_faces=False, is_2d=False):
+    def create_curves(self, should_exclude_faces=False, is_2d=False, ignore_non_loose_edges=False):
         geom_data = self.settings["geometry"]
 
         if isinstance(geom_data, bpy.types.Mesh):
-            if self.is_mesh_curve_consequtive(geom_data):
-                if self.file.schema == "IFC2X3":
-                    return self.create_curves_from_mesh_ifc2x3(should_exclude_faces=should_exclude_faces, is_2d=is_2d)
-                else:
-                    return self.create_curves_from_mesh(should_exclude_faces=should_exclude_faces, is_2d=is_2d)
+            if not self.is_mesh_curve_consecutive(geom_data):
+                return
+            if self.file.schema == "IFC2X3":
+                return self.create_curves_from_mesh_ifc2x3(should_exclude_faces=should_exclude_faces, is_2d=is_2d)
+            return self.create_curves_from_mesh(should_exclude_faces=should_exclude_faces, is_2d=is_2d)
 
         import blenderbim.tool as tool
 
@@ -530,7 +539,9 @@ class Usecase:
         bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.0001)
         tool.Blender.apply_bmesh(mesh, bm)
 
-    def create_curves_from_mesh_ifc2x3(self, should_exclude_faces=False, is_2d=False):
+    def create_curves_from_mesh_ifc2x3(
+        self, should_exclude_faces=False, is_2d=False
+    ) -> list[ifcopenshell.entity_instance]:
         geom_data = self.settings["geometry"].copy()
         self.remove_doubles_from_mesh(geom_data)
         curves = []
@@ -568,7 +579,7 @@ class Usecase:
             curve_object_data = self.settings["geometry"]
         dim = (lambda v: v.xy) if is_2d else (lambda v: v.xyz)
         results = []
-        for spline in self.settings["geometry"].splines:
+        for spline in curve_object_data.splines:
             points = spline.bezier_points[:] + spline.points[:]
             if spline.use_cyclic_u:
                 points.append(points[0])
@@ -810,7 +821,7 @@ class Usecase:
         z = self.convert_si_to_unit(z)
         return self.file.createIfcCartesianPoint((x, y, z))
 
-    def create_cartesian_point_list_from_vertices(self, vertices, is_2d=False):
+    def create_cartesian_point_list_from_vertices(self, vertices: list[bpy.types.MeshVertex], is_2d=False):
         if is_2d:
             return self.file.createIfcCartesianPointList2D([self.convert_si_to_unit(v.co.xy) for v in vertices])
         return self.file.createIfcCartesianPointList3D([self.convert_si_to_unit(v.co) for v in vertices])

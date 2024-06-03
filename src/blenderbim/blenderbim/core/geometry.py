@@ -63,6 +63,9 @@ def add_representation(
         profile_set_usage=profile_set_usage,
     )
 
+    if not representation:
+        raise IncompatibleRepresentationError()
+
     if geometry.is_body_representation(representation):
         [geometry.run_style_add_style(obj=mat) for mat in geometry.get_object_materials_without_styles(obj)]
         ifc.run(
@@ -221,3 +224,7 @@ def edit_similar_opening_placement(geometry, opening=None, similar_openings=None
         old_placement = similar_opening.ObjectPlacement
         similar_opening.ObjectPlacement = opening.ObjectPlacement
         geometry.delete_opening_object_placement(old_placement)
+
+
+class IncompatibleRepresentationError(Exception):
+    pass

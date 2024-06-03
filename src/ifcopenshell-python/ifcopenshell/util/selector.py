@@ -287,17 +287,17 @@ def filter_elements(
     Filter elements based on the provided `query`.
 
     :param ifc_file: The IFC file object
-    :type ifc_file: ifcopenshell.file.file
+    :type ifc_file: ifcopenshell.file
     :param query: Query to execute
     :type query: str
     :param elements: Base set of IFC elements for the query.
         If provided, new elements found for the current query will be added to `elements`.
         Elements explicitly excluded in the `query` will also be excluded from `elements`
-    :type elements: set[ifcopenshell.entity_instance.entity_instance], optional
+    :type elements: set[ifcopenshell.entity_instance], optional
     :param edit_in_place: If `True`, mutate the provided `elements` in place. Defaults to `False`
     :type edit_in_place: bool
     :return: Set of filtered elements
-    :rtype: set[ifcopenshell.entity_instance.entity_instance]
+    :rtype: set[ifcopenshell.entity_instance]
 
     Example:
 
@@ -970,6 +970,8 @@ class Selector:
                 value = ifcopenshell.util.element.get_material(value, should_skip_usage=True)
             elif key in ("materials", "mats"):
                 value = ifcopenshell.util.element.get_materials(value)
+            elif key == "profiles":
+                value = ifcopenshell.util.shape.get_profiles(value)
             elif key == "styles":
                 value = ifcopenshell.util.element.get_styles(value)
             elif key in ("item", "i"):

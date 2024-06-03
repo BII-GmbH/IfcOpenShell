@@ -21,6 +21,7 @@ import bpy
 import time
 import logging
 import tempfile
+import traceback
 import subprocess
 import numpy as np
 import ifcopenshell
@@ -47,6 +48,7 @@ from mathutils import Vector, Matrix
 from bpy.app.handlers import persistent
 from blenderbim.bim.module.project.data import LinksData
 from blenderbim.bim.module.project.decorator import ProjectDecorator, ClippingPlaneDecorator
+from typing import Union
 
 
 class NewProject(bpy.types.Operator):
@@ -301,7 +303,7 @@ class AssignLibraryDeclaration(bpy.types.Operator):
         ifcopenshell.api.run(
             "project.assign_declaration",
             self.file,
-            definition=self.file.by_id(self.definition),
+            definitions=[self.file.by_id(self.definition)],
             relating_context=self.file.by_type("IfcProjectLibrary")[0],
         )
         element_name = self.props.active_library_element
@@ -337,7 +339,7 @@ class UnassignLibraryDeclaration(bpy.types.Operator):
         ifcopenshell.api.run(
             "project.unassign_declaration",
             self.file,
-            definition=self.file.by_id(self.definition),
+            definitions=[self.file.by_id(self.definition)],
             relating_context=self.file.by_type("IfcProjectLibrary")[0],
         )
         element_name = self.props.active_library_element
@@ -673,19 +675,23 @@ class LoadProject(bpy.types.Operator, IFCFileSelector):
             return self.finish_loading_project(context)
 
     def finish_loading_project(self, context):
-        if not self.is_existing_ifc_file():
-            return {"FINISHED"}
+        try:
+            if not self.is_existing_ifc_file():
+                return {"FINISHED"}
 
-        if tool.Blender.is_default_scene():
-            for obj in bpy.data.objects:
-                bpy.data.objects.remove(obj)
+            if tool.Blender.is_default_scene():
+                for obj in bpy.data.objects:
+                    bpy.data.objects.remove(obj)
 
-        context.scene.BIMProperties.ifc_file = self.get_filepath()
-        context.scene.BIMProjectProperties.is_loading = True
-        context.scene.BIMProjectProperties.total_elements = len(tool.Ifc.get().by_type("IfcElement"))
-        tool.Blender.register_toolbar()
-        if not self.is_advanced:
-            bpy.ops.bim.load_project_elements()
+            context.scene.BIMProperties.ifc_file = self.get_filepath()
+            context.scene.BIMProjectProperties.is_loading = True
+            context.scene.BIMProjectProperties.total_elements = len(tool.Ifc.get().by_type("IfcElement"))
+            tool.Blender.register_toolbar()
+            if not self.is_advanced:
+                bpy.ops.bim.load_project_elements()
+        except:
+            blenderbim.last_error = traceback.format_exc()
+            raise
         return {"FINISHED"}
 
     def invoke(self, context, event):
@@ -867,7 +873,16 @@ class LinkIfc(bpy.types.Operator):
                 except:
                     pass  # Perhaps on another drive or something
             new.name = filepath
-            bpy.ops.bim.load_link(filepath=filepath, false_origin=self.false_origin)
+            status = bpy.ops.bim.load_link(filepath=filepath, false_origin=self.false_origin)
+            if status == {"CANCELLED"}:
+                error_msg = (
+                    f'Error processing IFC file "{self.filepath}" '
+                    "was critical and blend file either wasn't saved or wasn't updated. "
+                    "See logs above in system console for details."
+                )
+                print(error_msg)
+                self.report({"ERROR"}, error_msg)
+                return {"FINISHED"}
         print(f"Finished linking {len(files)} IFCs", time.time() - start)
         return {"FINISHED"}
 
@@ -946,10 +961,12 @@ class LoadLink(bpy.types.Operator):
         if self.filepath.lower().endswith(".blend"):
             self.link_blend(filepath)
         elif self.filepath.lower().endswith(".ifc"):
-            self.link_ifc()
+            status = self.link_ifc()
+            if status:
+                return status
         return {"FINISHED"}
 
-    def link_blend(self, filepath):
+    def link_blend(self, filepath: str) -> None:
         with bpy.data.libraries.load(filepath, link=True) as (data_from, data_to):
             data_to.scenes = data_from.scenes
         for scene in bpy.data.scenes:
@@ -962,7 +979,7 @@ class LoadLink(bpy.types.Operator):
         link = bpy.context.scene.BIMProjectProperties.links.get(self.filepath)
         link.is_loaded = True
 
-    def link_ifc(self):
+    def link_ifc(self) -> Union[set[str], None]:
         blend_filepath = self.filepath + ".cache.blend"
         h5_filepath = self.filepath + ".cache.h5"
 
@@ -982,11 +999,14 @@ except Exception as e:
     exit(1)
             """
 
+            t = time.time()
             with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as temp_file:
                 temp_file.write(code)
             run = subprocess.run([bpy.app.binary_path, "-b", "--python", temp_file.name, "--python-exit-code", "1"])
             if run.returncode == 1:
                 print("An error occurred while processing your IFC.")
+                if not os.path.exists(blend_filepath) or os.stat(blend_filepath).st_mtime < t:
+                    return {"CANCELLED"}
 
         self.link_blend(blend_filepath)
 

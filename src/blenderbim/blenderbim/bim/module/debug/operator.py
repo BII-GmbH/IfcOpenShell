@@ -24,7 +24,6 @@ import random
 import logging
 import platform
 import subprocess
-import addon_utils
 import ifcopenshell
 import ifcopenshell.api
 import ifcopenshell.util.element
@@ -34,7 +33,7 @@ import blenderbim.tool as tool
 import blenderbim.core.debug as core
 import blenderbim.bim.handler
 import blenderbim.bim.import_ifc as import_ifc
-import blenderbim.tool as tool
+from blenderbim import get_debug_info, format_debug_info
 from blenderbim.bim.ifc import IfcStore
 
 
@@ -44,28 +43,7 @@ class CopyDebugInformation(bpy.types.Operator):
     bl_description = "Copies debugging information to your clipboard for use in bugreports"
 
     def execute(self, context):
-        version = ".".join(
-            [
-                str(x)
-                for x in [
-                    addon.bl_info.get("version", (-1, -1, -1))
-                    for addon in addon_utils.modules()
-                    if addon.bl_info["name"] == "BlenderBIM"
-                ][0]
-            ]
-        )
-        info = {
-            "os": platform.system(),
-            "os_version": platform.version(),
-            "python_version": platform.python_version(),
-            "architecture": platform.architecture(),
-            "machine": platform.machine(),
-            "processor": platform.processor(),
-            "blender_version": bpy.app.version_string,
-            "blenderbim_version": version,
-            "ifc": False,
-        }
-
+        info = get_debug_info()
         if tool.Ifc.get():
             info.update(
                 {
@@ -76,16 +54,18 @@ class CopyDebugInformation(bpy.types.Operator):
                 }
             )
 
-        # Format it in a readable way
-        text = "\n".join(f"{k}: {v}" for k, v in info.items())
+        text = format_debug_info(info)
+
+        print("-" * 80)
         print(text)
+        print("-" * 80)
 
         if platform.system() == "Windows":
-            command = "echo | set /p nul=" + text.strip()
+            command = "echo | set /p nul=" + text
         elif platform.system() == "Darwin":  # for MacOS
-            command = 'printf "' + text.strip().replace("\n", "\\n").replace('"', "") + '" | pbcopy'
+            command = 'printf "' + text.replace("\n", "\\n").replace('"', "") + '" | pbcopy'
         else:  # Linux
-            command = 'printf "' + text.strip().replace("\n", "\\n").replace('"', "") + '" | xclip -selection clipboard'
+            command = 'printf "' + text.replace("\n", "\\n").replace('"', "") + '" | xclip -selection clipboard'
         subprocess.run(command, shell=True, check=True)
         return {"FINISHED"}
 
@@ -104,10 +84,11 @@ class PrintIfcFile(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class PurgeIfcLinks(bpy.types.Operator):
-    bl_idname = "bim.purge_ifc_links"
-    bl_label = "Purge IFC Links"
-    bl_description = "Purge all definitions and references from the file.\nWarning : Cannot be undone."
+class ConvertToBlender(bpy.types.Operator):
+    bl_idname = "bim.convert_to_blender"
+    bl_label = "Convert To Blender File"
+    bl_description = "Removes all IFC data and revert to basic Blender objects.\nWarning : Cannot be undone."
+    bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
         for obj in bpy.data.objects:
@@ -119,26 +100,6 @@ class PurgeIfcLinks(bpy.types.Operator):
             material.BIMMaterialProperties.ifc_style_id = False
         context.scene.BIMProperties.ifc_file = ""
         context.scene.BIMDebugProperties.attributes.clear()
-        IfcStore.purge()
-        blenderbim.bim.handler.refresh_ui_data()
-        return {"FINISHED"}
-
-
-class ConvertToBlender(bpy.types.Operator):
-    bl_idname = "bim.convert_to_blender"
-    bl_label = "Convert To Blender File"
-    bl_description = "Removes all IFC data, and converts the file to a simple Blender file."
-    bl_options = {"REGISTER", "UNDO"}
-
-    def execute(self, context):
-        for o in bpy.data.objects:
-            if o.type in {"MESH", "EMPTY"}:
-                o.BIMObjectProperties.ifc_definition_id = 0
-                if o.data:
-                    o.data.BIMMeshProperties.ifc_definition_id = 0
-        for m in bpy.data.materials:
-            m.BIMMaterialProperties.ifc_style_id = False
-        bpy.context.scene.BIMProperties.ifc_file = ""
         IfcStore.purge()
         blenderbim.bim.handler.refresh_ui_data()
         return {"FINISHED"}

@@ -145,7 +145,7 @@ def rename_sheet(ifc, drawing, sheet: ifcopenshell.entity_instance, identificati
 
 
 def rename_reference(ifc, drawing, reference=None, identification=None):
-    attributes = drawing.generate_reference_attributes(reference, Identifiaction=identification)
+    attributes = drawing.generate_reference_attributes(reference, Identification=identification)
     ifc.run("document.edit_reference", reference=reference, attributes=attributes)
 
 
@@ -441,9 +441,19 @@ def select_assigned_product(drawing, context):
     drawing.select_assigned_product(context)
 
 
-def activate_drawing_view(ifc, drawing_tool, drawing):
+def activate_drawing_view(ifc, blender, drawing_tool, drawing):
     camera = ifc.get_object(drawing)
     if not camera:
         camera = drawing_tool.import_drawing(drawing)
         drawing_tool.import_annotations_in_group(drawing_tool.get_drawing_group(drawing))
+    blender.activate_camera(camera)
+    drawing_tool.isolate_camera_collection(camera)
+    try:
+        blender.set_active_object(camera)
+    except:
+        raise CameraNotAvailableError()
     drawing_tool.activate_drawing(camera)
+
+
+class CameraNotAvailableError(Exception):
+    pass
