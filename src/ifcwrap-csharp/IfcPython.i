@@ -34,6 +34,8 @@
 %include "std_string.i"
 %include "exception.i"
 
+%include <typemaps.i>
+
 // TODO: operator()
 
 %exception {

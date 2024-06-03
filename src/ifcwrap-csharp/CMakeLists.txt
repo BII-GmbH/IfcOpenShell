@@ -77,4 +77,4 @@ add_custom_target(ifcopenshell_net ALL
     COMMAND dotnet build "${CMAKE_SWIG_OUTDIR}/IfcOpenShell.Net.sln"
 )
 
-link_libraries(ifcopenshell_net PUBLIC ifcopenshell_wrapper_csharp)
+add_dependencies(ifcopenshell_net ifcopenshell_wrapper_csharp)

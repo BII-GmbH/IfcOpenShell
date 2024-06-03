@@ -128,13 +128,15 @@
 // }
 
 %define CREATE_VECTOR_TYPEMAP_OUT(template_type)
-	%typemap(out) std::vector<template_type> {
-		$result = &$1;
-	}
+	// %typemap(out) std::vector<template_type> {
+	// 	$result = &$1;
+	// }
 
-	%typemap(out) const std::vector<template_type>& {
-		$result = &$1;
-	}
+	// %typemap(out) const std::vector<template_type>& {
+	// 	$result = &$1;
+	// }
+
+	%naturalvar template_type
 %enddef
 
 //CREATE_VECTOR_TYPEMAP_OUT(bool)
@@ -142,11 +144,11 @@
 //CREATE_VECTOR_TYPEMAP_OUT(unsigned int)
 //CREATE_VECTOR_TYPEMAP_OUT(double)
 //CREATE_VECTOR_TYPEMAP_OUT(std::string)
-CREATE_VECTOR_TYPEMAP_OUT(IfcGeom::Material)
-CREATE_VECTOR_TYPEMAP_OUT(IfcParse::attribute const *)
-CREATE_VECTOR_TYPEMAP_OUT(IfcParse::inverse_attribute const *)
-CREATE_VECTOR_TYPEMAP_OUT(IfcParse::entity const *)
-CREATE_VECTOR_TYPEMAP_OUT(IfcParse::declaration const *)
+//CREATE_VECTOR_TYPEMAP_OUT(IfcGeom::Material)
+//CREATE_VECTOR_TYPEMAP_OUT(IfcParse::attribute const *)
+//CREATE_VECTOR_TYPEMAP_OUT(IfcParse::inverse_attribute const *)
+//CREATE_VECTOR_TYPEMAP_OUT(IfcParse::entity const *)
+//CREATE_VECTOR_TYPEMAP_OUT(IfcParse::declaration const *)
 
 // %typemap(out) std::pair<const char*, size_t> {
 //     $result = PyBytes_FromStringAndSize($1.first, $1.second);

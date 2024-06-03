@@ -17,32 +17,37 @@
  *                                                                              *
  ********************************************************************************/
 
-%include <typemaps.i>
-
 %rename("buffer") stream_or_filename;
 
 %ignore stream_or_filename::stream;
 
+%extend IfcGeom::Material {
+	const std::array<double,3> diffuseColor;	
+	const std::array<double,3> specularColor;
+}
+
+// TODO: validate that this free mechanism works - somehow
+%newobject diffuseColor;
+%newobject specularColor;
+
 %inline %{
-	namespace IfcGeom {
-		struct Color {
+	std::array<double,3>* IfcGeom_Material_diffuseColor_get(IfcGeom::Material* elem)
+	{
+		std::array<double,3>* tmp = new std::array<double,3>();
+		std::copy_n(elem->diffuse(), tmp->size(), tmp->begin());
+		return tmp;
+	}
 
-			double R() const {
-				return dataPtr[0];
-			}
-			double G() const {
-				return dataPtr[1];
-			}
-			double B() const {
-				return dataPtr[2];
-			}
-
-			Color(double* ptr) : dataPtr(ptr) {}
-		private:
-			double* dataPtr;
-		};
+	std::array<double,3>* IfcGeom_Material_specularColor_get(IfcGeom::Material* elem)
+	{
+		std::array<double,3>* tmp = new std::array<double,3>();
+		std::copy_n(elem->diffuse(), tmp->size(), tmp->begin());
+		return tmp;
 	}
 %}
+
+%ignore IfcGeom::Material::diffuse;
+%ignore IfcGeom::Material::specular;
 
 %insert(proxycode) {
 	struct ColorCs {
@@ -56,21 +61,6 @@
 		}
 	}
 }
-
-// This is only used for RGB colours, hence the size of 3
-// %typemap(out) const double* %{
-// 	$result = (void*)$1;
-// %}
-
-%typemap(cstype) const double* "Color"
-%typemap(csvarout, excode=SWIGEXCODE2) const double* %{
-    /* csvarout typemap code */
-    
-	global::System.IntPtr cPtr = $imcall;
-	CDate tempDate = (cPtr == global::System.IntPtr.Zero) ? null : new ColorCs(cPtr, $owner);
-	$excode
-	return tempDate;
-	%}
 
 %ignore IfcGeom::impl::tree::selector;
 
@@ -113,21 +103,6 @@
 %apply double* OUTPUT { double* out };
 
 %apply double* OUTPUT { double* out };
-//%apply IfcGeom::SerializedElement* OUTPUT { IfcGeom::SerializedElement* out };
-
-//const double HelloWhereAreYou(double* OUTPUT);
-//const double HelloWhereAreYou2(double* out);
-
-// %inline %{ 
-// 	const double HelloWhereAreYou(double* OUTPUT);
-// 	const double HelloWhereAreYou2(double* out);
-// %}
-
-// %inline %{
-// 	//const double test(double* OUTPUT);
-// 	bool TryGetAsSerializedElement1(IfcGeom::Element* elem, IfcGeom::SerializedElement* OUTPUT);
-// %}
-
 
 %extend IfcGeom::Element {
 	IfcGeom::SerializedElement* TryGetAsSerializedElement();
