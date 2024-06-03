@@ -17,9 +17,60 @@
  *                                                                              *
  ********************************************************************************/
 
+%include <typemaps.i>
+
 %rename("buffer") stream_or_filename;
 
 %ignore stream_or_filename::stream;
+
+%inline %{
+	namespace IfcGeom {
+		struct Color {
+
+			double R() const {
+				return dataPtr[0];
+			}
+			double G() const {
+				return dataPtr[1];
+			}
+			double B() const {
+				return dataPtr[2];
+			}
+
+			Color(double* ptr) : dataPtr(ptr) {}
+		private:
+			double* dataPtr;
+		};
+	}
+%}
+
+%insert(proxycode) {
+	struct ColorCs {
+
+		private global::System.Runtime.InteropServices.HandleRef swigCPtr;
+		protected bool swigCMemOwn;
+
+		internal Color(global::System.IntPtr cPtr, bool cMemoryOwn) {
+			swigCMemOwn = cMemoryOwn;
+			swigCPtr = new global::System.Runtime.InteropServices.HandleRef(this, cPtr);
+		}
+	}
+}
+
+// This is only used for RGB colours, hence the size of 3
+// %typemap(out) const double* %{
+// 	$result = (void*)$1;
+// %}
+
+%typemap(cstype) const double* "Color"
+%typemap(csvarout, excode=SWIGEXCODE2) const double* %{
+    /* csvarout typemap code */
+    
+	global::System.IntPtr cPtr = $imcall;
+	CDate tempDate = (cPtr == global::System.IntPtr.Zero) ? null : new ColorCs(cPtr, $owner);
+	$excode
+	return tempDate;
+	%}
 
 %ignore IfcGeom::impl::tree::selector;
 
@@ -54,7 +105,6 @@
 
 
 
-%include <typemaps.i>
 // %typemap(argout) IfcGeom::SerializedElement* OUTPUT (IfcGeom::SerializedElement* o) %{
 //     $1 = ($1_ltype)$input;
 // %}
@@ -103,7 +153,6 @@
 	}
 
 %}
-
 
 %include "../serializers/SvgSerializer.h"
 %include "../serializers/HdfSerializer.h"
@@ -248,6 +297,7 @@
     %}    
 	*/
 };
+
 /*
 %extend IfcGeom::Material {
 	%pythoncode %{
