@@ -1,9 +1,19 @@
+
+//%typemap(cstype) aggregate_of_instance::ptr "std::vector<IfcUtil::IfcBaseClass*>*"
+
+// %newobject aggregate_of_instance::ptr;
 // %typemap(out) aggregate_of_instance::ptr {
+// 	std::vector<IfcUtil::IfcBaseClass*>* tmp = new std::vector<IfcUtil::IfcBaseClass*>();
+// 	tmp->reserve($1 ? $1->size() : 0);
 // 	const unsigned size = $1 ? $1->size() : 0;
-// 	$result = PyTuple_New(size);
-// 	for (unsigned i = 0; i < size; ++i) {
-// 		PyTuple_SetItem($result, i, pythonize((*$1)[i]));
+// 	$result = tmp;
+// 	if($1)
+// 	{
+// 		for (unsigned i = 0; i < size; ++i) {
+// 			(*tmp)[i] = (*$1)[i];
+// 		}
 // 	}
+	
 // }
 
 // %typemap(out) IfcUtil::ArgumentType {

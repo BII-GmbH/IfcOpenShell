@@ -21,7 +21,7 @@
 
 %ignore stream_or_filename::stream;
 
-
+%ignore SerializerSettings;
 // The extended implementation of these properties allocates memory using new to perform better type wrapping than double *.
 // This directive indicates to the SWIG generator that the code allocates something that should 
 // be freed once the object is not used anymore.
@@ -51,19 +51,6 @@
 
 %ignore IfcGeom::Material::diffuse;
 %ignore IfcGeom::Material::specular;
-
-%insert(proxycode) {
-	struct ColorCs {
-
-		private global::System.Runtime.InteropServices.HandleRef swigCPtr;
-		protected bool swigCMemOwn;
-
-		internal Color(global::System.IntPtr cPtr, bool cMemoryOwn) {
-			swigCMemOwn = cMemoryOwn;
-			swigCPtr = new global::System.Runtime.InteropServices.HandleRef(this, cPtr);
-		}
-	}
-}
 
 %ignore IfcGeom::impl::tree::selector;
 
@@ -146,59 +133,133 @@
 
 %extend IfcGeom::tree {
 
-	static aggregate_of_instance::ptr vector_to_list(const std::vector<IfcUtil::IfcBaseEntity*>& ps) {
-		aggregate_of_instance::ptr r(new aggregate_of_instance);
-		for (std::vector<IfcUtil::IfcBaseEntity*>::const_iterator it = ps.begin(); it != ps.end(); ++it) {
-			r->push(*it);
-		}
-		return r;
+	// static aggregate_of_instance::ptr vector_to_list(const std::vector<IfcUtil::IfcBaseEntity*>& ps) {
+	// 	aggregate_of_instance::ptr r(new aggregate_of_instance);
+	// 	for (std::vector<IfcUtil::IfcBaseEntity*>::const_iterator it = ps.begin(); it != ps.end(); ++it) {
+	// 		r->push(*it);
+	// 	}
+	// 	return r;
+	// }
+
+	// aggregate_of_instance::ptr select_box(IfcUtil::IfcBaseClass* e, bool completely_within = false, double extend=-1.e-5) const {
+	// 	if (!e->declaration().is("IfcProduct")) {
+	// 		throw IfcParse::IfcException("Instance should be an IfcProduct");
+	// 	}
+	// 	std::vector<IfcUtil::IfcBaseEntity*> ps = $self->select_box((IfcUtil::IfcBaseEntity*)e, completely_within, extend);
+	// 	return IfcGeom_tree_vector_to_list(ps);
+	// }
+
+	// aggregate_of_instance::ptr select_box(const gp_Pnt& p) const {
+	// 	std::vector<IfcUtil::IfcBaseEntity*> ps = $self->select_box(p);
+	// 	return IfcGeom_tree_vector_to_list(ps);
+	// }
+
+	// aggregate_of_instance::ptr select_box(const Bnd_Box& b, bool completely_within = false) const {
+	// 	std::vector<IfcUtil::IfcBaseEntity*> ps = $self->select_box(b, completely_within);
+	// 	return IfcGeom_tree_vector_to_list(ps);
+	// }
+
+	// %naturalvar const std::vector<IfcUtil::IfcBaseClass*>&
+	// %typemap(in) const std::vector<IfcUtil::IfcBaseClass*>& (std::vector<IfcUtil::IfcBaseClass*> temp) {
+    //     if (!PyList_Check($input)) {
+    //         PyErr_SetString(PyExc_TypeError, "Expected a list.");
+    //         return NULL;
+    //     }
+    //     $1 = &temp;  // Set $1 to the address of temp, which SWIG will use as the argument in the wrapped function
+    //     temp.reserve(PyList_Size($input));  // Pre-allocate memory for efficiency
+    //     for (Py_ssize_t i = 0; i < PyList_Size($input); ++i) {
+    //         PyObject* pyObj = PyList_GetItem($input, i);
+    //         void* ptr = 0;
+    //         int res = SWIG_ConvertPtr(pyObj, &ptr, SWIGTYPE_p_IfcUtil__IfcBaseClass, 0);
+    //         if (!SWIG_IsOK(res)) {
+    //             PyErr_SetString(PyExc_TypeError, "List item is not of type IfcBaseClass.");
+    //             return NULL;
+    //         }
+    //         temp.push_back(reinterpret_cast<IfcUtil::IfcBaseClass*>(ptr));
+    //     }
+    // }
+
+	std::vector<clash> clash_intersection_many(const std::vector<IfcUtil::IfcBaseClass*>& set_a, const std::vector<IfcUtil::IfcBaseClass*>& set_b, double tolerance, bool check_all) const {
+        std::vector<IfcUtil::IfcBaseEntity*> set_a_entities;
+        std::vector<IfcUtil::IfcBaseEntity*> set_b_entities;
+        for (auto* e : set_a) {
+            if (!e->declaration().is("IfcProduct")) {
+                throw IfcParse::IfcException("All instances should be of type IfcProduct");
+            }
+            set_a_entities.push_back(static_cast<IfcUtil::IfcBaseEntity*>(e));
+        }
+        for (auto* e : set_b) {
+            if (!e->declaration().is("IfcProduct")) {
+                throw IfcParse::IfcException("All instances should be of type IfcProduct");
+            }
+            set_b_entities.push_back(static_cast<IfcUtil::IfcBaseEntity*>(e));
+        }
+		return $self->clash_intersection_many(set_a_entities, set_b_entities, tolerance, check_all);
 	}
 
-	aggregate_of_instance::ptr select_box(IfcUtil::IfcBaseClass* e, bool completely_within = false, double extend=-1.e-5) const {
-		if (!e->declaration().is("IfcProduct")) {
-			throw IfcParse::IfcException("Instance should be an IfcProduct");
-		}
-		std::vector<IfcUtil::IfcBaseEntity*> ps = $self->select_box((IfcUtil::IfcBaseEntity*)e, completely_within, extend);
-		return IfcGeom_tree_vector_to_list(ps);
+	std::vector<clash> clash_collision_many(const std::vector<IfcUtil::IfcBaseClass*>& set_a, const std::vector<IfcUtil::IfcBaseClass*>& set_b, bool allow_touching) const {
+        std::vector<IfcUtil::IfcBaseEntity*> set_a_entities;
+        std::vector<IfcUtil::IfcBaseEntity*> set_b_entities;
+        for (auto* e : set_a) {
+            if (!e->declaration().is("IfcProduct")) {
+                throw IfcParse::IfcException("All instances should be of type IfcProduct");
+            }
+            set_a_entities.push_back(static_cast<IfcUtil::IfcBaseEntity*>(e));
+        }
+        for (auto* e : set_b) {
+            if (!e->declaration().is("IfcProduct")) {
+                throw IfcParse::IfcException("All instances should be of type IfcProduct");
+            }
+            set_b_entities.push_back(static_cast<IfcUtil::IfcBaseEntity*>(e));
+        }
+		return $self->clash_collision_many(set_a_entities, set_b_entities, allow_touching);
 	}
 
-	aggregate_of_instance::ptr select_box(const gp_Pnt& p) const {
-		std::vector<IfcUtil::IfcBaseEntity*> ps = $self->select_box(p);
-		return IfcGeom_tree_vector_to_list(ps);
+	std::vector<clash> clash_clearance_many(const std::vector<IfcUtil::IfcBaseClass*>& set_a, const std::vector<IfcUtil::IfcBaseClass*>& set_b, double clearance, bool check_all) const {
+        std::vector<IfcUtil::IfcBaseEntity*> set_a_entities;
+        std::vector<IfcUtil::IfcBaseEntity*> set_b_entities;
+        for (auto* e : set_a) {
+            if (!e->declaration().is("IfcProduct")) {
+                throw IfcParse::IfcException("All instances should be of type IfcProduct");
+            }
+            set_a_entities.push_back(static_cast<IfcUtil::IfcBaseEntity*>(e));
+        }
+        for (auto* e : set_b) {
+            if (!e->declaration().is("IfcProduct")) {
+                throw IfcParse::IfcException("All instances should be of type IfcProduct");
+            }
+            set_b_entities.push_back(static_cast<IfcUtil::IfcBaseEntity*>(e));
+        }
+		return $self->clash_clearance_many(set_a_entities, set_b_entities, clearance, check_all);
 	}
 
-	aggregate_of_instance::ptr select_box(const Bnd_Box& b, bool completely_within = false) const {
-		std::vector<IfcUtil::IfcBaseEntity*> ps = $self->select_box(b, completely_within);
-		return IfcGeom_tree_vector_to_list(ps);
-	}
+	// aggregate_of_instance::ptr select(IfcUtil::IfcBaseClass* e, bool completely_within = false, double extend = 0.0) const {
+	// 	if (!e->declaration().is("IfcProduct")) {
+	// 		throw IfcParse::IfcException("Instance should be an IfcProduct");
+	// 	}
+	// 	std::vector<IfcUtil::IfcBaseEntity*> ps = $self->select((IfcUtil::IfcBaseEntity*)e, completely_within, extend);
+	// 	return IfcGeom_tree_vector_to_list(ps);
+	// }
 
-	aggregate_of_instance::ptr select(IfcUtil::IfcBaseClass* e, bool completely_within = false, double extend = 0.0) const {
-		if (!e->declaration().is("IfcProduct")) {
-			throw IfcParse::IfcException("Instance should be an IfcProduct");
-		}
-		std::vector<IfcUtil::IfcBaseEntity*> ps = $self->select((IfcUtil::IfcBaseEntity*)e, completely_within, extend);
-		return IfcGeom_tree_vector_to_list(ps);
-	}
+	// aggregate_of_instance::ptr select(const gp_Pnt& p, double extend=0.0) const {
+	// 	std::vector<IfcUtil::IfcBaseEntity*> ps = $self->select(p, extend);
+	// 	return IfcGeom_tree_vector_to_list(ps);
+	// }
 
-	aggregate_of_instance::ptr select(const gp_Pnt& p, double extend=0.0) const {
-		std::vector<IfcUtil::IfcBaseEntity*> ps = $self->select(p, extend);
-		return IfcGeom_tree_vector_to_list(ps);
-	}
+	// aggregate_of_instance::ptr select(const std::string& shape_serialization, bool completely_within = false, double extend = -1.e-5) const {
+	// 	std::stringstream stream(shape_serialization);
+	// 	BRepTools_ShapeSet shapes;
+	// 	shapes.Read(stream);
+	// 	const TopoDS_Shape& shp = shapes.Shape(shapes.NbShapes());
 
-	aggregate_of_instance::ptr select(const std::string& shape_serialization, bool completely_within = false, double extend = -1.e-5) const {
-		std::stringstream stream(shape_serialization);
-		BRepTools_ShapeSet shapes;
-		shapes.Read(stream);
-		const TopoDS_Shape& shp = shapes.Shape(shapes.NbShapes());
+	// 	std::vector<IfcUtil::IfcBaseEntity*> ps = $self->select(shp, completely_within, extend);
+	// 	return IfcGeom_tree_vector_to_list(ps);
+	// }
 
-		std::vector<IfcUtil::IfcBaseEntity*> ps = $self->select(shp, completely_within, extend);
-		return IfcGeom_tree_vector_to_list(ps);
-	}
-
-	aggregate_of_instance::ptr select(const IfcGeom::BRepElement* elem, bool completely_within = false, double extend = -1.e-5) const {
-		std::vector<IfcUtil::IfcBaseEntity*> ps = $self->select(elem, completely_within, extend);
-		return IfcGeom_tree_vector_to_list(ps);
-	}
+	// aggregate_of_instance::ptr select(const IfcGeom::BRepElement* elem, bool completely_within = false, double extend = -1.e-5) const {
+	// 	std::vector<IfcUtil::IfcBaseEntity*> ps = $self->select(elem, completely_within, extend);
+	// 	return IfcGeom_tree_vector_to_list(ps);
+	// }
 
 }
 

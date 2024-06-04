@@ -195,8 +195,10 @@ namespace std {
   %template(DoubleVectorVector) std::vector<std::vector<double>>;
 
   %template(MaterialVector) std::vector<IfcGeom::Material>;
-}
 
+
+  %template(EntityPtrList) std::vector<IfcUtil::IfcBaseClass*>;
+}
 // TODO: Decide if these should stay
 
 %extend std::array<double, 3> {

@@ -46,13 +46,43 @@ private:
 
 %ignore IfcUtil::IfcBaseClass::is;
 
-%rename("by_id") instance_by_id;
-%rename("by_type") instances_by_type;
-%rename("by_type_excl_subtypes") instances_by_type_excl_subtypes;
-%rename("entity_instance") IfcBaseClass;
-%rename("file") IfcFile;
-%rename("add") addEntity;
-%rename("remove") removeEntity;
+%define RENAME_AND_COPY_TO_VECTOR(origName, renamed, argsDecl, argsPassed)
+
+	%ignore IfcParse::IfcFile::origName;
+	%newobject origName;
+
+	%extend IfcParse::IfcFile {
+		std::vector<IfcUtil::IfcBaseClass*>* renamed(argsDecl);
+	}
+
+	%inline %{
+	std::vector<IfcUtil::IfcBaseClass*>* IfcParse_IfcFile_##renamed(IfcParse::IfcFile* file, argsDecl) {
+		auto tmpResult = file->origName(argsPassed);
+		auto res = new std::vector<IfcUtil::IfcBaseClass*>();
+		res->reserve(tmpResult ? tmpResult->size() : 0);
+		const unsigned size = tmpResult ? tmpResult->size() : 0;
+		if(tmpResult)
+		{
+			for (unsigned i = 0; i < size; ++i) {
+				(*res)[i] = (*tmpResult)[i];
+			}
+		}
+		return res;
+	}
+%}
+%enddef
+
+// TODO: while this works for now, modify this to simply apply to the aggregate_of_instance::ptr type
+RENAME_AND_COPY_TO_VECTOR(instances_by_type, ByType, const std::string& type, type)
+RENAME_AND_COPY_TO_VECTOR(instances_by_type_excl_subtypes, ByTypeExcludingSubtypes, const std::string& type, type)
+//RENAME_AND_COPY_TO_VECTOR(instance_by_id, ById, int id, id)
+
+
+//%rename("ByTypeExcludingSubtypes") instances_by_type_excl_subtypes;
+%rename("EntityInstance") IfcBaseClass;
+//%rename("file") IfcFile;
+%rename("Add") addEntity;
+%rename("Remove") removeEntity;
 
 class attribute_value_derived {};
 %{
