@@ -21,14 +21,17 @@
 
 %ignore stream_or_filename::stream;
 
+
+// The extended implementation of these properties allocates memory using new to perform better type wrapping than double *.
+// This directive indicates to the SWIG generator that the code allocates something that should 
+// be freed once the object is not used anymore.
+%newobject diffuseColor;
+%newobject specularColor;
+
 %extend IfcGeom::Material {
 	const std::array<double,3> diffuseColor;	
 	const std::array<double,3> specularColor;
 }
-
-// TODO: validate that this free mechanism works - somehow
-%newobject diffuseColor;
-%newobject specularColor;
 
 %inline %{
 	std::array<double,3>* IfcGeom_Material_diffuseColor_get(IfcGeom::Material* elem)
