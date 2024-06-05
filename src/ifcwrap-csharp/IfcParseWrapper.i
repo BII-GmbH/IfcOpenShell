@@ -79,8 +79,11 @@ RENAME_AND_COPY_TO_VECTOR(instances_by_type_excl_subtypes, ByTypeExcludingSubtyp
 
 
 //%rename("ByTypeExcludingSubtypes") instances_by_type_excl_subtypes;
-%rename("EntityInstance") IfcBaseClass;
-//%rename("file") IfcFile;
+
+%rename(Declaration) declaration;
+%rename(DeclarationType) IfcParse::declaration;
+%rename(EntityInstance) IfcBaseClass;
+
 %rename("Add") addEntity;
 %rename("Remove") removeEntity;
 
