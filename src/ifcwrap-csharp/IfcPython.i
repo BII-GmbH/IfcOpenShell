@@ -36,6 +36,9 @@
 
 %include <typemaps.i>
 
+%rename(Equals) operator==;
+%rename(LessThan) operator<;
+%rename(Compare) operator();
 // TODO: operator()
 
 %exception {

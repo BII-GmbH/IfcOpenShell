@@ -31,6 +31,7 @@ private:
 %ignore IfcParse::IfcFile::end;
 
 %ignore operator<<;
+%ignore operator file_open_enum;
 
 %ignore IfcParse::FileDescription::FileDescription;
 %ignore IfcParse::FileName::FileName;
@@ -45,6 +46,7 @@ private:
 %ignore IfcParse::IfcFile::type_iterator;
 
 %ignore IfcUtil::IfcBaseClass::is;
+%rename("Is") is;
 
 %define RENAME_AND_COPY_TO_VECTOR(origName, renamed, argsDecl, argsPassed)
 
