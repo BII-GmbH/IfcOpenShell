@@ -33,8 +33,94 @@
 %include "std_vector.i"
 %include "std_string.i"
 %include "exception.i"
+%include <boost_shared_ptr.i>
 
-%include <typemaps.i>
+%shared_ptr(aggregate_of_instance)
+%shared_ptr(aggregate_of_instance2)
+
+//%apply boost::shared_ptr<aggregate_of_instance> { aggregate_of_instance::ptr }
+//%apply boost::shared_ptr<aggregate_of_instance>* { aggregate_of_instance::ptr* }
+
+%shared_ptr(RandomTestSubject)
+
+%inline %{
+#include <boost/shared_ptr.hpp>
+
+struct RandomTestSubject {
+	int someContent;
+
+	
+	typedef boost::shared_ptr<RandomTestSubject> Alias;
+};
+
+
+void takingRandomTest(RandomTestSubject subject) {
+
+}
+
+void takingRandomTestR(RandomTestSubject& subject) {
+
+}
+void takingRandomTestP(RandomTestSubject* subject) {
+
+}
+void takingRandomTestS(boost::shared_ptr<RandomTestSubject> subject) {
+
+}
+
+
+void takingRandomTestA(RandomTestSubject::Alias subject) {
+
+}
+
+RandomTestSubject returningRandomTest() {
+	return {};
+}
+
+RandomTestSubject::Alias returningRandomTestA() {
+	return {};
+}
+
+class aggregate_of_instance2;
+
+template<typename T>
+inline int RandomTemplateFunctionToMakeStuffMoreComplicated(typename T::Alias subject)
+{
+	return 0;
+}
+
+class aggregate_of_instance2 {
+public:
+	typedef boost::shared_ptr<aggregate_of_instance2> ptr;
+	//typedef std::vector<IfcUtil::IfcBaseClass*>::const_iterator it;
+	//inline void push(IfcUtil::IfcBaseClass* l){}
+	inline void push(const ptr& l) {}
+};
+namespace IfcParse2 {
+	class IfcFile2 {
+	public:
+
+		/// Returns all entities in the file that match the positional argument.
+		/// NOTE: This also returns subtypes of the requested type, for example:
+		/// IfcWall will also return IfcWallStandardCase entities
+		//aggregate_of_instance2::ptr instances_by_type(const IfcParse::declaration*);
+
+		/// Returns all entities in the file that match the positional argument.
+		//aggregate_of_instance2::ptr instances_by_type_excl_subtypes(const IfcParse::declaration*);
+
+		/// Returns all entities in the file that match the positional argument.
+		/// NOTE: This also returns subtypes of the requested type, for example:
+		/// IfcWall will also return IfcWallStandardCase entities
+		inline aggregate_of_instance2::ptr instances_by_type(const std::string& t) {
+			return {};
+		}
+
+	};
+}
+
+%}
+
+//%include <typemaps.i>
 
 %rename(Equals) operator==;
 %rename(LessThan) operator<;
@@ -56,6 +142,7 @@
 }
 
 %include "../serializers/serializers_api.h"
+//%import "../ifcgeom_schema_agnostic/Serializer.h"
 
 %typemap(csbase) IfcGeom::IteratorSettings::Settings "long"
 
@@ -71,42 +158,42 @@
 	#include "../serializers/WavefrontObjSerializer.h"
 	#include "../serializers/HdfSerializer.h"
 	
-#ifdef HAS_SCHEMA_2x3
-	#include "../ifcparse/Ifc2x3.h"
-#endif
-#ifdef HAS_SCHEMA_4
-	#include "../ifcparse/Ifc4.h"
-#endif
-#ifdef HAS_SCHEMA_4x1
-	#include "../ifcparse/Ifc4x1.h"
-#endif
-#ifdef HAS_SCHEMA_4x2
-	#include "../ifcparse/Ifc4x2.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_rc1
-	#include "../ifcparse/Ifc4x3_rc1.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_rc2
-	#include "../ifcparse/Ifc4x3_rc2.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_rc3
-#include "../ifcparse/Ifc4x3_rc3.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_rc4
-#include "../ifcparse/Ifc4x3_rc4.h"
-#endif
-#ifdef HAS_SCHEMA_4x3
-#include "../ifcparse/Ifc4x3.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_tc1
-#include "../ifcparse/Ifc4x3_tc1.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_add1
-#include "../ifcparse/Ifc4x3_add1.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_add2
-#include "../ifcparse/Ifc4x3_add2.h"
-#endif
+	#ifdef HAS_SCHEMA_2x3
+		#include "../ifcparse/Ifc2x3.h"
+	#endif
+	#ifdef HAS_SCHEMA_4
+		#include "../ifcparse/Ifc4.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x1
+		#include "../ifcparse/Ifc4x1.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x2
+		#include "../ifcparse/Ifc4x2.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3_rc1
+		#include "../ifcparse/Ifc4x3_rc1.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3_rc2
+		#include "../ifcparse/Ifc4x3_rc2.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3_rc3
+	#include "../ifcparse/Ifc4x3_rc3.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3_rc4
+	#include "../ifcparse/Ifc4x3_rc4.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3
+	#include "../ifcparse/Ifc4x3.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3_tc1
+	#include "../ifcparse/Ifc4x3_tc1.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3_add1
+	#include "../ifcparse/Ifc4x3_add1.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3_add2
+	#include "../ifcparse/Ifc4x3_add2.h"
+	#endif
 
 
 	#include "../ifcparse/IfcBaseClass.h"
@@ -137,45 +224,46 @@
 	#include "../serializers/XmlSerializer.h"
 	#include "../serializers/GltfSerializer.h"
 	
-#ifdef HAS_SCHEMA_2x3
-	#include "../ifcparse/Ifc2x3.h"
-#endif
-#ifdef HAS_SCHEMA_4
-	#include "../ifcparse/Ifc4.h"
-#endif
-#ifdef HAS_SCHEMA_4x1
-	#include "../ifcparse/Ifc4x1.h"
-#endif
-#ifdef HAS_SCHEMA_4x2
-	#include "../ifcparse/Ifc4x2.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_rc1
-	#include "../ifcparse/Ifc4x3_rc1.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_rc2
-	#include "../ifcparse/Ifc4x3_rc2.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_rc3
-	#include "../ifcparse/Ifc4x3_rc3.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_rc4
-	#include "../ifcparse/Ifc4x3_rc4.h"
-#endif
-#ifdef HAS_SCHEMA_4x3
-	#include "../ifcparse/Ifc4x3.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_tc1
-	#include "../ifcparse/Ifc4x3_tc1.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_add1
-	#include "../ifcparse/Ifc4x3_add1.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_add2
-	#include "../ifcparse/Ifc4x3_add2.h"
-#endif
+	#ifdef HAS_SCHEMA_2x3
+		#include "../ifcparse/Ifc2x3.h"
+	#endif
+	#ifdef HAS_SCHEMA_4
+		#include "../ifcparse/Ifc4.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x1
+		#include "../ifcparse/Ifc4x1.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x2
+		#include "../ifcparse/Ifc4x2.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3_rc1
+		#include "../ifcparse/Ifc4x3_rc1.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3_rc2
+		#include "../ifcparse/Ifc4x3_rc2.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3_rc3
+		#include "../ifcparse/Ifc4x3_rc3.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3_rc4
+		#include "../ifcparse/Ifc4x3_rc4.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3
+		#include "../ifcparse/Ifc4x3.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3_tc1
+		#include "../ifcparse/Ifc4x3_tc1.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3_add1
+		#include "../ifcparse/Ifc4x3_add1.h"
+	#endif
+	#ifdef HAS_SCHEMA_4x3_add2
+		#include "../ifcparse/Ifc4x3_add2.h"
+	#endif
 
 	#include "../ifcparse/IfcBaseClass.h"
 	#include "../ifcparse/IfcFile.h"
+	#include "../ifcparse/aggregate_of_instance.h"
 	#include "../ifcparse/IfcSchema.h"
 	#include "../ifcparse/utils.h"
 

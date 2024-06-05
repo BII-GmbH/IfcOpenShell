@@ -163,7 +163,7 @@ namespace {
 
 				// Set unit information from file
 
-				IfcSchema::IfcProject::list::ptr projects = file->instances_by_type<IfcSchema::IfcProject>();
+				IfcSchema::IfcProject::list::ptr projects = file->instances_by_type_t<IfcSchema::IfcProject>();
 				if (projects->size() == 1) {
 					IfcSchema::IfcProject* project = *projects->begin();
 					std::pair<std::string, double> unit_info = k->initializeUnits(project->UnitsInContext());
@@ -179,7 +179,7 @@ namespace {
 
 				IfcSchema::IfcGeometricRepresentationContext::list::it it;
 				IfcSchema::IfcGeometricRepresentationContext::list::ptr contexts =
-					file->instances_by_type_excl_subtypes<IfcSchema::IfcGeometricRepresentationContext>();
+					file->instances_by_type_excl_subtypes_t<IfcSchema::IfcGeometricRepresentationContext>();
 
 				for (it = contexts->begin(); it != contexts->end(); ++it) {
 					IfcSchema::IfcGeometricRepresentationContext* context = *it;

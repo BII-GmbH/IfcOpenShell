@@ -257,7 +257,7 @@ int main(int argc, char** argv) {
 	// we need to cast them to IfcWindows. Since these properties 
 	// are optional we need to make sure the properties are 
 	// defined for the window in question before accessing them.
-	IfcSchema::IfcBuildingElement::list::ptr elements = file.instances_by_type<IfcSchema::IfcBuildingElement>();
+	IfcSchema::IfcBuildingElement::list::ptr elements = file.instances_by_type_t<IfcSchema::IfcBuildingElement>();
 
 	std::cout << "Found " << elements->size() << " elements in " << argv[1] << ":" << std::endl;
 	

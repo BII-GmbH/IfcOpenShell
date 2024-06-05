@@ -48,6 +48,48 @@ private:
 %ignore IfcUtil::IfcBaseClass::is;
 %rename("Is") is;
 
+//%typemap(imtype) aggregate_of_instance::ptr "IMAggregate";
+// %typemap(ctype) aggregate_of_instance::ptr "std::vector<IfcUtil::IfcBaseClass*>*";
+// %apply std::vector<IfcUtil::IfcBaseClass*>* { aggregate_of_instance::ptr }
+// %apply std::vector<IfcUtil::IfcBaseClass*> { aggregate_of_instance }
+// %apply EntityPtrList { aggregate_of_instance }
+// %apply EntityPtrList* { aggregate_of_instance::ptr }
+// %typemap(cstype) aggregate_of_instance::ptr "EntityPtrList";
+// %typemap(csout,
+// 	pre="    CDate temp$csinput = new CDate($csinput.Year, $csinput.Month, $csinput.Day);",
+// 	post="      $csinput = new System.DateTime(temp$csinput.getYear(),"
+// 		 " temp$csinput.getMonth(), temp$csinput.getDay(), 0, 0, 0);",
+// 	cshin="ref $csinput") aggregate_of_instance::ptr "$csclassname.getCPtr(temp$csinput)";
+
+// %typemap(in) aggregate_of_instance::ptr { 
+	
+// 	aggregate_of_instance::ptr ret = aggregate_of_instance::ptr(new aggregate_of_instance());
+
+// 	if($input)
+// 	{
+// 		for (auto entry : (*$input)) {
+// 			ret->push(entry);
+// 		}
+// 	}	
+
+// 	$1 = ret;
+// };
+
+// %typemap(out) aggregate_of_instance::ptr {
+// 	const std::size_t size = $1 ? $1->size() : 0;
+
+// 	auto res = new std::vector<IfcUtil::IfcBaseClass*>();
+// 	res->reserve(size);
+// 	if($1)
+// 	{
+// 		for (std::size_t i = 0; i < size; ++i) {
+// 			// we explictly want to call the overloaded [] operator of the source type, not pointer arithmetic stuff
+// 			(*res)[i] = (*$1)[i];
+// 		}
+// 	}	
+// 	$result = res; 
+// };
+
 %define RENAME_AND_COPY_TO_VECTOR(origName, renamed, argsDecl, argsPassed)
 
 	%ignore IfcParse::IfcFile::origName;
@@ -75,8 +117,8 @@ private:
 %enddef
 
 // TODO: while this works for now, modify this to simply apply to the aggregate_of_instance::ptr type
-RENAME_AND_COPY_TO_VECTOR(instances_by_type, ByType, const std::string& type, type)
-RENAME_AND_COPY_TO_VECTOR(instances_by_type_excl_subtypes, ByTypeExcludingSubtypes, const std::string& type, type)
+//RENAME_AND_COPY_TO_VECTOR(instances_by_type, ByType, const std::string& type, type)
+//RENAME_AND_COPY_TO_VECTOR(instances_by_type_excl_subtypes, ByTypeExcludingSubtypes, const std::string& type, type)
 //RENAME_AND_COPY_TO_VECTOR(instance_by_id, ById, int id, id)
 
 

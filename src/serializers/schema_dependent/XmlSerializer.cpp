@@ -533,7 +533,7 @@ void format_tasks(IfcSchema::IfcTask* task, ptree& node) {
 void MAKE_TYPE_NAME(XmlSerializer)::finalize() {
 	MAKE_TYPE_NAME(argument_name_map).insert(std::make_pair("GlobalId", "id"));
 
-	IfcSchema::IfcProject::list::ptr projects = file->instances_by_type<IfcSchema::IfcProject>();
+	IfcSchema::IfcProject::list::ptr projects = file->instances_by_type_t<IfcSchema::IfcProject>();
 	if (projects->size() != 1) {
 		Logger::Message(Logger::LOG_ERROR, "Expected a single IfcProject");
 		return;
@@ -608,7 +608,7 @@ void MAKE_TYPE_NAME(XmlSerializer)::finalize() {
 	descend(project, decomposition);
 
 	// Write all property sets and values as XML nodes.
-	IfcSchema::IfcPropertySet::list::ptr psets = file->instances_by_type<IfcSchema::IfcPropertySet>();
+	IfcSchema::IfcPropertySet::list::ptr psets = file->instances_by_type_t<IfcSchema::IfcPropertySet>();
 	for (IfcSchema::IfcPropertySet::list::it it = psets->begin(); it != psets->end(); ++it) {
 		IfcSchema::IfcPropertySet* pset = *it;
 		ptree* node = format_entity_instance(pset, properties);
@@ -618,7 +618,7 @@ void MAKE_TYPE_NAME(XmlSerializer)::finalize() {
 	}
 
 	// Write all group sets and values as XML nodes.
-	IfcSchema::IfcGroup::list::ptr gsets = file->instances_by_type<IfcSchema::IfcGroup>();
+	IfcSchema::IfcGroup::list::ptr gsets = file->instances_by_type_t<IfcSchema::IfcGroup>();
 	std::set<std::string> notRootGroups; //selfname, fathername
 	for (IfcSchema::IfcGroup::list::it it = gsets->begin(); it != gsets->end(); ++it) {
 		writeGroupToNode(*it, groups, notRootGroups);
@@ -632,7 +632,7 @@ void MAKE_TYPE_NAME(XmlSerializer)::finalize() {
 	}
 
 	// Write all quantities and values as XML nodes.
-	IfcSchema::IfcElementQuantity::list::ptr qtosets = file->instances_by_type<IfcSchema::IfcElementQuantity>();
+	IfcSchema::IfcElementQuantity::list::ptr qtosets = file->instances_by_type_t<IfcSchema::IfcElementQuantity>();
 	for (IfcSchema::IfcElementQuantity::list::it it = qtosets->begin(); it != qtosets->end(); ++it) {
 		IfcSchema::IfcElementQuantity* qto = *it;
 		ptree* node = format_entity_instance(qto, quantities);
@@ -643,7 +643,7 @@ void MAKE_TYPE_NAME(XmlSerializer)::finalize() {
 
 	// Write all work schedules and values as XML nodes.
 	ptree pwork_schedules;
-	IfcSchema::IfcWorkSchedule::list::ptr pschedules = file->instances_by_type<IfcSchema::IfcWorkSchedule>();
+	IfcSchema::IfcWorkSchedule::list::ptr pschedules = file->instances_by_type_t<IfcSchema::IfcWorkSchedule>();
 	for (IfcSchema::IfcWorkSchedule::list::it it = pschedules->begin(); it != pschedules->end(); ++it) {
 		IfcSchema::IfcWorkSchedule* schedule = *it;
 		ptree* nschedule = format_entity_instance(schedule, pwork_schedules);
@@ -669,7 +669,7 @@ void MAKE_TYPE_NAME(XmlSerializer)::finalize() {
 
 	// Write all work plans and values as XML nodes.
 	ptree pwork_plans;
-	IfcSchema::IfcWorkPlan::list::ptr pplans = file->instances_by_type<IfcSchema::IfcWorkPlan>();
+	IfcSchema::IfcWorkPlan::list::ptr pplans = file->instances_by_type_t<IfcSchema::IfcWorkPlan>();
 	for (IfcSchema::IfcWorkPlan::list::it it = pplans->begin(); it != pplans->end(); ++it) {
 		IfcSchema::IfcWorkPlan* plan = *it;
 		ptree* nschedule = format_entity_instance(plan, pwork_plans);
@@ -695,7 +695,7 @@ void MAKE_TYPE_NAME(XmlSerializer)::finalize() {
 	
 	// Write all work calendars and values as XML nodes.
 #ifdef SCHEMA_HAS_IfcWorkCalendar
-	IfcSchema::IfcWorkCalendar::list::ptr pcalendars = file->instances_by_type<IfcSchema::IfcWorkCalendar>();
+	IfcSchema::IfcWorkCalendar::list::ptr pcalendars = file->instances_by_type_t<IfcSchema::IfcWorkCalendar>();
 	for (IfcSchema::IfcWorkCalendar::list::it it = pcalendars->begin(); it != pcalendars->end(); ++it) {
 		IfcSchema::IfcWorkCalendar* calendar = *it;
 		ptree* ncalendar = format_entity_instance(calendar, calendars);
@@ -713,7 +713,7 @@ void MAKE_TYPE_NAME(XmlSerializer)::finalize() {
 	}
 #endif
 	
-	IfcSchema::IfcRelConnectsElements::list::ptr pconnections = file->instances_by_type<IfcSchema::IfcRelConnectsElements>();
+	IfcSchema::IfcRelConnectsElements::list::ptr pconnections = file->instances_by_type_t<IfcSchema::IfcRelConnectsElements>();
 	for (IfcSchema::IfcRelConnectsElements::list::it it = pconnections->begin(); it != pconnections->end(); ++it) {
 		IfcSchema::IfcRelConnectsElements* connection = *it;
 
@@ -730,7 +730,7 @@ void MAKE_TYPE_NAME(XmlSerializer)::finalize() {
 	}
 
 	// Write all type objects as XML nodes.
-	IfcSchema::IfcTypeObject::list::ptr type_objects = file->instances_by_type<IfcSchema::IfcTypeObject>();
+	IfcSchema::IfcTypeObject::list::ptr type_objects = file->instances_by_type_t<IfcSchema::IfcTypeObject>();
 	for (IfcSchema::IfcTypeObject::list::it it = type_objects->begin(); it != type_objects->end(); ++it) {
 		IfcSchema::IfcTypeObject* type_object = *it;
 		ptree* node = descend(type_object, types);
@@ -764,7 +764,7 @@ void MAKE_TYPE_NAME(XmlSerializer)::finalize() {
     // so use names as the IDs and only insert those with unique names. In case of possible duplicate names/IDs
     // the first IfcPresentationLayerAssignment occurrence takes precedence.
     std::set<std::string> layer_names;
-	IfcSchema::IfcPresentationLayerAssignment::list::ptr layer_assignments = file->instances_by_type<IfcSchema::IfcPresentationLayerAssignment>();
+	IfcSchema::IfcPresentationLayerAssignment::list::ptr layer_assignments = file->instances_by_type_t<IfcSchema::IfcPresentationLayerAssignment>();
     for (IfcSchema::IfcPresentationLayerAssignment::list::it it = layer_assignments->begin(); it != layer_assignments->end(); ++it) {
         const std::string& name = (*it)->Name();
         if (layer_names.find(name) == layer_names.end()) {
@@ -775,7 +775,7 @@ void MAKE_TYPE_NAME(XmlSerializer)::finalize() {
         }
     }
 
-	IfcSchema::IfcRelAssociatesMaterial::list::ptr materal_associations = file->instances_by_type<IfcSchema::IfcRelAssociatesMaterial>();
+	IfcSchema::IfcRelAssociatesMaterial::list::ptr materal_associations = file->instances_by_type_t<IfcSchema::IfcRelAssociatesMaterial>();
 	std::set<IfcSchema::IfcMaterialSelect*> emitted_materials;
 	for (IfcSchema::IfcRelAssociatesMaterial::list::it it = materal_associations->begin(); it != materal_associations->end(); ++it) {
 		IfcSchema::IfcMaterialSelect* mat = (**it).RelatingMaterial();

@@ -46,7 +46,7 @@ namespace boost {
 
 class Argument;
 
-class aggregate_of_instance;
+//class aggregate_of_instance;
 class aggregate_of_aggregate_of_instance;
 
 class IfcEntityInstanceData;

@@ -52,6 +52,7 @@
 #endif
 
 #include "../ifcparse/IfcBaseClass.h"
+#include "../ifcparse/IfcBaseEntity.h"
 #include "../ifcparse/Argument.h"
 #include "../ifcparse/utils.h"
 #include "../ifcparse/IfcException.h"

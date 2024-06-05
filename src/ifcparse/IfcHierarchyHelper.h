@@ -382,7 +382,7 @@ public:
 
 	template <class T>
 	T* getSingle() {
-		typename T::list::ptr ts = instances_by_type<T>();
+		typename T::list::ptr ts = instances_by_type_t<T>();
 		if (ts->size() != 1) return 0;
 		return *ts->begin();
 	}
@@ -403,7 +403,7 @@ public:
 	void addRelatedObject(typename Schema::IfcObjectDefinition* relating_object, 
 		typename Schema::IfcObjectDefinition* related_object, typename Schema::IfcOwnerHistory* owner_hist = 0)
 	{
-		typename T::list::ptr li = instances_by_type<T>();
+		typename T::list::ptr li = instances_by_type_t<T>();
 		bool found = false;
 		for (typename T::list::it i = li->begin(); i != li->end(); ++i) {
 			T* rel = *i;

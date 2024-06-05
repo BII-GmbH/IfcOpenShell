@@ -31,7 +31,6 @@
 #include <atomic>
 
 class Argument;
-class aggregate_of_instance;
 
 namespace IfcUtil {
 
@@ -117,18 +116,6 @@ namespace IfcUtil {
 		virtual const IfcParse::declaration& declaration() const {
 			return *decl_;
 		}
-	};
-
-	class IFC_PARSE_API IfcBaseEntity : public IfcBaseClass {
-	public:
-		IfcBaseEntity() : IfcBaseClass() {}
-		IfcBaseEntity(IfcEntityInstanceData* d) : IfcBaseClass(d) {}
-
-		virtual const IfcParse::entity& declaration() const = 0;
-
-		Argument* get(const std::string& name) const;
-
-		boost::shared_ptr<aggregate_of_instance> get_inverse(const std::string& a) const;
 	};
 
 	// TODO: Investigate whether these should be template classes instead

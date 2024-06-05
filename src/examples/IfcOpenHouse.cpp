@@ -341,9 +341,9 @@ int main() {
 		null, 
 		null,
 #ifdef USE_IFC4
-		file.instances_by_type<IfcSchema::IfcWallStandardCase>()->as<IfcSchema::IfcDefinitionSelect>(),
+		file.instances_by_type_t<IfcSchema::IfcWallStandardCase>()->as<IfcSchema::IfcDefinitionSelect>(),
 #else
-		file.instances_by_type<IfcSchema::IfcWallStandardCase>()->as<IfcSchema::IfcRoot>(),
+		file.instances_by_type_t<IfcSchema::IfcWallStandardCase>()->as<IfcSchema::IfcRoot>(),
 #endif
 		layer_usage);
 

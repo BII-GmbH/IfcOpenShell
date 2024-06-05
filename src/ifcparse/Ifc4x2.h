@@ -36,6 +36,7 @@
 
 #include "../ifcparse/aggregate_of_instance.h"
 #include "../ifcparse/IfcBaseClass.h"
+#include "../ifcparse/IfcBaseEntity.h"
 #include "../ifcparse/IfcSchema.h"
 #include "../ifcparse/IfcException.h"
 #include "../ifcparse/Argument.h"

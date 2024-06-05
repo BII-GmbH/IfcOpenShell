@@ -181,7 +181,7 @@ namespace IfcGeom {
         };
 
 		void initUnits() {
-			IfcSchema::IfcProject::list::ptr projects = ifc_file->instances_by_type<IfcSchema::IfcProject>();
+			IfcSchema::IfcProject::list::ptr projects = ifc_file->instances_by_type_t<IfcSchema::IfcProject>();
 			if (projects->size() == 1) {
 				IfcSchema::IfcProject* project = *projects->begin();
 				std::pair<std::string, double> length_unit = kernel.initializeUnits(project->UnitsInContext());
@@ -409,7 +409,7 @@ namespace IfcGeom {
 					}
 				} while (++num_created, next());
 			} else {
-				IfcSchema::IfcProduct::list::ptr products = ifc_file->instances_by_type<IfcSchema::IfcProduct>();
+				IfcSchema::IfcProduct::list::ptr products = ifc_file->instances_by_type_t<IfcSchema::IfcProduct>();
 				for (IfcSchema::IfcProduct::list::it iter = products->begin(); iter != products->end(); ++iter) {
 					IfcSchema::IfcProduct* product = *iter;
 					if (product->ObjectPlacement()) {
@@ -519,7 +519,7 @@ namespace IfcGeom {
 			IfcSchema::IfcGeometricRepresentationContext::list::it it;
 			IfcSchema::IfcGeometricRepresentationSubContext::list::it jt;
 			IfcSchema::IfcGeometricRepresentationContext::list::ptr contexts =
-				ifc_file->instances_by_type<IfcSchema::IfcGeometricRepresentationContext>();
+				ifc_file->instances_by_type_t<IfcSchema::IfcGeometricRepresentationContext>();
 
 			IfcSchema::IfcGeometricRepresentationContext::list::ptr filtered_contexts (new IfcSchema::IfcGeometricRepresentationContext::list);
 
@@ -581,7 +581,7 @@ namespace IfcGeom {
 
 			if (representations->size() == 0) {
 				Logger::Warning("No representations encountered in relevant contexts, using all");
-				representations = ifc_file->instances_by_type<IfcSchema::IfcRepresentation>();
+				representations = ifc_file->instances_by_type_t<IfcSchema::IfcRepresentation>();
 			}
 		}
 

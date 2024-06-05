@@ -89,11 +89,6 @@
 //     $1 = ($1_ltype)$input;
 // %}
 
-
-%apply double* OUTPUT { double* out };
-
-%apply double* OUTPUT { double* out };
-
 %extend IfcGeom::Element {
 	IfcGeom::SerializedElement* TryGetAsSerializedElement();
 	IfcGeom::TriangulationElement* TryGetAsTriangulationElement();
@@ -130,6 +125,8 @@
 // A Template instantantation should be defined before it is used as a base class. 
 // But frankly I don't care as most methods are subtlely different anyway.
 %include "../ifcgeom_schema_agnostic/IfcGeomTree.h"
+
+//%template(BaseEntityTree) IfcGeom::impl::tree<IfcUtil::IfcBaseEntity*>;
 
 %extend IfcGeom::tree {
 

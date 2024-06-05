@@ -21,6 +21,7 @@
 #define IFCLOGGER_H
 
 #include "../ifcparse/IfcBaseClass.h"
+#include "../ifcparse/IfcBaseEntity.h"
 
 #include <map>
 #include <set>
