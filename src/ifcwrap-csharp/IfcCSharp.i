@@ -214,7 +214,7 @@ namespace IfcParse2 {
 //%include "utils/typemaps_in.i"
 %include "utils/typemaps_out.i"
 
-%module ifcopenshell_wrapper %{
+%module ifcopenshell_net %{
 	#include "../ifcgeom_schema_agnostic/IfcGeomIterator.h"
 	#include "../ifcgeom_schema_agnostic/Serialization.h"
 	#include "../ifcgeom_schema_agnostic/IfcGeomTree.h"

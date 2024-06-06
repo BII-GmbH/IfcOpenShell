@@ -50,6 +50,7 @@ option(NO_WARN "Disable all warnings" OFF)
 
 option(BUILD_IFCGEOM "Build IfcGeom." ON)
 option(BUILD_IFCPYTHON "Build IfcPython." ON)
+option(BUILD_IFC_CSHARP "Build C# Wrapper." ON)
 option(BUILD_CONVERT "Build IfcConvert executable." ON)
 option(BUILD_DOCUMENTATION "Build IfcOpenShell Documentation." OFF)
 option(BUILD_EXAMPLES "Build example applications." ON)
@@ -79,7 +80,7 @@ if(MINIMAL_BUILD)
     set(USD_SUPPORT OFF)
 endif()
 
-if((BUILD_CONVERT OR BUILD_GEOMSERVER OR BUILD_IFCPYTHON) AND(NOT BUILD_IFCGEOM))
+if((BUILD_CONVERT OR BUILD_GEOMSERVER OR BUILD_IFCPYTHON OR BUILD_IFC_CSHARP) AND(NOT BUILD_IFCGEOM))
     message(STATUS "'IfcGeom' is required with current outputs")
     set(BUILD_IFCGEOM ON)
 endif()
@@ -871,7 +872,7 @@ if (BUILD_IFCGEOM)
 	endif()
 endif()
 
-if (BUILD_CONVERT OR BUILD_IFCPYTHON)
+if (BUILD_CONVERT OR BUILD_IFCPYTHON OR BUILD_IFC_CSHARP)
 	foreach(schema ${SCHEMA_VERSIONS})
 		set(SERIALIZER_SCHEMA_LIBRARIES ${SERIALIZER_SCHEMA_LIBRARIES} Serializers_ifc${schema})
 	endforeach()
@@ -954,7 +955,7 @@ if(BUILD_IFCGEOM)
 
 endif(BUILD_IFCGEOM)
 
-if(BUILD_CONVERT OR BUILD_IFCPYTHON)
+if(BUILD_CONVERT OR BUILD_IFCPYTHON OR BUILD_IFC_CSHARP)
     # Serializers
     file(GLOB SERIALIZERS_H_FILES ../src/serializers/*.h)
     file(GLOB SERIALIZERS_CPP_FILES ../src/serializers/*.cpp)
@@ -988,7 +989,7 @@ if(BUILD_CONVERT OR BUILD_IFCPYTHON)
 
     target_link_libraries(Serializers ${SERIALIZER_SCHEMA_LIBRARIES} ${OPENCOLLADA_LIBRARIES} ${USD_LIBRARIES})
 
-endif(BUILD_CONVERT OR BUILD_IFCPYTHON)
+endif(BUILD_CONVERT OR BUILD_IFCPYTHON OR BUILD_IFC_CSHARP)
 
 if(BUILD_CONVERT)
     # IfcConvert
@@ -1075,7 +1076,7 @@ if(BUILD_IFCPYTHON)
     add_subdirectory(../src/ifcwrap ifcwrap)
 endif()
 
-if(BUILD_IFCPYTHON)
+if(BUILD_IFC_CSHARP)
     add_subdirectory(../src/ifcwrap-csharp ifcwrap-csharp)
 endif()
 
