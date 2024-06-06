@@ -196,6 +196,7 @@ namespace IfcParse2 {
 	#endif
 
 
+	#include "../ifcparse/aggregate_of_instance.h"
 	#include "../ifcparse/IfcBaseClass.h"
 	#include "../ifcparse/IfcFile.h"
 	#include "../ifcparse/IfcSchema.h"
@@ -261,6 +262,7 @@ namespace IfcParse2 {
 		#include "../ifcparse/Ifc4x3_add2.h"
 	#endif
 
+	#include "../ifcparse/aggregate_of_instance.h"
 	#include "../ifcparse/IfcBaseClass.h"
 	#include "../ifcparse/IfcFile.h"
 	#include "../ifcparse/aggregate_of_instance.h"
