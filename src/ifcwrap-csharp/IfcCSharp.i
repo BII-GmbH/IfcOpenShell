@@ -36,89 +36,6 @@
 %include <boost_shared_ptr.i>
 
 %shared_ptr(aggregate_of_instance)
-%shared_ptr(aggregate_of_instance2)
-
-//%apply boost::shared_ptr<aggregate_of_instance> { aggregate_of_instance::ptr }
-//%apply boost::shared_ptr<aggregate_of_instance>* { aggregate_of_instance::ptr* }
-
-%shared_ptr(RandomTestSubject)
-
-%inline %{
-#include <boost/shared_ptr.hpp>
-
-struct RandomTestSubject {
-	int someContent;
-
-	
-	typedef boost::shared_ptr<RandomTestSubject> Alias;
-};
-
-
-void takingRandomTest(RandomTestSubject subject) {
-
-}
-
-void takingRandomTestR(RandomTestSubject& subject) {
-
-}
-void takingRandomTestP(RandomTestSubject* subject) {
-
-}
-void takingRandomTestS(boost::shared_ptr<RandomTestSubject> subject) {
-
-}
-
-
-void takingRandomTestA(RandomTestSubject::Alias subject) {
-
-}
-
-RandomTestSubject returningRandomTest() {
-	return {};
-}
-
-RandomTestSubject::Alias returningRandomTestA() {
-	return {};
-}
-
-class aggregate_of_instance2;
-
-template<typename T>
-inline int RandomTemplateFunctionToMakeStuffMoreComplicated(typename T::Alias subject)
-{
-	return 0;
-}
-
-class aggregate_of_instance2 {
-public:
-	typedef boost::shared_ptr<aggregate_of_instance2> ptr;
-	//typedef std::vector<IfcUtil::IfcBaseClass*>::const_iterator it;
-	//inline void push(IfcUtil::IfcBaseClass* l){}
-	inline void push(const ptr& l) {}
-};
-namespace IfcParse2 {
-	class IfcFile2 {
-	public:
-
-		/// Returns all entities in the file that match the positional argument.
-		/// NOTE: This also returns subtypes of the requested type, for example:
-		/// IfcWall will also return IfcWallStandardCase entities
-		//aggregate_of_instance2::ptr instances_by_type(const IfcParse::declaration*);
-
-		/// Returns all entities in the file that match the positional argument.
-		//aggregate_of_instance2::ptr instances_by_type_excl_subtypes(const IfcParse::declaration*);
-
-		/// Returns all entities in the file that match the positional argument.
-		/// NOTE: This also returns subtypes of the requested type, for example:
-		/// IfcWall will also return IfcWallStandardCase entities
-		inline aggregate_of_instance2::ptr instances_by_type(const std::string& t) {
-			return {};
-		}
-
-	};
-}
-
-%}
 
 //%include <typemaps.i>
 
@@ -209,6 +126,8 @@ namespace IfcParse2 {
 
 // Create docstrings for generated python code.
 %feature("autodoc", "1");
+
+%include "impl/aggregate_of_instance.i"
 
 //%include "utils/type_conversion.i"
 //%include "utils/typemaps_in.i"
