@@ -487,12 +487,12 @@ class Material:
     def disable_editing_materials(cls): pass
     def enable_editing_material(cls, material): pass
     def enable_editing_materials(cls): pass
-    def get_active_material_type(cls): pass
     def get_active_material(cls): pass
+    def get_active_material_type(cls): pass
     def get_active_object_material(cls, obj): pass
     def get_elements_by_material(cls, material): pass
-    def get_material_attributes(cls): pass
     def get_material(cls, element, should_inherit): pass
+    def get_material_attributes(cls): pass
     def get_name(cls, obj): pass
     def get_type(cls, element): pass
     def has_material_profile(cls, element): pass
@@ -503,6 +503,7 @@ class Material:
     def is_material_used_in_sets(cls, material): pass
     def load_material_attributes(cls, material): pass
     def replace_material_with_material_profile(cls, element): pass
+    def sync_blender_material_name(cls, material): pass
 
 
 @interface
@@ -617,24 +618,28 @@ class Profile:
 
 @interface
 class Pset:
+    def add_proposed_property(cls, name, value, props): pass
+    def cast_string_to_primitive(cls, value: str): pass
+    def clear_blender_pset_properties(cls, props): pass
+    def enable_proposed_pset(cls, props, pset_name, pset_type, has_template): pass
     def get_element_pset(cls, element, pset_name): pass
-    def get_pset_name(cls, obj, obj_type): pass
+    def get_prop_template_primitive_type(cls, prop_template): pass
+    def get_pset_name(cls, obj, obj_type, pset_type): pass
+    def get_pset_template(cls, name): pass
+    def import_enumerated_value_from_template(cls, prop_template, data, props): pass
+    def import_pset_from_existing(cls, pset, props): pass
+    def import_pset_from_template(cls, pset_template, pset, props): pass
+    def import_single_value_from_template(cls, pset_template, prop_template, data, props): pass
     def is_pset_applicable(cls,element, pset_name): pass
+    def set_active_pset(cls, props, pset, has_template): pass
 
 
 @interface
 class Qto:
     def get_radius_of_selected_vertices(cls, obj): pass
-    def set_qto_result(cls, result): pass
-    def get_applicable_quantity_names(cls, qto_name): pass
-    def get_applicable_base_quantity_name(cls, product): pass
-    def get_rounded_value(cls, new_quantity): pass
-    def get_calculated_object_quantities(cls, calculator, baste_qto, object): pass
-    def add_object_base_qto(cls, object): pass
-    def add_product_base_qto(cls, product): pass
-    def get_new_calculated_quantity(cls, qto_name, quantity_name, object): pass
-    def get_new_guessed_quantity(cls, object, qto_name, quantity_name, ): pass
     def get_related_cost_item_quantities(cls, product): pass
+    def get_rounded_value(cls, new_quantity): pass
+    def set_qto_result(cls, result): pass
 
 
 @interface
@@ -826,7 +831,7 @@ class Spatial:
     def can_reference(cls, structure, element): pass
     def contract_container(cls, container): pass
     def copy_xy(cls, src_obj, destination_obj): pass
-    def create_new_storey_li(cls, element, level_index): pass
+    def import_spatial_structure(cls, element, level_index): pass
     def deselect_objects(cls): pass
     def disable_editing(cls, obj): pass
     def duplicate_object_and_data(cls, obj): pass
@@ -843,7 +848,7 @@ class Spatial:
     def get_selected_product_types(cls): pass
     def get_selected_products(cls): pass
     def import_containers(cls, parent=None): pass
-    def load_container_manager(cls): pass
+    def import_spatial_decomposition(cls): pass
     def run_root_copy_class(cls, obj=None): pass
     def run_spatial_assign_container(cls, structure_obj=None, element_obj=None): pass
     def select_object(cls, obj): pass

@@ -19,6 +19,7 @@
 import datetime
 from re import findall
 from dateutil import parser
+from typing import Literal, Union, Any, overload
 
 try:
     import isodate
@@ -104,7 +105,33 @@ def readable_ifc_duration(string):
     return final_string
 
 
-def datetime2ifc(dt, ifc_type):
+@overload
+def datetime2ifc(dt: None, ifc_type: Any) -> None: ...
+@overload
+def datetime2ifc(
+    dt: Union[datetime.date, str, None],
+    ifc_type: Literal[
+        "IfcDuration",
+        "IfcTimeStamp",
+        "IfcDateTime",
+        "IfcDate",
+        "IfcTime",
+        "IfcCalendarDate",
+        "IfcLocalTime",
+    ],
+) -> Union[int, str, dict[str, Any], None]: ...
+def datetime2ifc(
+    dt: Union[datetime.date, str, None],
+    ifc_type: Literal[
+        "IfcDuration",
+        "IfcTimeStamp",
+        "IfcDateTime",
+        "IfcDate",
+        "IfcTime",
+        "IfcCalendarDate",
+        "IfcLocalTime",
+    ],
+) -> Union[int, str, dict[str, Any], None]:
     if isinstance(dt, str):
         if ifc_type == "IfcDuration":
             return dt
@@ -112,6 +139,8 @@ def datetime2ifc(dt, ifc_type):
             dt = datetime.datetime.fromisoformat(dt)
         except:
             dt = datetime.time.fromisoformat(dt)
+    elif dt is None:
+        return
 
     if ifc_type == "IfcDuration":
         return isodate.duration_isoformat(dt)
@@ -145,6 +174,8 @@ def datetime2ifc(dt, ifc_type):
             "MinuteComponent": dt.minute,
             "SecondComponent": dt.second,
         }
+
+    raise TypeError(f"Unsupported ifc_type for conversion from datetime.datetime = {ifc_type}, value = {dt}")
 
 
 def string_to_date(string):

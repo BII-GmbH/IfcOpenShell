@@ -26,6 +26,7 @@ import bmesh
 import logging
 import mathutils
 import numpy as np
+import numpy.typing as npt
 import multiprocessing
 import ifcopenshell
 import ifcopenshell.geom
@@ -36,6 +37,7 @@ import ifcopenshell.util.placement
 import ifcopenshell.util.representation
 import ifcopenshell.util.shape
 import blenderbim.tool as tool
+import blenderbim.core.spatial
 import ifcopenshell.ifcopenshell_wrapper as ifcopenshell_wrapper
 from itertools import chain, accumulate
 from blenderbim.bim.ifc import IfcStore, IFC_CONNECTED_TYPE
@@ -300,25 +302,26 @@ class IfcImporter:
             self.setup_viewport_camera()
         self.setup_arrays()
         self.profile_code("Setup arrays")
+        blenderbim.core.spatial.import_spatial_decomposition(tool.Spatial)
         self.update_progress(100)
         bpy.context.window_manager.progress_end()
 
-    def is_element_far_away(self, element):
+    def is_element_far_away(self, element: ifcopenshell.entity_instance) -> bool:
         try:
             placement = ifcopenshell.util.placement.get_local_placement(element.ObjectPlacement)
             point = placement[:, 3][0:3]
             return self.is_point_far_away(point, is_meters=False)
         except:
-            pass
+            return False
 
-    def is_point_far_away(self, point, is_meters=True):
+    def is_point_far_away(
+        self, point: Union[ifcopenshell.entity_instance, npt.NDArray[np.float64]], is_meters: bool = True
+    ) -> bool:
         # Locations greater than 1km are not considered "small sites" according to the georeferencing guide
         # Users can configure this if they have to handle larger sites but beware of surveying precision
         limit = self.ifc_import_settings.distance_limit
         limit = limit if is_meters else (limit / self.unit_scale)
-        coords = point
-        if hasattr(point, "Coordinates"):
-            coords = point.Coordinates
+        coords = getattr(point, "Coordinates", point)
         return abs(coords[0]) > limit or abs(coords[1]) > limit or abs(coords[2]) > limit
 
     def process_context_filter(self):
@@ -608,7 +611,9 @@ class IfcImporter:
 
         threshold = 10000  # Just from experience.
 
-        faces = [len(e.CfsFaces) for e in self.file.by_type("IfcClosedShell")]
+        # The check for CfsFaces/Faces/CoordIndex accommodates invalid data from Cadwork
+        # 0 IfcClosedShell.CfsFaces
+        faces = [len(faces) for e in self.file.by_type("IfcClosedShell") if (faces := e[0])]
         if faces and max(faces) > threshold:
             self.ifc_import_settings.should_use_native_meshes = True
             return
@@ -616,12 +621,14 @@ class IfcImporter:
         if self.file.schema == "IFC2X3":
             return
 
-        faces = [len(e.Faces) for e in self.file.by_type("IfcPolygonalFaceSet")]
+        # 2 IfcPolygonalFaceSet.Faces
+        faces = [len(faces) for e in self.file.by_type("IfcPolygonalFaceSet") if (faces := e[2])]
         if faces and max(faces) > threshold:
             self.ifc_import_settings.should_use_native_meshes = True
             return
 
-        faces = [len(e.CoordIndex) for e in self.file.by_type("IfcTriangulatedFaceSet")]
+        # 3 IfcTriangulatedFaceSet.CoordIndex
+        faces = [len(index) for e in self.file.by_type("IfcTriangulatedFaceSet") if (index := e[3])]
         if faces and max(faces) > threshold:
             self.ifc_import_settings.should_use_native_meshes = True
 
@@ -679,10 +686,10 @@ class IfcImporter:
         props.blender_orthogonal_height = str(offset_point[2])
         props.has_blender_offset = True
 
-    def get_offset_point(self):
+    def get_offset_point(self) -> Union[npt.NDArray[np.float64], None]:
         elements_checked = 0
         # If more than these elements aren't far away, the file probably isn't absolutely positioned
-        element_checking_threshold = 10
+        element_checking_threshold = 3
         for element in self.file.by_type("IfcElement"):
             if not element.Representation:
                 continue
@@ -714,7 +721,7 @@ class IfcImporter:
             if self.is_point_far_away(point, is_meters=False):
                 return point
 
-    def does_element_likely_have_geometry_far_away(self, element):
+    def does_element_likely_have_geometry_far_away(self, element: ifcopenshell.entity_instance) -> bool:
         for representation in element.Representation.Representations:
             items = []
             for item in representation.Items:
@@ -731,26 +738,42 @@ class IfcImporter:
                     if subelement.is_a("IfcCartesianPoint"):
                         if len(subelement.Coordinates) == 3 and self.is_point_far_away(subelement, is_meters=False):
                             return True
+        return False
 
     def apply_blender_offset_to_matrix_world(self, obj: bpy.types.Object, matrix: np.ndarray) -> mathutils.Matrix:
         props = bpy.context.scene.BIMGeoreferenceProperties
         if props.has_blender_offset:
-            if obj.data and obj.data.get("has_cartesian_point_offset", None):
+            if not obj.data and tool.Cad.is_x(matrix[0][3], 0) and tool.Cad.is_x(matrix[1][3], 0) and tool.Cad.is_x(matrix[2][3], 0):
+                # We assume any non-geometric matrix at 0,0,0 is not
+                # positionally significant and is left alone. This handles
+                # scenarios where often spatial elements are left at 0,0,0 and
+                # everything else is at map coordinates.
+                obj.BIMObjectProperties.blender_offset_type = "NOT_APPLICABLE"
+                return mathutils.Matrix(matrix.tolist())
+            elif obj.data and obj.data.get("has_cartesian_point_offset", None):
                 obj.BIMObjectProperties.blender_offset_type = "CARTESIAN_POINT"
-            elif self.is_point_far_away((matrix[0, 3], matrix[1, 3], matrix[2, 3])):
+                if cartesian_point_offset := obj.data.get("cartesian_point_offset", None):
+                    obj.BIMObjectProperties.cartesian_point_offset = cartesian_point_offset
+                    offset_x, offset_y, offset_z = map(float, cartesian_point_offset.split(","))
+                    matrix[0][3] += offset_x
+                    matrix[1][3] += offset_y
+                    matrix[2][3] += offset_z
+            else:
                 obj.BIMObjectProperties.blender_offset_type = "OBJECT_PLACEMENT"
-                matrix = ifcopenshell.util.geolocation.global2local(
-                    matrix,
-                    float(props.blender_eastings) * self.unit_scale,
-                    float(props.blender_northings) * self.unit_scale,
-                    float(props.blender_orthogonal_height) * self.unit_scale,
-                    float(props.blender_x_axis_abscissa),
-                    float(props.blender_x_axis_ordinate),
-                )
+            matrix = ifcopenshell.util.geolocation.global2local(
+                matrix,
+                float(props.blender_eastings) * self.unit_scale,
+                float(props.blender_northings) * self.unit_scale,
+                float(props.blender_orthogonal_height) * self.unit_scale,
+                float(props.blender_x_axis_abscissa),
+                float(props.blender_x_axis_ordinate),
+            )
 
         return mathutils.Matrix(matrix.tolist())
 
-    def find_decomposed_ifc_class(self, element, ifc_class):
+    def find_decomposed_ifc_class(
+        self, element: ifcopenshell.entity_instance, ifc_class: str
+    ) -> Union[ifcopenshell.entity_instance, None]:
         if element.is_a(ifc_class):
             return element
         rel_aggregates = element.IsDecomposedBy
@@ -1191,7 +1214,6 @@ class IfcImporter:
                 styles.extend(style.Styles)
 
     def create_native_faceted_brep(self, element, mesh_name, native_data):
-        # TODO: georeferencing?
         # co [x y z x y z x y z ...]
         # vertex_index [i i i i i ...]
         # loop_start [0 3 6 9 ...] (for tris)
@@ -1216,45 +1238,27 @@ class IfcImporter:
         mesh = bpy.data.meshes.new("Native")
 
         props = bpy.context.scene.BIMGeoreferenceProperties
-        mat = ifcopenshell.util.placement.get_local_placement(element.ObjectPlacement)
         if props.has_blender_offset and self.is_point_far_away(self.mesh_data["co"][0:3], is_meters=False):
-            offset_point = np.linalg.inv(mat) @ np.array(
-                (
-                    float(props.blender_eastings),
-                    float(props.blender_northings),
-                    float(props.blender_orthogonal_height),
-                    0.0,
-                )
-            )
-            verts = [None] * len(self.mesh_data["co"])
-            for i in range(0, len(self.mesh_data["co"]), 3):
-                verts[i], verts[i + 1], verts[i + 2], _ = native_data["matrix"] @ mathutils.Vector(
-                    (
-                        *ifcopenshell.util.geolocation.enh2xyz(
-                            self.mesh_data["co"][i] * self.unit_scale,
-                            self.mesh_data["co"][i + 1] * self.unit_scale,
-                            self.mesh_data["co"][i + 2] * self.unit_scale,
-                            offset_point[0] * self.unit_scale,
-                            offset_point[1] * self.unit_scale,
-                            offset_point[2] * self.unit_scale,
-                            float(props.blender_x_axis_abscissa),
-                            float(props.blender_x_axis_ordinate),
-                        ),
-                        1,
-                    )
-                )
+            verts_array = np.array(self.mesh_data["co"])
+            verts_array *= self.unit_scale
+            offset_x, offset_y, offset_z = verts_array[0:3]
+            offset = np.array([-offset_x, -offset_y, -offset_z])
+            offset_verts = verts_array + np.tile(offset, len(verts_array) // 3)
+
+            if np.allclose(native_data["matrix"], np.identity(4), atol=1e-8):
+                verts = offset_verts.tolist()
+            else:
+                verts = self.apply_matrix_to_flat_coords(offset_verts, native_data["matrix"])
+
             mesh["has_cartesian_point_offset"] = True
+            mesh["cartesian_point_offset"] = f"{offset_x},{offset_y},{offset_z}"
         else:
-            verts = [None] * len(self.mesh_data["co"])
-            for i in range(0, len(self.mesh_data["co"]), 3):
-                verts[i], verts[i + 1], verts[i + 2], _ = native_data["matrix"] @ mathutils.Vector(
-                    (
-                        self.mesh_data["co"][i] * self.unit_scale,
-                        self.mesh_data["co"][i + 1] * self.unit_scale,
-                        self.mesh_data["co"][i + 2] * self.unit_scale,
-                        1,
-                    )
-                )
+            verts_array = np.array(self.mesh_data["co"])
+            verts_array *= self.unit_scale
+            if np.allclose(native_data["matrix"], np.identity(4), atol=1e-8):
+                verts = verts_array.tolist()
+            else:
+                verts = self.apply_matrix_to_flat_coords(verts_array, native_data["matrix"])
             mesh["has_cartesian_point_offset"] = False
 
         mesh.vertices.add(self.mesh_data["total_verts"])
@@ -1270,6 +1274,13 @@ class IfcImporter:
         mesh["ios_materials"] = self.mesh_data["materials"]
         mesh["ios_material_ids"] = self.mesh_data["material_ids"]
         return mesh
+
+    def apply_matrix_to_flat_coords(self, coords, matrix):
+        coords_array = np.array(coords).reshape(-1, 3)
+        ones = np.ones((coords_array.shape[0], 1))
+        homogeneous_coords = np.hstack([coords_array, ones])
+        transformed_coords = homogeneous_coords @ matrix.T
+        return transformed_coords[:, :3].flatten().tolist()
 
     def convert_representation_item_face_based_surface_model(self, item):
         mesh = item.get_info_2(recursive=True)
@@ -1694,19 +1705,20 @@ class IfcImporter:
             if aggregate["element"].is_a("IfcElementType"):
                 self.type_collection.children.link(aggregate["collection"])
                 continue
+            self.project["blender"].children.link(aggregate["collection"])
 
-    def create_materials(self):
+    def create_materials(self) -> None:
         for material in self.file.by_type("IfcMaterial"):
             self.create_material(material)
 
-    def create_material(self, material):
+    def create_material(self, material: ifcopenshell.entity_instance) -> bpy.types.Material:
         blender_material = bpy.data.materials.new(material.Name)
         self.link_element(material, blender_material)
         self.material_creator.materials[material.id()] = blender_material
         blender_material.use_fake_user = True
         return blender_material
 
-    def create_styles(self):
+    def create_styles(self) -> None:
         parsed_styles = set()
 
         for material_definition_representation in self.file.by_type("IfcMaterialDefinitionRepresentation"):
@@ -1913,34 +1925,14 @@ class IfcImporter:
                 and geometry.verts
                 and self.is_point_far_away((geometry.verts[0], geometry.verts[1], geometry.verts[2]))
             ):
-                offset_point = np.array(
-                    (
-                        float(props.blender_eastings),
-                        float(props.blender_northings),
-                        float(props.blender_orthogonal_height),
-                        0.0,
-                    )
-                )
-                if geometry != shape:
-                    m = shape.transformation.matrix.data
-                    mat = np.array(
-                        ([m[0], m[3], m[6], m[9]], [m[1], m[4], m[7], m[10]], [m[2], m[5], m[8], m[11]], [0, 0, 0, 1])
-                    )
-                    offset_point = np.linalg.inv(mat) @ offset_point
-                verts = [None] * len(geometry.verts)
-                for i in range(0, len(geometry.verts), 3):
-                    # Note: this enh2xyz call is crazy slow.
-                    verts[i], verts[i + 1], verts[i + 2] = ifcopenshell.util.geolocation.enh2xyz(
-                        geometry.verts[i],
-                        geometry.verts[i + 1],
-                        geometry.verts[i + 2],
-                        offset_point[0] * self.unit_scale,
-                        offset_point[1] * self.unit_scale,
-                        offset_point[2] * self.unit_scale,
-                        float(props.blender_x_axis_abscissa),
-                        float(props.blender_x_axis_ordinate),
-                    )
+                # Shift geometry close to the origin based off that first vert it found
+                verts_array = np.array(geometry.verts)
+                offset = np.array([-geometry.verts[0], -geometry.verts[1], -geometry.verts[2]])
+                offset_verts = verts_array + np.tile(offset, len(verts_array) // 3)
+                verts = offset_verts.tolist()
+
                 mesh["has_cartesian_point_offset"] = True
+                mesh["cartesian_point_offset"] = f"{geometry.verts[0]},{geometry.verts[1]},{geometry.verts[2]}"
             else:
                 verts = geometry.verts
                 mesh["has_cartesian_point_offset"] = False

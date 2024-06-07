@@ -67,6 +67,20 @@ def batching_argument_deprecation(
     return (replace_usecase or usecase_path, settings)
 
 
+def renamed_arguments_deprecation(
+    usecase_path: str, settings: dict, arguments_remapped: dict[str, str]
+) -> tuple[str, dict]:
+    for prev_argument, new_argument in arguments_remapped.items():
+        if prev_argument in settings:
+            print(
+                f"WARNING. `{prev_argument}` argument is deprecated for API method "
+                f'"{usecase_path}" and should be replaced with `{new_argument}`.'
+            )
+            settings = settings | {new_argument: settings[prev_argument]}
+            settings.pop(prev_argument)
+    return (usecase_path, settings)
+
+
 ARGUMENTS_DEPRECATION = {
     "spatial.assign_container": partial(
         batching_argument_deprecation, prev_argument="product", new_argument="products"
@@ -143,6 +157,10 @@ ARGUMENTS_DEPRECATION = {
     "project.unassign_declaration": partial(
         batching_argument_deprecation, prev_argument="definition", new_argument="definitions"
     ),
+    "group.add_group": partial(
+        renamed_arguments_deprecation, arguments_remapped={"Name": "name", "Description": "description"}
+    ),
+    "layer.add_layer": partial(renamed_arguments_deprecation, arguments_remapped={"Name": "name"}),
 }
 
 
@@ -325,7 +343,17 @@ def wrap_usecase(usecase_path, usecase):
         try:
             result = usecase(*args, **settings)
         except TypeError as e:
-            msg = f"Incorrect function arguments provided for {usecase_path}\n{str(e)}. You specified args {args} and settings {settings}\n\nCorrect signature is {inspect.signature(usecase)}\nSee help(ifcopenshell.api.{usecase_path}) for documentation."
+            if not e.args[0].startswith(f"{usecase.__name__}()"):
+                # signature errors typically start with function name
+                # e.g. "TypeError: edit_library() got an unexpected keyword argument 'test'"
+                # otherwise it's an error inside api call and we shouldn't get in the way
+                raise e
+            msg = (
+                f"Incorrect function arguments provided for {usecase_path}\n{str(e)}. "
+                f"You specified args {args} and settings {settings}\n\n"
+                f"Correct signature is {inspect.signature(usecase)}\n"
+                f"See help(ifcopenshell.api.{usecase_path}) for documentation."
+            )
             raise TypeError(msg) from e
 
         if should_run_listeners:

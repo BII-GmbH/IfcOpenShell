@@ -18,7 +18,15 @@
 
 import os
 import sys
-import bpy
+
+# Ensure we don't try to import bpy or blenderbim.bim
+# to support running core tests.
+# We assume if bpy was never loaded in current python session
+# then we're not in Blender. It's still possible to use
+# bpy in core and core tests for annotations using TYPE_CHECKING.
+IN_BLENDER = sys.modules.get("bpy", None)
+if IN_BLENDER:
+    import bpy
 import platform
 import traceback
 import subprocess
@@ -78,7 +86,7 @@ def format_debug_info(info: dict):
     return text.strip()
 
 
-if sys.modules.get("bpy", None):
+if IN_BLENDER:
     # Process *.pth in /libs/site/packages to setup globally importable modules
     # This is 3 levels deep as required by the static RPATH of ../../ from dependencies taken from Anaconda
     # site.addsitedir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "libs", "site", "packages"))
@@ -120,11 +128,16 @@ if sys.modules.get("bpy", None):
             bl_context = "scene"
 
             def draw(self, context):
-                layout = self.layout
-                layout.label(text="BlenderBIM could not load.", icon="ERROR")
-                layout.label(text="View the console for full logs.", icon="CONSOLE")
-                box = layout.box()
                 info = get_debug_info()
+
+                layout = self.layout
+                layout.alert = True
+                layout.label(text="BlenderBIM could not load.", icon="ERROR")
+                if info["os"] == "Windows":
+                    layout.operator("wm.console_toggle", text="View the console for full logs.", icon="CONSOLE")
+                else:
+                    layout.label(text="View the console for full logs.", icon="CONSOLE")
+                box = layout.box()
                 py = ".".join(info["python_version"].split(".")[0:2])
                 b3d = ".".join(info["blender_version"].split(".")[0:2])
                 box.label(text=f"Blender {b3d} {info['os']} {info['machine']}", icon="BLENDER")
@@ -132,6 +145,21 @@ if sys.modules.get("bpy", None):
                 layout.operator("bim.copy_debug_information", text="Copy Error Message To Clipboard")
                 op = layout.operator("bim.open_uri", text="How Can I Fix This?")
                 op.uri = "https://docs.blenderbim.org/users/troubleshooting.html#installation-issues"
+
+                layout.label(text="Try Reinstalling:", icon="IMPORT")
+                op = layout.operator("bim.open_uri", text="Re-download Add-on")
+                bbim_date = info["blenderbim_version"].split(".")[-1]
+                py_tag = py.replace(".", "")
+                if "Linux" in info["os"]:
+                    os = "linux"
+                elif "Darwin" in info["os"]:
+                    if "arm64" in info["machine"]:
+                        os = "macosm1"
+                    else:
+                        os = "macos"
+                else:
+                    os = "win"
+                op.uri = f"https://github.com/IfcOpenShell/IfcOpenShell/releases/download/blenderbim-{bbim_date}/blenderbim-{bbim_date}-py{py_tag}-{os}.zip"
 
         class OpenUri(bpy.types.Operator):
             bl_idname = "bim.open_uri"
@@ -149,14 +177,7 @@ if sys.modules.get("bpy", None):
 
             def execute(self, context):
                 info = format_debug_info(get_debug_info())
-
-                if platform.system() == "Windows":
-                    command = "echo | set /p nul=" + info
-                elif platform.system() == "Darwin":  # for MacOS
-                    command = 'printf "' + info.replace("\n", "\\n").replace('"', "") + '" | pbcopy'
-                else:  # Linux
-                    command = 'printf "' + info.replace("\n", "\\n").replace('"', "") + '" | xclip -selection clipboard'
-                subprocess.run(command, shell=True, check=True)
+                context.window_manager.clipboard = info
                 return {"FINISHED"}
 
         class HiddenPanel:

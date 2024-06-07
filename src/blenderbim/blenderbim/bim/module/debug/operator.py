@@ -40,7 +40,7 @@ from blenderbim.bim.ifc import IfcStore
 class CopyDebugInformation(bpy.types.Operator):
     bl_idname = "bim.copy_debug_information"
     bl_label = "Copy Debug Information"
-    bl_description = "Copies debugging information to your clipboard for use in bugreports"
+    bl_description = "Copies debugging information to your clipboard for use in bug reports"
 
     def execute(self, context):
         info = get_debug_info()
@@ -56,17 +56,13 @@ class CopyDebugInformation(bpy.types.Operator):
 
         text = format_debug_info(info)
 
+        text_with_backticks = f"```\n{text}\n```"
+
         print("-" * 80)
-        print(text)
+        print(text_with_backticks)
         print("-" * 80)
 
-        if platform.system() == "Windows":
-            command = "echo | set /p nul=" + text
-        elif platform.system() == "Darwin":  # for MacOS
-            command = 'printf "' + text.replace("\n", "\\n").replace('"', "") + '" | pbcopy'
-        else:  # Linux
-            command = 'printf "' + text.replace("\n", "\\n").replace('"', "") + '" | xclip -selection clipboard'
-        subprocess.run(command, shell=True, check=True)
+        context.window_manager.clipboard = text_with_backticks
         return {"FINISHED"}
 
 
@@ -97,7 +93,8 @@ class ConvertToBlender(bpy.types.Operator):
                 if obj.data:
                     obj.data.BIMMeshProperties.ifc_definition_id = 0
         for material in bpy.data.materials:
-            material.BIMMaterialProperties.ifc_style_id = False
+            material.BIMObjectProperties.ifc_definition_id = 0
+            material.BIMMaterialProperties.ifc_style_id = 0
         context.scene.BIMProperties.ifc_file = ""
         context.scene.BIMDebugProperties.attributes.clear()
         IfcStore.purge()
