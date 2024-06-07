@@ -55,3 +55,22 @@ add_custom_target(ifcopenshell_net ALL
 )
 
 add_dependencies(ifcopenshell_net ifcopenshell_net_wrapper)
+
+# install
+FILE(GLOB_RECURSE libraryfiles 
+    "${CMAKE_BINARY_DIR}/IfcOpenShell.Net/bin/*"
+)
+FOREACH(file ${libraryfiles})
+    FILE(RELATIVE_PATH relative "${CMAKE_BINARY_DIR}/IfcOpenShell.Net/bin/" "${file}")
+    GET_FILENAME_COMPONENT(dir "${relative}" DIRECTORY)
+    INSTALL(FILES "${file}"
+            DESTINATION "IfcOpenShell.Net")
+ENDFOREACH()
+# INSTALL(TARGETS ifcopenshell_net_wrapper
+#         DESTINATION "IfcOpenShell.Net")
+# if (MSVC)
+#     install(FILES $<TARGET_PDB_FILE:ifcopenshell_net_wrapper> DESTINATION bin OPTIONAL)
+# endif()
+
+
+
