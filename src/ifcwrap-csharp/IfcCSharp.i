@@ -217,7 +217,23 @@
 // ) TYPE* "$csclassname.getCPtr(temp$csinput)"
 // %enddef
 
-%apply std::string { std::string* }
+%define OUTPUT_TYPEMAP(TYPE, CTYPE, CSTYPE)
+%typemap(ctype, out="void *") TYPE *OUTPUT, TYPE &OUTPUT "CTYPE *"
+%typemap(imtype, out="global::System.IntPtr") TYPE *OUTPUT, TYPE &OUTPUT "out CSTYPE"
+%typemap(cstype, out="$csclassname") TYPE *OUTPUT, TYPE &OUTPUT "out CSTYPE"
+%typemap(csin,
+	pre="$csclassname temp$csinput = null;",
+	post="$csinput = temp$csinput;",
+	cshin="out $csinput") TYPE *OUTPUT, TYPE &OUTPUT "$csclassname.getCPtr(temp$csinput)"
+
+// %typemap(in) TYPE *OUTPUT, TYPE &OUTPUT
+// %{ $1 = ($1_ltype)$input; %}
+
+%enddef
+
+%apply const std::string& { std::string* }
+
+OUTPUT_TYPEMAP(std::string, std::string, string)
 
 //CUSTOM_OUTPUT_TYPEMAP(std::string, string)
 
@@ -235,7 +251,8 @@
 
 %extend std::pair<IfcUtil::ArgumentType, Argument*> {
 
-	bool try_get_as_string(std::string* OUTPUT) {
+	bool try_get_as_string(std::string *OUTPUT) {
+		OUTPUT = nullptr;
 		const Argument& arg = *($self->second);
 		const IfcUtil::ArgumentType type = $self->first;
 		if(type == IfcUtil::Argument_ENUMERATION || type == IfcUtil::Argument_STRING)
