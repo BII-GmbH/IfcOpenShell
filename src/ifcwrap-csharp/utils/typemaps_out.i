@@ -16,9 +16,11 @@
 	
 // }
 
-// %typemap(out) IfcUtil::ArgumentType {
-// 	$result = SWIG_Python_str_FromChar(IfcUtil::ArgumentTypeToString($1));
-// }
+// %typemap(out) IfcUtil::ArgumentType %{
+// 	$result = IfcUtil::ArgumentTypeToString($1);
+// %}
+
+// %typemap(cstype) IfcUtil::ArgumentType { string };
 
 // %typemap(out) IfcParse::declaration* {
 // 	$result = SWIG_NewPointerObj(SWIG_as_voidptr($1), declaration_type_to_swig($1), 0);
@@ -36,10 +38,36 @@
 // 	}
 // }
 
+
+// %apply const char* { IfcParse::simple_type::data_type }
+
 // %typemap(out) IfcParse::simple_type::data_type {
 // 	static const char* const data_type_strings[] = {"binary", "boolean", "integer", "logical", "number", "real", "string"};
-// 	$result = SWIG_Python_str_FromChar(data_type_strings[(int)$1]);
+// 	$result = data_type_strings[(int)$1];
 // }
+
+%include "typemaps.i"
+
+// %typemap(cstype) IfcParse::simple_type::data_type { string }
+
+//%newobject OUTPUT;
+
+%apply int* {std::string* };
+
+%extend std::pair<IfcUtil::ArgumentType, Argument*> {
+
+	bool try_get_as_string(std::string* OUTPUT) {
+		const Argument& arg = *($self->second);
+		const IfcUtil::ArgumentType type = $self->first;
+		if(type == IfcUtil::Argument_ENUMERATION || type == IfcUtil::Argument_STRING)
+		{			
+			std::string* t = new std::string(arg);
+			OUTPUT = t;
+			return true;
+		}
+		return false;
+	}
+}
 
 // %typemap(out) std::pair<IfcUtil::ArgumentType, Argument*> {
 // 	// The SWIG %exception directive does not take care

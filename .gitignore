@@ -101,3 +101,5 @@ src/ifcopenshell-python/ifcopenshell/ifcopenshell_wrapper.py
 
 # Brickschema
 src/blenderbim/blenderbim/bim/schema/Brick.ttl
+src/ifcwrap-csharp/IfcOpenShell.Net/IfcOpenShell.Net/generated/
+src/ifcwrap-csharp/IfcOpenShell.Net/IfcOpenShell.Net/obj/

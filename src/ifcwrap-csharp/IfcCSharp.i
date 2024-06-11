@@ -32,6 +32,7 @@
 %include "std_array.i"
 %include "std_vector.i"
 %include "std_string.i"
+%include "std_pair.i"
 %include "exception.i"
 %include <boost_shared_ptr.i>
 
@@ -42,6 +43,8 @@
 %rename(Equals) operator==;
 %rename(LessThan) operator<;
 %rename(Compare) operator();
+
+%rename("Attribute") IfcParse::attribute;
 // TODO: operator()
 
 %exception {
@@ -62,6 +65,11 @@
 //%import "../ifcgeom_schema_agnostic/Serializer.h"
 
 %typemap(csbase) IfcGeom::IteratorSettings::Settings "long"
+
+// TODO: not sure if i want/need this to be partial, for now an extension method is enough
+//%typemap(csclassmodifiers) IfcUtil::IfcBaseClass "public partial class"
+
+
 
 // Include headers for the typemaps to function. This set of includes,
 // can probably be reduced, but for now it's identical to the includes
@@ -114,6 +122,8 @@
 
 
 	#include "../ifcparse/aggregate_of_instance.h"
+	
+	#include "../ifcparse/Argument.h"
 	#include "../ifcparse/IfcBaseClass.h"
 	#include "../ifcparse/IfcFile.h"
 	#include "../ifcparse/IfcSchema.h"
@@ -128,6 +138,7 @@
 %feature("autodoc", "1");
 
 %include "impl/aggregate_of_instance.i"
+
 
 //%include "utils/type_conversion.i"
 //%include "utils/typemaps_in.i"
@@ -181,10 +192,10 @@
 		#include "../ifcparse/Ifc4x3_add2.h"
 	#endif
 
+	#include "../ifcparse/Argument.h"
 	#include "../ifcparse/aggregate_of_instance.h"
 	#include "../ifcparse/IfcBaseClass.h"
 	#include "../ifcparse/IfcFile.h"
-	#include "../ifcparse/aggregate_of_instance.h"
 	#include "../ifcparse/IfcSchema.h"
 	#include "../ifcparse/utils.h"
 
@@ -195,7 +206,49 @@
 
 %include "IfcGeomWrapper.i"
 %include "IfcParseWrapper.i"
-	
+
+%include "typemaps.i"
+// // TODO :sob:
+// %define CUSTOM_OUTPUT_TYPEMAP(TYPE, CSTYPE)
+// %typemap(cstype, out="CSTYPE") TYPE* "out CSTYPE"
+// %typemap(csin,
+// 	pre="    CSTYPE temp$csinput = new CSTYPE();",
+//   	post="    $csinput = temp$csinput;"
+// ) TYPE* "$csclassname.getCPtr(temp$csinput)"
+// %enddef
+
+%apply std::string { std::string* }
+
+//CUSTOM_OUTPUT_TYPEMAP(std::string, string)
+
+// %typemap(cstype) IfcParse::simple_type::data_type { string }
+
+//%newobject std::string*
+// %typemap(ctype, out="void *") std::string* OUTPUT "std::string *"
+// %typemap(imtype, out="IntPtr") std::string* OUTPUT "out string"
+// %typemap(cstype, out="string") std::string* OUTPUT "out string"
+// %typemap(csin) std::string* OUTPUT "out $csinput"
+
+//%apply double* OUTPUT { std::string* OUTPUT }
+
+//%apply char* { std::string* OUTPUT };
+
+%extend std::pair<IfcUtil::ArgumentType, Argument*> {
+
+	bool try_get_as_string(std::string* OUTPUT) {
+		const Argument& arg = *($self->second);
+		const IfcUtil::ArgumentType type = $self->first;
+		if(type == IfcUtil::Argument_ENUMERATION || type == IfcUtil::Argument_STRING)
+		{			
+			std::string* t = new std::string(arg);
+			OUTPUT = t;
+			return true;
+		}
+		return false;
+	}
+}
+
+
 namespace std {
   %template(Vec3) std::array<double, 3>;
   %template(Vec4) std::array<double, 4>;
@@ -208,6 +261,7 @@ namespace std {
 
   %template(MaterialVector) std::vector<IfcGeom::Material>;
 
+  %template(ArgumentByType) std::pair<IfcUtil::ArgumentType, Argument*>;
 
   %template(EntityPtrList) std::vector<IfcUtil::IfcBaseClass*>;
 }
