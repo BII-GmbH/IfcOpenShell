@@ -46,29 +46,6 @@
 // 	$result = data_type_strings[(int)$1];
 // }
 
-%include "typemaps.i"
-
-// %typemap(cstype) IfcParse::simple_type::data_type { string }
-
-//%newobject OUTPUT;
-
-%apply int* {std::string* };
-
-%extend std::pair<IfcUtil::ArgumentType, Argument*> {
-
-	bool try_get_as_string(std::string* OUTPUT) {
-		const Argument& arg = *($self->second);
-		const IfcUtil::ArgumentType type = $self->first;
-		if(type == IfcUtil::Argument_ENUMERATION || type == IfcUtil::Argument_STRING)
-		{			
-			std::string* t = new std::string(arg);
-			OUTPUT = t;
-			return true;
-		}
-		return false;
-	}
-}
-
 // %typemap(out) std::pair<IfcUtil::ArgumentType, Argument*> {
 // 	// The SWIG %exception directive does not take care
 // 	// of our typemap. So the attribute conversion block

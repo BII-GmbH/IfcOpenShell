@@ -66,8 +66,7 @@ FILE(GLOB_RECURSE libraryfiles
 FOREACH(file ${libraryfiles})
     FILE(RELATIVE_PATH relative "${CMAKE_BINARY_DIR}/IfcOpenShell.Net/bin/" "${file}")
     GET_FILENAME_COMPONENT(dir "${relative}" DIRECTORY)
-    INSTALL(FILES "${file}"
-            DESTINATION "IfcOpenShell.Net")
+    INSTALL(FILES "${file}" DESTINATION "IfcOpenShell.Net")
 ENDFOREACH()
 # INSTALL(TARGETS ifcopenshell_net_wrapper
 #         DESTINATION "IfcOpenShell.Net")

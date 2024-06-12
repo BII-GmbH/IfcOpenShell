@@ -208,65 +208,113 @@
 %include "IfcParseWrapper.i"
 
 %include "typemaps.i"
-// // TODO :sob:
-// %define CUSTOM_OUTPUT_TYPEMAP(TYPE, CSTYPE)
-// %typemap(cstype, out="CSTYPE") TYPE* "out CSTYPE"
-// %typemap(csin,
-// 	pre="    CSTYPE temp$csinput = new CSTYPE();",
-//   	post="    $csinput = temp$csinput;"
-// ) TYPE* "$csclassname.getCPtr(temp$csinput)"
-// %enddef
 
-%define OUTPUT_TYPEMAP(TYPE, CTYPE, CSTYPE)
-%typemap(ctype, out="void *") TYPE *OUTPUT, TYPE &OUTPUT "CTYPE *"
-%typemap(imtype, out="global::System.IntPtr") TYPE *OUTPUT, TYPE &OUTPUT "out CSTYPE"
-%typemap(cstype, out="$csclassname") TYPE *OUTPUT, TYPE &OUTPUT "out CSTYPE"
-%typemap(csin,
-	pre="$csclassname temp$csinput = null;",
-	post="$csinput = temp$csinput;",
-	cshin="out $csinput") TYPE *OUTPUT, TYPE &OUTPUT "$csclassname.getCPtr(temp$csinput)"
-
-// %typemap(in) TYPE *OUTPUT, TYPE &OUTPUT
-// %{ $1 = ($1_ltype)$input; %}
-
-%enddef
 
 %apply const std::string& { std::string* }
 
-OUTPUT_TYPEMAP(std::string, std::string, string)
+%inline %{
+	
+	template<typename T>
+	struct TypedArgument {
 
-//CUSTOM_OUTPUT_TYPEMAP(std::string, string)
+		virtual ~TypedArgument() = default;
 
-// %typemap(cstype) IfcParse::simple_type::data_type { string }
+		virtual bool HasValue() const = 0;
+		virtual T GetValue() const = 0;
+	};
 
-//%newobject std::string*
-// %typemap(ctype, out="void *") std::string* OUTPUT "std::string *"
-// %typemap(imtype, out="IntPtr") std::string* OUTPUT "out string"
-// %typemap(cstype, out="string") std::string* OUTPUT "out string"
-// %typemap(csin) std::string* OUTPUT "out $csinput"
+	template<typename T>
+	struct WithValue : public TypedArgument<T> {
+		explicit WithValue(const T& arg) : value(arg) {}
+		explicit WithValue(const T&& arg) : value(std::move(arg)) {}
 
-//%apply double* OUTPUT { std::string* OUTPUT }
-
-//%apply char* { std::string* OUTPUT };
-
-%extend std::pair<IfcUtil::ArgumentType, Argument*> {
-
-	bool try_get_as_string(std::string *OUTPUT) {
-		OUTPUT = nullptr;
-		const Argument& arg = *($self->second);
-		const IfcUtil::ArgumentType type = $self->first;
-		if(type == IfcUtil::Argument_ENUMERATION || type == IfcUtil::Argument_STRING)
-		{			
-			std::string* t = new std::string(arg);
-			OUTPUT = t;
+		inline bool HasValue() const override {
 			return true;
 		}
-		return false;
-	}
-}
 
+		inline T GetValue() const override { 
+			return value;
+		}
+
+		private:
+		T value;
+	};
+
+	template <typename T>
+	struct NoValue : public TypedArgument<T> {
+		inline bool HasValue() const override { return false; }
+		inline T GetValue() const override { 
+			throw std::runtime_error("Has no value");
+		}
+	};
+
+%}
+
+
+%newobject TryGetAsString;
+
+%define TRY_GET_AS(TYPE, NAME, TYPECHECK)
+	%extend std::pair<IfcUtil::ArgumentType, Argument*> {
+		TypedArgument<TYPE>* TryGetAs##NAME() {
+			const Argument& arg = *($self->second);
+			const IfcUtil::ArgumentType type = $self->first;
+			if(TYPECHECK)
+			{			
+				TYPE tmp = arg;
+				return new WithValue<TYPE>(tmp);
+			}
+			return new NoValue<TYPE>();
+		}
+	}
+
+	%template(NAME##Argument) TypedArgument<TYPE>;
+%enddef
+
+//%extend std::pair<IfcUtil::ArgumentType, Argument*> {
+
+
+
+	// TODO: LOGICAL (whatever that is)
+	// TODO: BINARY
+TRY_GET_AS(std::string, String, type == IfcUtil::Argument_ENUMERATION || type == IfcUtil::Argument_STRING)
+TRY_GET_AS(int, Int, type == IfcUtil::Argument_INT)
+TRY_GET_AS(bool, Bool, type == IfcUtil::Argument_BOOL)
+//TRY_GET_AS(std::uint8_t, Binary, type == IfcUtil::Argument_BINARY)
+TRY_GET_AS(double, Double, type == IfcUtil::Argument_DOUBLE)
+TRY_GET_AS(IfcUtil::IfcBaseClass*, Entity, type == IfcUtil::Argument_AGGREGATE_OF_ENTITY_INSTANCE)
+TRY_GET_AS(std::vector<int>, IntList, type == IfcUtil::Argument_AGGREGATE_OF_INT)
+//TRY_GET_AS(std::vector<std::uint8_t>, BinaryList, type == IfcUtil::Argument_AGGREGATE_OF_BINARY)
+TRY_GET_AS(std::vector<double>, DoubleList, type == IfcUtil::Argument_AGGREGATE_OF_DOUBLE)
+TRY_GET_AS(std::vector<std::string>, StringList, type == IfcUtil::Argument_AGGREGATE_OF_STRING)
+TRY_GET_AS(aggregate_of_instance::ptr, EntityList, type == IfcUtil::Argument_AGGREGATE_OF_ENTITY_INSTANCE)
+
+	// TypedArgument<std::vector<int>>* TryGetAsIntList() {
+	// 	const Argument& arg = *($self->second);
+	// 	const IfcUtil::ArgumentType type = $self->first;
+	// 	if(type == IfcUtil::Argument_AGGREGATE_OF_INT)
+	// 	{			
+	// 		return new WithValue<int>(arg);
+	// 	}
+	// 	return new NoValue<int>();
+	// }
+
+	// TypedArgument<std::vector<double>>* TryGetAsIntList() {
+	// 	const Argument& arg = *($self->second);
+	// 	const IfcUtil::ArgumentType type = $self->first;
+	// 	if(type == IfcUtil::Argument_AGGREGATE_OF_INT)
+	// 	{			
+	// 		return new WithValue<int>(arg);
+	// 	}
+	// 	return new NoValue<int>();
+	// }
+	
+//}
+
+  //%template(StringArgument) TypedArgument<std::string>;
+  //%template(IntArgument) TypedArgument<int>;
 
 namespace std {
+  
   %template(Vec3) std::array<double, 3>;
   %template(Vec4) std::array<double, 4>;
   %template(FloatVector) std::vector<float>;
