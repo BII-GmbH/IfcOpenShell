@@ -20,10 +20,98 @@ namespace IfcOpenShell {
                 value = arg.GetValue();
                 return true;
             }
-            value = null;
+            value = default;
             return false;
         }
-
+    
+        public static bool TryGetValue(this IntArgument arg, out int value)
+        {
+            if (arg.HasValue())
+            {
+                value = arg.GetValue();
+                return true;
+            }
+            value = default;
+            return false;
+        }
+        
+        public static bool TryGetValue(this BoolArgument arg, out bool value)
+        {
+            if (arg.HasValue())
+            {
+                value = arg.GetValue();
+                return true;
+            }
+            value = default;
+            return false;
+        }
+        
+        public static bool TryGetValue(this DoubleArgument arg, out double value)
+        {
+            if (arg.HasValue())
+            {
+                value = arg.GetValue();
+                return true;
+            }
+            value = default;
+            return false;
+        }
+        
+        public static bool TryGetValue(this EntityArgument arg, out EntityInstance value)
+        {
+            if (arg.HasValue())
+            {
+                value = arg.GetValue();
+                return true;
+            }
+            value = default;
+            return false;
+        }
+        
+        public static bool TryGetValue(this IntListArgument arg, out IntVector value)
+        {
+            if (arg.HasValue())
+            {
+                value = arg.GetValue();
+                return true;
+            }
+            value = default;
+            return false;
+        }
+        
+        public static bool TryGetValue(this DoubleListArgument arg, out DoubleVector value)
+        {
+            if (arg.HasValue())
+            {
+                value = arg.GetValue();
+                return true;
+            }
+            value = default;
+            return false;
+        }
+        
+        public static bool TryGetValue(this StringListArgument arg, out StringVector value)
+        {
+            if (arg.HasValue())
+            {
+                value = arg.GetValue();
+                return true;
+            }
+            value = default;
+            return false;
+        }
+        
+        public static bool TryGetValue(this EntityListArgument arg, out aggregate_of_instance value)
+        {
+            if (arg.HasValue())
+            {
+                value = arg.GetValue();
+                return true;
+            }
+            value = default;
+            return false;
+        }
+        
         // internal static EntityInstance wrapValue(IfcBaseInterface value, IfcFile file)
         // {
         //     return value is EntityInstance ei ? new EntityInstance()
@@ -49,6 +137,60 @@ namespace IfcOpenShell {
         // {
         //     return values.Select(entry => walk(condition, g, entry));
         // }
+        
+        public static bool TryGetAttributeAsString(this EntityInstance instance , string attributeName, out string attributeValue)
+        {
+            attributeValue = default;
+            return instance.TryGetAttribute(attributeName).TryGetAsString().TryGetValue(out attributeValue);
+        }
+        
+        public static bool TryGetAttributeAsInt(this EntityInstance instance , string attributeName, out int attributeValue)
+        {
+            attributeValue = default;
+            return instance.TryGetAttribute(attributeName).TryGetAsInt().TryGetValue(out attributeValue);
+        }
+        
+        public static bool TryGetAttributeAsBool(this EntityInstance instance , string attributeName, out bool attributeValue)
+        {
+            attributeValue = default;
+            return instance.TryGetAttribute(attributeName).TryGetAsBool().TryGetValue(out attributeValue);
+        }
+        
+        public static bool TryGetAttributeAsDouble(this EntityInstance instance , string attributeName, out double attributeValue)
+        {
+            attributeValue = default;
+            return instance.TryGetAttribute(attributeName).TryGetAsDouble().TryGetValue(out attributeValue);
+        }
+        
+        public static bool TryGetAttributeAsEntity(this EntityInstance instance , string attributeName, out EntityInstance attributeValue)
+        {
+            attributeValue = default;
+            return instance.TryGetAttribute(attributeName).TryGetAsEntity().TryGetValue(out attributeValue);
+        }
+        
+        public static bool TryGetAttributeAsIntList(this EntityInstance instance , string attributeName, out IntVector attributeValue)
+        {
+            attributeValue = default;
+            return instance.TryGetAttribute(attributeName).TryGetAsIntList().TryGetValue(out attributeValue);
+        }
+        
+        public static bool TryGetAttributeAsDoubleList(this EntityInstance instance , string attributeName, out DoubleVector attributeValue)
+        {
+            attributeValue = default;
+            return instance.TryGetAttribute(attributeName).TryGetAsDoubleList().TryGetValue(out attributeValue);
+        }
+        
+        public static bool TryGetAttributeAsStringList(this EntityInstance instance , string attributeName, out StringVector attributeValue)
+        {
+            attributeValue = default;
+            return instance.TryGetAttribute(attributeName).TryGetAsStringList().TryGetValue(out attributeValue);
+        }
+        
+        public static bool TryGetAttributeAsEntityList(this EntityInstance instance , string attributeName, out aggregate_of_instance attributeValue)
+        {
+            attributeValue = default;
+            return instance.TryGetAttribute(attributeName).TryGetAsEntityList().TryGetValue(out attributeValue);
+        }
         
         public static ArgumentByType TryGetAttribute(this EntityInstance instance, string attributeName) {
             // attribute categories:
@@ -85,28 +227,5 @@ namespace IfcOpenShell {
             // throw new System.NotImplementedException();
             return null;
         }
-        
-        // public static bool TryGetAttribute(this EntityInstance instance, string attributeName, out Attribute att) {
-        //     att = null;
-        //     // attribute categories:
-        //     const int INVALID = 0;
-        //     const int FORWARD = 1;
-        //     const int INVERSE = 2;
-        //     
-        //     // 0 == INVALID, 1 == FORWARD, 2 == INVERSE
-        //     var attributeCategory = instance.get_attribute_category(attributeName);
-        //     if (attributeCategory == FORWARD)
-        //     {
-        //         var idx = instance.get_argument_index(attributeName);
-        //         // TODO need to understand what the hell the python impl is doing
-        //         throw new NotImplementedException();
-        //     }
-        //     else if(attributeCategory == INVERSE)
-        //     {
-        //         instance.get_inverse(attributeName);
-        //     }
-        //     
-        //     throw new System.NotImplementedException();
-        // }
     }
 }
