@@ -123,6 +123,37 @@ namespace System.Numerics.Double
             M44 = m44;
         }
 
+        /// <summary>Creates a 4x4 matrix from the specified components.</summary>
+        /// <param name="column0">The value to assign to the first element in the first row.</param>
+        /// <param name="column1">The value to assign to the second element in the first row.</param>
+        /// <param name="column2">The value to assign to the third element in the first row.</param>
+        /// <param name="column3">The value to assign to the fourth element in the first row.</param>
+        public static DoubleMatrix4x4 FromColumnVectors(DoubleVector4 column0,DoubleVector4 column1,DoubleVector4 column2,DoubleVector4 column3)
+        {
+            return new DoubleMatrix4x4(
+                column0.X, column1.X, column2.X, column3.X,
+                column0.Y, column1.Y, column2.Y, column3.Y,
+                column0.Z, column1.Z, column2.Z, column3.Z,
+                column0.W, column1.W, column2.W, column3.W
+            );
+        }
+        
+        /// <summary>Creates a 4x4 matrix from the specified components.</summary>
+        /// <param name="row0">The value to assign to the first element in the first row.</param>
+        /// <param name="row1">The value to assign to the second element in the first row.</param>
+        /// <param name="row2">The value to assign to the third element in the first row.</param>
+        /// <param name="row3">The value to assign to the fourth element in the first row.</param>
+        public static DoubleMatrix4x4 FromRowVectors(DoubleVector4 row0,DoubleVector4 row1,DoubleVector4 row2,DoubleVector4 row3)
+        {
+            return new DoubleMatrix4x4(
+                row0.X, row0.Y, row0.Z, row0.W,
+                row1.X, row1.Y, row1.Z, row1.W,
+                row2.X, row2.Y, row2.Z, row2.W,
+                row3.W, row3.Y, row3.Z, row3.W
+            );
+        }
+
+        
         /// <summary>Creates a <see cref="System.Numerics.DoubleMatrix4x4" /> object from a specified <see cref="System.Numerics.Matrix3x2" /> object.</summary>
         /// <param name="value">A 3x2 matrix.</param>
         /// <remarks>This constructor creates a 4x4 matrix whose <see cref="System.Numerics.DoubleMatrix4x4.M13" />, <see cref="System.Numerics.DoubleMatrix4x4.M14" />, <see cref="System.Numerics.DoubleMatrix4x4.M23" />, <see cref="System.Numerics.DoubleMatrix4x4.M24" />, <see cref="System.Numerics.DoubleMatrix4x4.M31" />, <see cref="System.Numerics.DoubleMatrix4x4.M32" />, <see cref="System.Numerics.DoubleMatrix4x4.M34" />, and <see cref="System.Numerics.DoubleMatrix4x4.M43" /> components are zero, and whose <see cref="System.Numerics.DoubleMatrix4x4.M33" /> and <see cref="System.Numerics.DoubleMatrix4x4.M44" /> components are one.</remarks>

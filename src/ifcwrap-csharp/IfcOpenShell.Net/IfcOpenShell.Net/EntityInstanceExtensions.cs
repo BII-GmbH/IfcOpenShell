@@ -141,55 +141,57 @@ namespace IfcOpenShell {
         public static bool TryGetAttributeAsString(this EntityInstance instance , string attributeName, out string attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName).TryGetAsString().TryGetValue(out attributeValue);
+            return instance.TryGetAttribute(attributeName)?.TryGetAsString().TryGetValue(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsInt(this EntityInstance instance , string attributeName, out int attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName).TryGetAsInt().TryGetValue(out attributeValue);
+            return instance.TryGetAttribute(attributeName)?.TryGetAsInt().TryGetValue(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsBool(this EntityInstance instance , string attributeName, out bool attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName).TryGetAsBool().TryGetValue(out attributeValue);
+            return instance.TryGetAttribute(attributeName)?.TryGetAsBool().TryGetValue(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsDouble(this EntityInstance instance , string attributeName, out double attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName).TryGetAsDouble().TryGetValue(out attributeValue);
+            return instance.TryGetAttribute(attributeName)?.TryGetAsDouble().TryGetValue(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsEntity(this EntityInstance instance , string attributeName, out EntityInstance attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName).TryGetAsEntity().TryGetValue(out attributeValue);
+            return instance.TryGetAttribute(attributeName)?.TryGetAsEntity().TryGetValue(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsIntList(this EntityInstance instance , string attributeName, out IntVector attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName).TryGetAsIntList().TryGetValue(out attributeValue);
+            return instance.TryGetAttribute(attributeName)?.TryGetAsIntList().TryGetValue(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsDoubleList(this EntityInstance instance , string attributeName, out DoubleVector attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName).TryGetAsDoubleList().TryGetValue(out attributeValue);
+            return instance.TryGetAttribute(attributeName)?.TryGetAsDoubleList().TryGetValue(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsStringList(this EntityInstance instance , string attributeName, out StringVector attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName).TryGetAsStringList().TryGetValue(out attributeValue);
+            return instance.TryGetAttribute(attributeName)?.TryGetAsStringList().TryGetValue(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsEntityList(this EntityInstance instance , string attributeName, out aggregate_of_instance attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName).TryGetAsEntityList().TryGetValue(out attributeValue);
+            var att = instance.TryGetAttribute(attributeName);
+            var asEntityList = att?.TryGetAsEntityList();
+            return asEntityList?.TryGetValue(out attributeValue) ?? false;
         }
         
         public static ArgumentByType TryGetAttribute(this EntityInstance instance, string attributeName) {

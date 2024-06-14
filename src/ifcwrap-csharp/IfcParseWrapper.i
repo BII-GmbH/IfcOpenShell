@@ -274,7 +274,7 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 		return $self->data().id();
 	}
 
-	int __len__() const {
+	int Length() const {
 		if ($self->declaration().as_entity()) {
 			return $self->declaration().as_entity()->attribute_count();
 		} else {

@@ -50,10 +50,10 @@ namespace System.Numerics.Double
         {
         }
 
-        /// <summary>Constructs a new <see cref="System.Numerics.DoubleVector4" /> object from the specified <see cref="System.Numerics.Vector3" /> object and a W component.</summary>
+        /// <summary>Constructs a new <see cref="System.Numerics.DoubleVector4" /> object from the specified <see cref="System.Numerics.DoubleVector3" /> object and a W component.</summary>
         /// <param name="value">The vector to use for the X, Y, and Z components.</param>
         /// <param name="w">The W component.</param>
-        public DoubleVector4(Vector3 value, double w) : this(value.X, value.Y, value.Z, w)
+        public DoubleVector4(DoubleVector3 value, double w) : this(value.X, value.Y, value.Z, w)
         {
         }
 
@@ -566,7 +566,7 @@ namespace System.Numerics.Double
         /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static DoubleVector4 Transform(Vector3 position, Matrix4x4 matrix)
+        public static DoubleVector4 Transform(DoubleVector3 position, Matrix4x4 matrix)
         {
             return new DoubleVector4(
                 (position.X * matrix.M11) + (position.Y * matrix.M21) + (position.Z * matrix.M31) + matrix.M41,
@@ -581,7 +581,7 @@ namespace System.Numerics.Double
         /// <param name="rotation">The rotation to apply.</param>
         /// <returns>The transformed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static DoubleVector4 Transform(Vector3 value, DoubleQuaternion rotation)
+        public static DoubleVector4 Transform(DoubleVector3 value, DoubleQuaternion rotation)
         {
             double x2 = rotation.X + rotation.X;
             double y2 = rotation.Y + rotation.Y;
