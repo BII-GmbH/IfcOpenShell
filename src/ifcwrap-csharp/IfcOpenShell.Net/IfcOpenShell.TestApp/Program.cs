@@ -4,9 +4,13 @@ using IfcOpenShell;
 
 Console.WriteLine("Hello, World!");
 
-const string fileName = "C:\\LocalDirs\\schnepp\\1160202_FbE25_ZK_4x3_Props_Geo.ifc";
+const string fileName = "I:\\sampleHouse.ifc";
 
 using var model = ifcopenshell_net.open(fileName);
+
+var wall = model.instances_by_type("IfcWall").First();
+var pset = wall.GetPset("Pset_WallCommon");
+Console.WriteLine(wall);
 
 var settings = new IteratorSettings();
 settings.set((ulong)IteratorSettings.Setting.GENERATE_UVS, true);
@@ -32,10 +36,10 @@ if (ifcMapConversion != null) {
         Console.WriteLine($"Found attribute on map conversion: {attribute}");
     }
             
-    var eastings = ifcMapConversion.TryGetAttribute("XAxisOrdinate").TryGetAsDouble().HasValue() ? ifcMapConversion.TryGetAttribute("XAxisOrdinate").TryGetAsDouble().GetValue() : -1.0;
+    //var eastings = ifcMapConversion.TryGetAttribute("XAxisOrdinate").TryGetAsDouble().HasValue() ? ifcMapConversion.TryGetAttribute("XAxisOrdinate").TryGetAsDouble().GetValue() : -1.0;
     //eastings.second
                     
-    Console.WriteLine($"XAxisOrdinate: {eastings}");
+    //Console.WriteLine($"XAxisOrdinate: {eastings}");
 }
                 
 // var projectedCrs = Option.SomeIfNotNull(model.instances_by_type("IfcProjectedCRS"))

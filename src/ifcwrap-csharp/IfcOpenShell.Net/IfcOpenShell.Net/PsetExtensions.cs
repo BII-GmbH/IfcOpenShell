@@ -51,12 +51,15 @@ namespace IfcOpenShell
 
                 foreach (var relationship in definedBy)
                 {
+                    
                     if (relationship.is_a("IfcRelDefinesByProperties") &&
-                        relationship.TryGetAttributeAsEntity("RelatingPropertyDefinition", out var definition) &&
-                        definition.TryGetAttributeAsString("Name", out var pname) && pname.Equals(psetName))
+                        relationship.TryGetAttributeAsEntity("RelatingPropertyDefinition", out var definition))
                     {
-                        pset = definition;
-                        break;
+                        if (definition.TryGetAttributeAsString("Name", out var pname) && pname.Equals(psetName))
+                        {
+                            pset = definition;
+                            break;
+                        }
                     }
                 }
             }

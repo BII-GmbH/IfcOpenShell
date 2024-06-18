@@ -10,8 +10,148 @@ namespace IfcOpenShell {
         {
             public const bool UnpackNonAggregateInverses = false;
         }
-        
 
+
+        public abstract class ArgumentResult
+        {
+            private ArgumentResult() {}
+
+            public virtual bool TryGetAsString(out string val)
+            {
+                val = default;
+                return false;
+            }
+
+            public virtual bool TryGetAsInt(out int val)
+            {
+                val = default;
+                return false;
+            }
+
+            public virtual bool TryGetAsBool(out bool val)
+            {
+                val = default;
+                return false;
+            }
+
+            public virtual bool TryGetAsDouble(out double val)
+            {
+                val = default;
+                return false;
+            }
+
+            public virtual bool TryGetAsEntity(out EntityInstance val)
+            {
+                val = null;
+                return false;
+            }
+
+            public virtual bool TryGetAsIntList(out IntVector val)
+            {
+                val = null;
+                return false;
+            }
+
+            public virtual bool TryGetAsDoubleList(out DoubleVector val)
+            {
+                val = null;
+                return false;
+            }
+
+            public virtual bool TryGetAsStringList(out StringVector val)
+            {
+                val = null;
+                return false;
+            }
+
+            public virtual bool TryGetAsEntityList(out aggregate_of_instance val)
+            {
+                val = null;
+                return false;
+            }
+            
+            internal class FromArgumentByType : ArgumentResult
+            {
+                public FromArgumentByType(ArgumentByType type)
+                {
+                    wrapped = type;
+                }
+                
+                public override bool TryGetAsString(out string val)
+                {
+                    val = default;
+                    return wrapped.TryGetAsString().TryGetValue(out val);
+                }
+
+                public override bool TryGetAsInt(out int val)
+                {
+                    val = default;
+                    return wrapped.TryGetAsInt().TryGetValue(out val);
+                }
+
+                public override bool TryGetAsBool(out bool val)
+                {
+                    val = default;
+                    return wrapped.TryGetAsBool().TryGetValue(out val);
+                }
+
+                public override bool TryGetAsDouble(out double val)
+                {
+                    val = default;
+                    return wrapped.TryGetAsDouble().TryGetValue(out val);
+                }
+
+                public override bool TryGetAsEntity(out EntityInstance val)
+                {
+                    val = null;
+                    return wrapped.TryGetAsEntity().TryGetValue(out val);
+                }
+
+                public override bool TryGetAsIntList(out IntVector val)
+                {
+                    val = null;
+                    return wrapped.TryGetAsIntList().TryGetValue(out val);
+                }
+
+                public override bool TryGetAsDoubleList(out DoubleVector val)
+                {
+                    val = null;
+                    return wrapped.TryGetAsDoubleList().TryGetValue(out val);
+                }
+
+                public override bool TryGetAsStringList(out StringVector val)
+                {
+                    val = null;
+                    return wrapped.TryGetAsStringList().TryGetValue(out val);
+                }
+
+                public override bool TryGetAsEntityList(out aggregate_of_instance val)
+                {
+                    val = null;
+                    return wrapped.TryGetAsEntityList().TryGetValue(out val);
+                }
+                
+                
+                private readonly ArgumentByType wrapped;
+            }
+
+            internal class FromAggregateOfInstance : ArgumentResult
+            {
+                public FromAggregateOfInstance(aggregate_of_instance agg)
+                {
+                    aggregate = agg;
+                }
+
+                public override bool TryGetAsEntityList(out aggregate_of_instance val)
+                {
+                    val = aggregate;
+                    return true;
+                }
+                
+                private readonly aggregate_of_instance aggregate;
+            }
+        }
+        
         // TODO: find a way to have this auto-generated
     	public static bool TryGetValue(this StringArgument arg, out string value)
         {
@@ -141,60 +281,59 @@ namespace IfcOpenShell {
         public static bool TryGetAttributeAsString(this EntityInstance instance , string attributeName, out string attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsString().TryGetValue(out attributeValue) ?? false;
+            return instance.TryGetAttribute(attributeName)?.TryGetAsString(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsInt(this EntityInstance instance , string attributeName, out int attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsInt().TryGetValue(out attributeValue) ?? false;
+            return instance.TryGetAttribute(attributeName)?.TryGetAsInt(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsBool(this EntityInstance instance , string attributeName, out bool attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsBool().TryGetValue(out attributeValue) ?? false;
+            return instance.TryGetAttribute(attributeName)?.TryGetAsBool(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsDouble(this EntityInstance instance , string attributeName, out double attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsDouble().TryGetValue(out attributeValue) ?? false;
+            return instance.TryGetAttribute(attributeName)?.TryGetAsDouble(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsEntity(this EntityInstance instance , string attributeName, out EntityInstance attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsEntity().TryGetValue(out attributeValue) ?? false;
+            return instance.TryGetAttribute(attributeName)?.TryGetAsEntity(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsIntList(this EntityInstance instance , string attributeName, out IntVector attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsIntList().TryGetValue(out attributeValue) ?? false;
+            return instance.TryGetAttribute(attributeName)?.TryGetAsIntList(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsDoubleList(this EntityInstance instance , string attributeName, out DoubleVector attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsDoubleList().TryGetValue(out attributeValue) ?? false;
+            return instance.TryGetAttribute(attributeName)?.TryGetAsDoubleList(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsStringList(this EntityInstance instance , string attributeName, out StringVector attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsStringList().TryGetValue(out attributeValue) ?? false;
+            return instance.TryGetAttribute(attributeName)?.TryGetAsStringList(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsEntityList(this EntityInstance instance , string attributeName, out aggregate_of_instance attributeValue)
         {
             attributeValue = default;
             var att = instance.TryGetAttribute(attributeName);
-            var asEntityList = att?.TryGetAsEntityList();
-            return asEntityList?.TryGetValue(out attributeValue) ?? false;
+            return att?.TryGetAsEntityList(out attributeValue) ?? false;
         }
         
-        public static ArgumentByType TryGetAttribute(this EntityInstance instance, string attributeName) {
+        public static ArgumentResult TryGetAttribute(this EntityInstance instance, string attributeName) {
             // attribute categories:
             const int INVALID = 0;
             const int FORWARD = 1;
@@ -207,7 +346,7 @@ namespace IfcOpenShell {
                 var idx = instance.get_argument_index(attributeName);
                 // TODO need to implement weird pointer lookup thing
 
-                return instance.get_argument(idx);
+                return new ArgumentResult.FromArgumentByType(instance.get_argument(idx));
             }
             else if(attributeCategory == INVERSE)
             {
@@ -217,8 +356,7 @@ namespace IfcOpenShell {
                     // TODO need to understand what the hell the python impl is doing
                     //throw new System.NotImplementedException();
                 }
-                    
-                
+                return new ArgumentResult.FromAggregateOfInstance(inverse);
             }
 
             var schema_name = instance.is_a(true).Split('.')[0];

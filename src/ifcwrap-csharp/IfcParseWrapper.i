@@ -343,7 +343,10 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 		return $self->identity() == other->identity();
 	}
 
-	std::string __repr__() const {
+
+	%csmethodmodifiers ToString "public override"
+	
+	std::string ToString() const {
 		return $self->data().toString();
 	}
 

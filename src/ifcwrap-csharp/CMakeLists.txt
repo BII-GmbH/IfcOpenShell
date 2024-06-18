@@ -68,8 +68,8 @@ FOREACH(file ${libraryfiles})
     GET_FILENAME_COMPONENT(dir "${relative}" DIRECTORY)
     INSTALL(FILES "${file}" DESTINATION "IfcOpenShell.Net")
 ENDFOREACH()
-# INSTALL(TARGETS ifcopenshell_net_wrapper
-#         DESTINATION "IfcOpenShell.Net")
+INSTALL(TARGETS ifcopenshell_net_wrapper
+        DESTINATION "IfcOpenShell.Net")
 # if (MSVC)
 #     install(FILES $<TARGET_PDB_FILE:ifcopenshell_net_wrapper> DESTINATION bin OPTIONAL)
 # endif()
