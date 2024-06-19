@@ -96,9 +96,9 @@ namespace IfcOpenShell
                     throw new NotImplementedException();
                 }
 
-                return getPropertyDefinition(pset, verbose:verbose);
+                return pset.getPropertyDefinition(verbose:verbose);
             }
-            var value = getPropertyDefinition(pset, propertyName: propertyName, verbose: verbose);
+            var value = pset.getPropertyDefinition(propertyName: propertyName, verbose: verbose);
             
             if(value is null && type_pset != null)
             {
@@ -107,6 +107,81 @@ namespace IfcOpenShell
             return value;
         }
 
+        public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, EntityInstanceExtensions.ArgumentResult>>
+            GetPsets(this EntityInstance instance,
+                bool onlyPsets = false,
+                bool onlyQtos = false,
+                bool shouldInherit = true,
+                bool verbose = false
+                )
+        {
+            var results =
+                new Dictionary<string, IReadOnlyDictionary<string, EntityInstanceExtensions.ArgumentResult>>();
+            
+            if (instance.is_a("IfcTypeObject") && 
+                instance.TryGetAttributeAsEntityList("HasPropertySets", out var hasPropertySets))
+            {
+                foreach (var definition in hasPropertySets)
+                {
+                    var name = definition.TryGetAttributeAsString("Name", out var n) ? n : "Unknown";
+                    if ((onlyPsets && !definition.is_a("IfcPropertySet")) ||
+                        (onlyQtos && !definition.is_a("IfcElementQuantity")))
+                    {
+                        continue;
+                    }
+
+                    var pset = instance.getPropertyDefinition() ?? new Dictionary<string, EntityInstanceExtensions.ArgumentResult>();
+                    results[name] = pset;
+                }
+            } else if (instance.is_a("IfcMaterialDefinition") || instance.is_a("IfcProfileDef"))
+            {
+                if (onlyQtos)
+                    return results;
+                // ifc2x3 may be missing this
+                if(instance.TryGetAttributeAsEntityList("HasProperties", out var props))
+                {
+                    foreach (var definition in props)
+                    {
+                        var name = definition.TryGetAttributeAsString("Name", out var n) ? n : "Unknown";
+                        var pset = instance.getPropertyDefinition() ?? new Dictionary<string, EntityInstanceExtensions.ArgumentResult>();
+                        results[name] = pset;
+                    }
+                }
+            } else if (instance.TryGetAttributeAsEntityList("IsDefinedBy", out var definers))
+            {
+                if (shouldInherit)
+                {
+                    var type = instance.get_type();
+                    if (type != null)
+                    {
+                        var typeResults = GetPsets(type, onlyPsets, onlyQtos, shouldInherit: false, verbose: verbose);
+                        foreach (var kvp in typeResults)
+                        {
+                            results.Add(kvp.Key, kvp.Value);
+                        }
+                    }
+                }
+
+                foreach (var relationship in definers)
+                {
+                    if (relationship.is_a("IfcRelDefinesByProperties") &&
+                        relationship.TryGetAttributeAsEntity("RelatingPropertyDefinition", out var def))
+                    {
+                        if ((onlyPsets && !def.is_a("IfcPropertySet")) || 
+                            (onlyQtos && !def.is_a("IfcElementQuantity")))
+                        {
+                            continue;
+                        }
+                        var name = def.TryGetAttributeAsString("Name", out var n) ? n : "Unknown";
+
+                        var pset = instance.getPropertyDefinition() ?? new Dictionary<string, EntityInstanceExtensions.ArgumentResult>();
+                        results[name] = pset;
+                    }
+                }
+            }
+            return results;
+        }
+        
         /// Retrieves the construction type element of an element occurrence
         ///
         /// param element: The element occurrence
@@ -137,7 +212,7 @@ namespace IfcOpenShell
             return null;
         }
                 
-        private static IReadOnlyDictionary<string, EntityInstanceExtensions.ArgumentResult> getPropertyDefinition(EntityInstance definition,
+        private static IReadOnlyDictionary<string, EntityInstanceExtensions.ArgumentResult> getPropertyDefinition(this EntityInstance definition,
             string? propertyName = null, bool verbose = false)
         {
             if (definition is null)

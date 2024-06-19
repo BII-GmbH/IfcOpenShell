@@ -9,7 +9,7 @@ const string fileName = "I:\\sampleHouse.ifc";
 using var model = ifcopenshell_net.open(fileName);
 
 var wall = model.instances_by_type("IfcWall").First();
-var pset = wall.GetPset("Pset_WallCommon");
+var pset = wall.GetPsets();
 Console.WriteLine(wall);
 
 var settings = new IteratorSettings();
