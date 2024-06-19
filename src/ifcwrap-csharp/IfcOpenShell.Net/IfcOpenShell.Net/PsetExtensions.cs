@@ -1,21 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace IfcOpenShell
 {
     public static class PsetExtensions
     {
-        public static IReadOnlyDictionary<string, EntityInstance> GetPset(this EntityInstance element,
+        public static IReadOnlyDictionary<string, EntityInstanceExtensions.ArgumentResult> GetPset(this EntityInstance element,
             string psetName, 
             string? propertyName = null,
             bool onlyPsets = false, 
             bool onlyQtos = false,
-            bool shouldInherit = false,
+            bool shouldInherit = true,
             bool verbose = false
         )
         {
             EntityInstance pset = null;
-            EntityInstance type_pset = null;
+            IReadOnlyDictionary<string, EntityInstanceExtensions.ArgumentResult> type_pset = null;
             if (element.is_a("IfcTypeObject") && 
                 element.TryGetAttributeAsEntityList("HasPropertySets", out var typeObjectPsets))
             {
@@ -44,9 +45,10 @@ namespace IfcOpenShell
             {
                 if (shouldInherit)
                 {
-                    //var elemType = element.get
-
-                    throw new NotImplementedException();
+                    var elemType = element.get_type();
+                    if (elemType != null)
+                        type_pset = elemType.GetPset(psetName, propertyName, shouldInherit: false, verbose: verbose);
+                    //throw new NotImplementedException();
                 }
 
                 foreach (var relationship in definedBy)
@@ -83,7 +85,7 @@ namespace IfcOpenShell
             if (pset == null && type_pset == null)
             {
                 // TODO: null?
-                return new Dictionary<string, EntityInstance>();
+                return new Dictionary<string, EntityInstanceExtensions.ArgumentResult>();
             }
 
 
@@ -100,12 +102,42 @@ namespace IfcOpenShell
             
             if(value is null && type_pset != null)
             {
-                //return type_pset;
+                return type_pset;
             }
             return value;
         }
 
-        private static IReadOnlyDictionary<string, EntityInstance> getPropertyDefinition(EntityInstance definition,
+        /// Retrieves the construction type element of an element occurrence
+        ///
+        /// param element: The element occurrence
+        /// type: ifcopenshell.entity_instance
+        /// return: The related type element
+        /// rtype: Union[ifcopenshell.entity_instance, None]
+
+        /// Example:
+
+        ///.. code:: python
+
+        ///   element = ifcopenshell.by_type("IfcWall")[0]
+        ///   element_type = ifcopenshell.util.element.get_type(element)
+        private static EntityInstance get_type(this EntityInstance entityInstance)
+        {
+            if (entityInstance.is_a("IfcTypeObject")) return entityInstance;
+            if (entityInstance.TryGetAttributeAsEntity("IsTypedBy", out var typedBy)) return typedBy;
+            if (entityInstance.TryGetAttributeAsEntityList("IsDefinedBy", out var definedBy)) // ifc2x3
+            {
+                foreach (var definer in definedBy)
+                {
+                    if (definer.is_a("IfcRelDefinesByType"))
+                    {
+                        return definer.TryGetAttributeAsEntity("RelatingType", out var relType) ? relType : null;
+                    }
+                }                
+            }
+            return null;
+        }
+                
+        private static IReadOnlyDictionary<string, EntityInstanceExtensions.ArgumentResult> getPropertyDefinition(EntityInstance definition,
             string? propertyName = null, bool verbose = false)
         {
             if (definition is null)
@@ -118,7 +150,7 @@ namespace IfcOpenShell
                 throw new NotImplementedException();
             }
 
-            var properties = new Dictionary<string, EntityInstance>();
+            var properties = new Dictionary<string, EntityInstanceExtensions.ArgumentResult>();
 
             switch (ifcClass)
             {
@@ -128,7 +160,7 @@ namespace IfcOpenShell
                         var quantitiesProps = getQuantities(quantities, verbose);
                         foreach (var (name, value) in quantitiesProps)
                         {
-                            properties.Add(name, value);
+                            properties.Add(name, new EntityInstanceExtensions.ArgumentResult.FromEntityInstance(value));
                         }
                     }
                     break;
@@ -138,14 +170,14 @@ namespace IfcOpenShell
                 case "IfcMaterialProperties":
                 case "IfcProfileProperties":
                     getPropertiesAndAddToResult(definition, "Properties");
-                    break; 
+                    break;
                 
                 default:
                     for (uint propIndex = 0; propIndex < definition.Length(); propIndex++)
                     {
                         if(definition.TryGetAttributeAtIndex(propIndex)?.TryGetValue(out var prop) ?? false)
                         {
-                            properties.Add(definition.get_argument_name(propIndex), prop);
+                            properties.Add(definition.get_argument_name(propIndex), new EntityInstanceExtensions.ArgumentResult.FromEntityInstance(prop));
                         }
                     }
                     break;
@@ -162,36 +194,57 @@ namespace IfcOpenShell
                     foreach (var (name, value) in props)
                     {
                         properties.Add(name, value);
-                    } 
+                    }
                 }
             }
             
         }
 
-        private static IReadOnlyDictionary<string, EntityInstance> getProperties(IEnumerable<EntityInstance> properties, bool verbose = false)
+        private static IReadOnlyDictionary<string, EntityInstanceExtensions.ArgumentResult> getProperties(IEnumerable<EntityInstance> properties, bool verbose = false)
         {
-            var result = new Dictionary<string, EntityInstance>();
+            var result = new Dictionary<string, EntityInstanceExtensions.ArgumentResult>();
 
             foreach (var prop in properties)
             {
                 var ifcClass = prop.is_a();
                 var name = prop.TryGetAttributeAsString("Name", out var n) ? n : "Unknown";
+
+                // TODO: verbose setting
+                switch (ifcClass)
+                {
+                    case "IfcPropertySingleValue":
+                        const uint IfcPropertySingleValue_NominalValue = 2;
+                        var singleVal = prop.get_argument(IfcPropertySingleValue_NominalValue);
+                        result.Add(name, new EntityInstanceExtensions.ArgumentResult.FromArgumentByType(singleVal));
+                        break;
+                    case "IfcPropertyEnumeratedValue":
+                        throw new NotImplementedException();
+                        break;
+                    case "IfcPropertyListValue":
+                        throw new NotImplementedException();
+                        break;
+                    case "IfcPropertyBoundedValue":
+                        throw new NotImplementedException();
+                        break;
+                    case "IfcPropertyTableValue":
+                        throw new NotImplementedException();
+                        break;
+                    case "IfcComplexProperty":
+                        throw new NotImplementedException();
+                        break;
+                    default: break;
+                }
                 
                 // TODO: actually read property values
                 
-                result.Add(name, null);
             }
             return result;
         }
         
         private static IReadOnlyDictionary<string, EntityInstance> getQuantities(IEnumerable<EntityInstance> quantities, bool verbose = false)
         {
-            
-            foreach (var quantity in quantities)
-            {
-                var quantityName = quantity;
-            }
-            return null;
+
+            throw new NotImplementedException();
         }
 
         public static EntityArgument TryGetAttributeAtIndex(this EntityInstance instance, uint key)

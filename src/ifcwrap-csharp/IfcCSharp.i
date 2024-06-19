@@ -192,6 +192,7 @@
 		#include "../ifcparse/Ifc4x3_add2.h"
 	#endif
 
+	#include "../ifcparse/ArgumentType.h"
 	#include "../ifcparse/Argument.h"
 	#include "../ifcparse/aggregate_of_instance.h"
 	#include "../ifcparse/IfcBaseClass.h"
@@ -281,7 +282,7 @@ TRY_GET_AS(int, Int, type == IfcUtil::Argument_INT)
 TRY_GET_AS(bool, Bool, type == IfcUtil::Argument_BOOL)
 //TRY_GET_AS(std::uint8_t, Binary, type == IfcUtil::Argument_BINARY)
 TRY_GET_AS(double, Double, type == IfcUtil::Argument_DOUBLE)
-TRY_GET_AS(IfcUtil::IfcBaseClass*, Entity, type == IfcUtil::Argument_AGGREGATE_OF_ENTITY_INSTANCE)
+TRY_GET_AS(IfcUtil::IfcBaseClass*, Entity, type == IfcUtil::Argument_ENTITY_INSTANCE)
 TRY_GET_AS(std::vector<int>, IntList, type == IfcUtil::Argument_AGGREGATE_OF_INT)
 //TRY_GET_AS(std::vector<std::uint8_t>, BinaryList, type == IfcUtil::Argument_AGGREGATE_OF_BINARY)
 TRY_GET_AS(std::vector<double>, DoubleList, type == IfcUtil::Argument_AGGREGATE_OF_DOUBLE)

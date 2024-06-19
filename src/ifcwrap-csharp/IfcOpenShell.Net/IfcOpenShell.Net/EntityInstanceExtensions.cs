@@ -150,6 +150,22 @@ namespace IfcOpenShell {
                 
                 private readonly aggregate_of_instance aggregate;
             }
+            
+            internal class FromEntityInstance : ArgumentResult
+            {
+                public FromEntityInstance(EntityInstance agg)
+                {
+                    instance = agg;
+                }
+
+                public override bool TryGetAsEntity(out EntityInstance val)
+                {
+                    val = instance;
+                    return true;
+                }
+                
+                private readonly EntityInstance instance;
+            }
         }
         
         // TODO: find a way to have this auto-generated
