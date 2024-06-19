@@ -49,7 +49,10 @@ set_target_properties(ifcopenshell_net_wrapper
 #configure_file("IfcOpenShell.Net/IfcOpenShell.Net/IfcOpenShell.Net.csproj" "${CMAKE_SWIG_OUTDIR}/IfcOpenShell.Net/IfcOpenShell.Net.csproj")
 #configure_file("IfcOpenShell.Net/EntityInstanceExtensions.cs" "${CMAKE_SWIG_OUTDIR}/IfcOpenShell.Net/EntityInstanceExtensions.cs")
 
+set(libraryfiles "${CMAKE_BINARY_DIR}/IfcOpenShell.Net/bin/IfcOpenShell.Net.deps.json" "${CMAKE_BINARY_DIR}/IfcOpenShell.Net/bin/IfcOpenShell.Net.dll" "${CMAKE_BINARY_DIR}/IfcOpenShell.Net/bin/IfcOpenShell.Net.pdb")
+
 add_custom_target(ifcopenshell_net ALL 
+    BYPRODUCTS "${libraryfiles}"
     #rm "${CMAKE_SWIG_OUTDIR}/*.cxx" "${CMAKE_SWIG_OUTDIR}/*.cs"
     #dotnet new sln --name "IfcOpenShell.Net" --output "${CMAKE_SWIG_OUTDIR}" --force
     #COMMAND dotnet new classlib --name "IfcOpenShell.Net" -f netstandard2.0 --output "${CMAKE_SWIG_OUTDIR}/IfcOpenShell.Net" --force
@@ -59,20 +62,25 @@ add_custom_target(ifcopenshell_net ALL
 
 add_dependencies(ifcopenshell_net ifcopenshell_net_wrapper)
 
+
 # install
-FILE(GLOB_RECURSE libraryfiles 
-    "${CMAKE_BINARY_DIR}/IfcOpenShell.Net/bin/*"
-)
+# FILE(GLOB_RECURSE libraryfiles 
+#     "${CMAKE_BINARY_DIR}/IfcOpenShell.Net/bin/*"
+# )
+#message("AAAA Installing: ${libraryfiles}")
+# install(DIRECTORY "${CMAKE_BINARY_DIR}/IfcOpenShell.Net/bin" DESTINATION "IfcOpenShell.Net")
+
 FOREACH(file ${libraryfiles})
     FILE(RELATIVE_PATH relative "${CMAKE_BINARY_DIR}/IfcOpenShell.Net/bin/" "${file}")
     GET_FILENAME_COMPONENT(dir "${relative}" DIRECTORY)
+    
     INSTALL(FILES "${file}" DESTINATION "IfcOpenShell.Net")
 ENDFOREACH()
 INSTALL(TARGETS ifcopenshell_net_wrapper
         DESTINATION "IfcOpenShell.Net")
-# if (MSVC)
-#     install(FILES $<TARGET_PDB_FILE:ifcopenshell_net_wrapper> DESTINATION bin OPTIONAL)
-# endif()
+if (MSVC)
+    install(FILES $<TARGET_PDB_FILE:ifcopenshell_net_wrapper> DESTINATION bin OPTIONAL)
+endif()
 
 
 
