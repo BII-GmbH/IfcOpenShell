@@ -558,8 +558,83 @@
 		}
 		return boost::variant<IfcGeom::Element*, IfcGeom::Representation::Representation*>();
 	}
+
+	template <typename Schema>
+	static IfcGeom::Transformation* helper_to_product(IfcGeom::IteratorSettings& settings, IfcUtil::IfcBaseClass* instance) {
+		IfcParse::IfcFile* file = instance->data().file;		
+		IfcGeom::Kernel kernel(file);
+
+		// @todo unify this logic with the logic in iterator impl.
+
+		kernel.setValue(IfcGeom::Kernel::GV_MAX_FACES_TO_ORIENT, settings.get(IfcGeom::IteratorSettings::SEW_SHELLS) ? std::numeric_limits<double>::infinity() : -1);
+		kernel.setValue(IfcGeom::Kernel::GV_DIMENSIONALITY, (settings.get(IfcGeom::IteratorSettings::INCLUDE_CURVES) ? (settings.get(IfcGeom::IteratorSettings::EXCLUDE_SOLIDS_AND_SURFACES) ? -1. : 0.) : +1.));
+		kernel.setValue(IfcGeom::Kernel::GV_LAYERSET_FIRST,
+			settings.get(IfcGeom::IteratorSettings::LAYERSET_FIRST)
+			? +1.0
+			: -1.0
+		);
+		kernel.setValue(IfcGeom::Kernel::GV_NO_WIRE_INTERSECTION_CHECK,
+			settings.get(IfcGeom::IteratorSettings::NO_WIRE_INTERSECTION_CHECK)
+			? +1.0
+			: -1.0
+		);
+		kernel.setValue(IfcGeom::Kernel::GV_NO_WIRE_INTERSECTION_TOLERANCE,
+			settings.get(IfcGeom::IteratorSettings::NO_WIRE_INTERSECTION_TOLERANCE)
+			? +1.0
+			: -1.0
+		);
+		kernel.setValue(IfcGeom::Kernel::GV_PRECISION_FACTOR,
+			settings.get(IfcGeom::IteratorSettings::STRICT_TOLERANCE)
+			? 1.0
+			: 10.0
+		);
+
+		kernel.setValue(IfcGeom::Kernel::GV_DISABLE_BOOLEAN_RESULT,
+			settings.get(IfcGeom::IteratorSettings::DISABLE_BOOLEAN_RESULT)
+			? +1.0
+			: -1.0
+		);
+
+		kernel.setValue(IfcGeom::Kernel::GV_DEBUG_BOOLEAN,
+			settings.get(IfcGeom::IteratorSettings::DEBUG_BOOLEAN)
+			? +1.0
+			: -1.0
+		);
+
+		kernel.setValue(IfcGeom::Kernel::GV_BOOLEAN_ATTEMPT_2D,
+			settings.get(IfcGeom::IteratorSettings::BOOLEAN_ATTEMPT_2D)
+			? +1.0
+			: -1.0
+		);
+		
+		
+		if (instance->declaration().is(Schema::IfcProduct::Class())) {
+			try {
+				typename Schema::IfcProduct* product = (typename Schema::IfcProduct*) instance;
+
+				gp_Trsf trsf;
+			
+			
+				if (product->ObjectPlacement()) {
+					auto whatisthis = kernel.convert_placement(product->ObjectPlacement(), trsf);
+					if(!whatisthis)
+						Logger::Error("Random return bool was false");
+				}
+				IfcGeom::ElementSettings element_settings(settings, kernel.getValue(IfcGeom::Kernel::GV_LENGTH_UNIT), instance->declaration().name());
+
+				return new IfcGeom::Transformation(element_settings, trsf);
+			} catch (const std::exception& e) {
+				Logger::Error(e);
+			} catch (...) {
+				Logger::Error("Failed to construct placement");
+			}
+		}
+		return nullptr;
+	}
+
 %}
 
+%newobject transformation_for;
 %inline %{
 	static boost::variant<IfcGeom::Element*, IfcGeom::Representation::Representation*> create_shape(IfcGeom::IteratorSettings& settings, IfcUtil::IfcBaseClass* instance, IfcUtil::IfcBaseClass* representation = 0) {
 		const std::string& schema_name = instance->declaration().schema()->name();
@@ -622,6 +697,73 @@
 		#ifdef HAS_SCHEMA_4x3_add2
 		if (schema_name == "IFC4X3_ADD2") {
 			return helper_fn_create_shape<Ifc4x3_add2>(settings, instance, representation);
+		}
+		#endif
+
+		throw IfcParse::IfcException("No geometry support for " + schema_name);
+	}
+
+	static IfcGeom::Transformation* transformation_for(IfcGeom::IteratorSettings& settings, IfcUtil::IfcBaseClass* instance) {
+		const std::string& schema_name = instance->declaration().schema()->name();
+
+		#ifdef HAS_SCHEMA_2x3
+		if (schema_name == "IFC2X3") {
+			return helper_to_product<Ifc2x3>(settings, instance);
+		}
+		#endif
+		#ifdef HAS_SCHEMA_4
+		if (schema_name == "IFC4") {
+			return helper_to_product<Ifc4>(settings, instance);
+		}
+		#endif
+		#ifdef HAS_SCHEMA_4x1
+		if (schema_name == "IFC4X1") {
+			return helper_to_product<Ifc4x1>(settings, instance);
+		}
+		#endif
+		#ifdef HAS_SCHEMA_4x2
+		if (schema_name == "IFC4X2") {
+			return helper_to_product<Ifc4x2>(settings, instance);
+		}
+		#endif
+		#ifdef HAS_SCHEMA_4x3_rc1
+		if (schema_name == "IFC4X3_RC1") {
+			return helper_to_product<Ifc4x3_rc1>(settings, instance);
+		}
+		#endif
+		#ifdef HAS_SCHEMA_4x3_rc2
+		if (schema_name == "IFC4X3_RC2") {
+			return helper_to_product<Ifc4x3_rc2>(settings, instance);
+		}
+		#endif
+		#ifdef HAS_SCHEMA_4x3_rc3
+		if (schema_name == "IFC4X3_RC3") {
+			return helper_to_product<Ifc4x3_rc3>(settings, instance);
+		}
+		#endif
+		#ifdef HAS_SCHEMA_4x3_rc4
+		if (schema_name == "IFC4X3_RC4") {
+			return helper_to_product<Ifc4x3_rc4>(settings, instance);
+		}
+		#endif
+		#ifdef HAS_SCHEMA_4x3
+		if (schema_name == "IFC4X3") {
+			return helper_to_product<Ifc4x3>(settings, instance);
+		}
+		#endif
+		#ifdef HAS_SCHEMA_4x3_tc1
+		if (schema_name == "IFC4X3_TC1") {
+			return helper_to_product<Ifc4x3_tc1>(settings, instance);
+		}
+		#endif
+        #ifdef HAS_SCHEMA_4x3_add1
+		if (schema_name == "IFC4X3_ADD1") {
+			return helper_to_product<Ifc4x3_add1>(settings, instance);
+		}
+		#endif
+		#ifdef HAS_SCHEMA_4x3_add2
+		if (schema_name == "IFC4X3_ADD2") {
+			return helper_to_product<Ifc4x3_add2>(settings, instance);
 		}
 		#endif
 

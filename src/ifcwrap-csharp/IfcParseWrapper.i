@@ -629,6 +629,7 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 %include "../ifcparse/aggregate_of_instance.h"
 %include "../ifcparse/IfcFile.h"
 %include "../ifcparse/IfcBaseClass.h"
+%include "../ifcparse/IfcBaseEntity.h"
 %include "../ifcparse/IfcSchema.h"
 %include "../ifcparse/ArgumentType.h"
 %include "../ifcparse/Argument.h"
