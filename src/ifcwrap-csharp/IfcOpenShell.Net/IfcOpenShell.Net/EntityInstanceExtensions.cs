@@ -16,6 +16,8 @@ namespace IfcOpenShell {
         {
             private ArgumentResult() {}
 
+            public abstract ArgumentType ArgumentType { get; }
+
             public virtual bool TryGetAsString(out string val)
             {
                 val = default;
@@ -76,7 +78,9 @@ namespace IfcOpenShell {
                 {
                     wrapped = type;
                 }
-                
+
+                public override ArgumentType ArgumentType => wrapped.first;
+
                 public override bool TryGetAsString(out string val)
                 {
                     val = default;
@@ -142,6 +146,8 @@ namespace IfcOpenShell {
                     aggregate = agg;
                 }
 
+                public override ArgumentType ArgumentType => ArgumentType.Argument_AGGREGATE_OF_ENTITY_INSTANCE;
+
                 public override bool TryGetAsEntityList(out aggregate_of_instance val)
                 {
                     val = aggregate;
@@ -157,6 +163,8 @@ namespace IfcOpenShell {
                 {
                     instance = agg;
                 }
+
+                public override ArgumentType ArgumentType => ArgumentType.Argument_ENTITY_INSTANCE;
 
                 public override bool TryGetAsEntity(out EntityInstance val)
                 {
@@ -370,7 +378,7 @@ namespace IfcOpenShell {
                 if (Settings.UnpackNonAggregateInverses)
                 {
                     // TODO need to understand what the hell the python impl is doing
-                    //throw new System.NotImplementedException();
+                    throw new System.NotImplementedException();
                 }
                 return new ArgumentResult.FromAggregateOfInstance(inverse);
             }
@@ -380,7 +388,7 @@ namespace IfcOpenShell {
             // TODO need to understand what the hell the python impl is doing
             // throw new System.NotImplementedException();
             //
-            // throw new System.NotImplementedException();
+            throw new System.NotImplementedException();
             return null;
         }
     }
