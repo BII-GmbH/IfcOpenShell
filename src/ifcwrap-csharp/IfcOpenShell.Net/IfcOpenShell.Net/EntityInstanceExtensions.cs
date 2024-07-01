@@ -11,169 +11,83 @@ namespace IfcOpenShell {
             public const bool UnpackNonAggregateInverses = false;
         }
 
-
-        public abstract class ArgumentResult
+        /// <summary>
+        /// Retrieves the construction type element of an element occurrence
+        /// </summary>
+        /// <param name="element">The element occurrence</param>
+        /// <returns>The related type element, can be null</returns>
+        public static EntityInstance GetConstructionType(this EntityInstance element)
         {
-            private ArgumentResult() {}
-
-            public abstract ArgumentType ArgumentType { get; }
-
-            public virtual bool TryGetAsString(out string val)
+            if (element.is_a("IfcTypeObject"))
+                return element;
+            else if(element.TryGetAttributeAsEntityList("IsTypedBy", out var typedBy) && typedBy.Count > 0)
             {
-                val = default;
-                return false;
+                // according to doc there can be either 0 or one elements
+                // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/IfcObject.htm
+                if(typedBy.First().TryGetAttributeAsEntity("RelatingType", out var type))
+                    return type;
             }
-
-            public virtual bool TryGetAsInt(out int val)
+            else if (element.TryGetAttributeAsEntityList("IsDefinedBy", out var definers)) // ifc 2x3
             {
-                val = default;
-                return false;
+                foreach (var def in definers)
+                {
+                    if (def.is_a("IfcRelDefinesByType") && def.TryGetAttributeAsEntity("RelatingType", out var type))
+                    {
+                        return type;
+                    }
+                }
             }
+            return null;
+        }
 
-            public virtual bool TryGetAsBool(out bool val)
-            {
-                val = default;
-                return false;
-            }
-
-            public virtual bool TryGetAsDouble(out double val)
-            {
-                val = default;
-                return false;
-            }
-
-            public virtual bool TryGetAsEntity(out EntityInstance val)
-            {
-                val = null;
-                return false;
-            }
-
-            public virtual bool TryGetAsIntList(out IntVector val)
-            {
-                val = null;
-                return false;
-            }
-
-            public virtual bool TryGetAsDoubleList(out DoubleVector val)
-            {
-                val = null;
-                return false;
-            }
-
-            public virtual bool TryGetAsStringList(out StringVector val)
-            {
-                val = null;
-                return false;
-            }
-
-            public virtual bool TryGetAsEntityList(out aggregate_of_instance val)
-            {
-                val = null;
-                return false;
-            }
+        /// <summary>
+        /// Return a dictionary of the entity_instance's properties (Python and IFC) and their values.
+        /// </summary>
+        /// <param name="instance"></param>
+        /// <param name="includeIdentifier">Whether or not to include the STEP numerical identifier</param>
+        /// <param name="recursive">Whether or not to convert referenced IFC elements into dictionaries too. All attributes also apply recursively</param>
+        /// <param name="scalarOnly">Filters out all values that are IFC instances</param>
+        /// <param name="ignore">A list of attribute names to ignore</param>
+        /// <returns>A dictionary of properties and their corresponding values</returns>
+        public static IReadOnlyDictionary<string, ArgumentResult> GetInfo(this EntityInstance instance, bool includeIdentifier=true, bool recursive = false, bool scalarOnly=false, IEnumerable<string> ignore=null)
+        {
+            var ignoreHashSet = ignore?.ToHashSet() ?? new HashSet<string>();
             
-            internal class FromArgumentByType : ArgumentResult
+            var result = new Dictionary<string, ArgumentResult>();
+            try
             {
-                public FromArgumentByType(ArgumentByType type)
-                {
-                    wrapped = type;
-                }
-
-                public override ArgumentType ArgumentType => wrapped.first;
-
-                public override bool TryGetAsString(out string val)
-                {
-                    val = default;
-                    return wrapped.TryGetAsString().TryGetValue(out val);
-                }
-
-                public override bool TryGetAsInt(out int val)
-                {
-                    val = default;
-                    return wrapped.TryGetAsInt().TryGetValue(out val);
-                }
-
-                public override bool TryGetAsBool(out bool val)
-                {
-                    val = default;
-                    return wrapped.TryGetAsBool().TryGetValue(out val);
-                }
-
-                public override bool TryGetAsDouble(out double val)
-                {
-                    val = default;
-                    return wrapped.TryGetAsDouble().TryGetValue(out val);
-                }
-
-                public override bool TryGetAsEntity(out EntityInstance val)
-                {
-                    val = null;
-                    return wrapped.TryGetAsEntity().TryGetValue(out val);
-                }
-
-                public override bool TryGetAsIntList(out IntVector val)
-                {
-                    val = null;
-                    return wrapped.TryGetAsIntList().TryGetValue(out val);
-                }
-
-                public override bool TryGetAsDoubleList(out DoubleVector val)
-                {
-                    val = null;
-                    return wrapped.TryGetAsDoubleList().TryGetValue(out val);
-                }
-
-                public override bool TryGetAsStringList(out StringVector val)
-                {
-                    val = null;
-                    return wrapped.TryGetAsStringList().TryGetValue(out val);
-                }
-
-                public override bool TryGetAsEntityList(out aggregate_of_instance val)
-                {
-                    val = null;
-                    return wrapped.TryGetAsEntityList().TryGetValue(out val);
-                }
-                
-                
-                private readonly ArgumentByType wrapped;
+                if(includeIdentifier) result.Add("id", new ArgumentResult.FromInt(instance.id()));
+                result.Add("type", new ArgumentResult.FromString(instance.is_a()));
+            }
+            catch (Exception e)
+            {
+                // TODO: logging instead
+                throw;
             }
 
-            internal class FromAggregateOfInstance : ArgumentResult
-            {
-                public FromAggregateOfInstance(aggregate_of_instance agg)
-                {
-                    aggregate = agg;
-                }
-
-                public override ArgumentType ArgumentType => ArgumentType.Argument_AGGREGATE_OF_ENTITY_INSTANCE;
-
-                public override bool TryGetAsEntityList(out aggregate_of_instance val)
-                {
-                    val = aggregate;
-                    return true;
-                }
-                
-                private readonly aggregate_of_instance aggregate;
-            }
+            var attributeNames = instance.get_attribute_names();
             
-            internal class FromEntityInstance : ArgumentResult
+            foreach (var attributeName in attributeNames)
             {
-                public FromEntityInstance(EntityInstance agg)
+                try
                 {
-                    instance = agg;
+                    if (ignoreHashSet.Contains(attributeName))
+                        continue;
+                    if(!instance.TryGetAttributeAsEntity(attributeName, out var attribute)) 
+                        continue;
+                    var shouldInclude = true;
+                    if (recursive || scalarOnly)
+                        throw new NotImplementedException();
+                    if(shouldInclude)
+                        result.Add(attributeName, new ArgumentResult.FromEntityInstance(attribute));
                 }
-
-                public override ArgumentType ArgumentType => ArgumentType.Argument_ENTITY_INSTANCE;
-
-                public override bool TryGetAsEntity(out EntityInstance val)
+                catch (Exception e)
                 {
-                    val = instance;
-                    return true;
+                    // TODO: logging instead
+                    throw;
                 }
-                
-                private readonly EntityInstance instance;
             }
+            return result;
         }
         
         // TODO: find a way to have this auto-generated
@@ -305,59 +219,59 @@ namespace IfcOpenShell {
         public static bool TryGetAttributeAsString(this EntityInstance instance , string attributeName, out string attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsString(out attributeValue) ?? false;
+            return instance.GetAttribute(attributeName)?.TryGetAsString(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsInt(this EntityInstance instance , string attributeName, out int attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsInt(out attributeValue) ?? false;
+            return instance.GetAttribute(attributeName)?.TryGetAsInt(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsBool(this EntityInstance instance , string attributeName, out bool attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsBool(out attributeValue) ?? false;
+            return instance.GetAttribute(attributeName)?.TryGetAsBool(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsDouble(this EntityInstance instance , string attributeName, out double attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsDouble(out attributeValue) ?? false;
+            return instance.GetAttribute(attributeName)?.TryGetAsDouble(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsEntity(this EntityInstance instance , string attributeName, out EntityInstance attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsEntity(out attributeValue) ?? false;
+            return instance.GetAttribute(attributeName)?.TryGetAsEntity(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsIntList(this EntityInstance instance , string attributeName, out IntVector attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsIntList(out attributeValue) ?? false;
+            return instance.GetAttribute(attributeName)?.TryGetAsIntList(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsDoubleList(this EntityInstance instance , string attributeName, out DoubleVector attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsDoubleList(out attributeValue) ?? false;
+            return instance.GetAttribute(attributeName)?.TryGetAsDoubleList(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsStringList(this EntityInstance instance , string attributeName, out StringVector attributeValue)
         {
             attributeValue = default;
-            return instance.TryGetAttribute(attributeName)?.TryGetAsStringList(out attributeValue) ?? false;
+            return instance.GetAttribute(attributeName)?.TryGetAsStringList(out attributeValue) ?? false;
         }
         
         public static bool TryGetAttributeAsEntityList(this EntityInstance instance , string attributeName, out aggregate_of_instance attributeValue)
         {
             attributeValue = default;
-            var att = instance.TryGetAttribute(attributeName);
+            var att = instance.GetAttribute(attributeName);
             return att?.TryGetAsEntityList(out attributeValue) ?? false;
         }
         
-        public static ArgumentResult TryGetAttribute(this EntityInstance instance, string attributeName) {
+        public static ArgumentResult GetAttribute(this EntityInstance instance, string attributeName) {
             // attribute categories:
             const int INVALID = 0;
             const int FORWARD = 1;

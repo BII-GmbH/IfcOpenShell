@@ -6,7 +6,7 @@ namespace IfcOpenShell
 {
     public static class PsetExtensions
     {
-        public static IReadOnlyDictionary<string, EntityInstanceExtensions.ArgumentResult> GetPset(this EntityInstance element,
+        public static IReadOnlyDictionary<string, ArgumentResult> GetPset(this EntityInstance element,
             string psetName, 
             string? propertyName = null,
             bool onlyPsets = false, 
@@ -16,7 +16,7 @@ namespace IfcOpenShell
         )
         {
             EntityInstance pset = null;
-            IReadOnlyDictionary<string, EntityInstanceExtensions.ArgumentResult> type_pset = null;
+            IReadOnlyDictionary<string, ArgumentResult> type_pset = null;
             if (element.is_a("IfcTypeObject") && 
                 element.TryGetAttributeAsEntityList("HasPropertySets", out var typeObjectPsets))
             {
@@ -45,7 +45,7 @@ namespace IfcOpenShell
             {
                 if (shouldInherit)
                 {
-                    var elemType = element.get_type();
+                    var elemType = element.GetConstructionType();
                     if (elemType != null)
                         type_pset = elemType.GetPset(psetName, propertyName, shouldInherit: false, verbose: verbose);
                     //throw new NotImplementedException();
@@ -85,7 +85,7 @@ namespace IfcOpenShell
             if (pset == null && type_pset == null)
             {
                 // TODO: null?
-                return new Dictionary<string, EntityInstanceExtensions.ArgumentResult>();
+                return new Dictionary<string, ArgumentResult>();
             }
 
 
@@ -107,7 +107,7 @@ namespace IfcOpenShell
             return value;
         }
 
-        public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, EntityInstanceExtensions.ArgumentResult>>
+        public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, ArgumentResult>>
             GetPsets(this EntityInstance instance,
                 bool onlyPsets = false,
                 bool onlyQtos = false,
@@ -116,7 +116,7 @@ namespace IfcOpenShell
                 )
         {
             var results =
-                new Dictionary<string, IReadOnlyDictionary<string, EntityInstanceExtensions.ArgumentResult>>();
+                new Dictionary<string, IReadOnlyDictionary<string, ArgumentResult>>();
             
             if (instance.is_a("IfcTypeObject") && 
                 instance.TryGetAttributeAsEntityList("HasPropertySets", out var hasPropertySets))
@@ -130,7 +130,7 @@ namespace IfcOpenShell
                         continue;
                     }
 
-                    var pset = instance.getPropertyDefinition() ?? new Dictionary<string, EntityInstanceExtensions.ArgumentResult>();
+                    var pset = instance.getPropertyDefinition() ?? new Dictionary<string, ArgumentResult>();
                     results[name] = pset;
                 }
             } else if (instance.is_a("IfcMaterialDefinition") || instance.is_a("IfcProfileDef"))
@@ -143,7 +143,7 @@ namespace IfcOpenShell
                     foreach (var definition in props)
                     {
                         var name = definition.TryGetAttributeAsString("Name", out var n) ? n : "Unknown";
-                        var pset = instance.getPropertyDefinition() ?? new Dictionary<string, EntityInstanceExtensions.ArgumentResult>();
+                        var pset = instance.getPropertyDefinition() ?? new Dictionary<string, ArgumentResult>();
                         results[name] = pset;
                     }
                 }
@@ -151,7 +151,7 @@ namespace IfcOpenShell
             {
                 if (shouldInherit)
                 {
-                    var type = instance.get_type();
+                    var type = instance.GetConstructionType();
                     if (type != null)
                     {
                         var typeResults = GetPsets(type, onlyPsets, onlyQtos, shouldInherit: false, verbose: verbose);
@@ -174,7 +174,7 @@ namespace IfcOpenShell
                         }
                         var name = def.TryGetAttributeAsString("Name", out var n) ? n : "Unknown";
 
-                        var pset = instance.getPropertyDefinition() ?? new Dictionary<string, EntityInstanceExtensions.ArgumentResult>();
+                        var pset = def.getPropertyDefinition() ?? new Dictionary<string, ArgumentResult>();
                         results[name] = pset;
                     }
                 }
@@ -182,37 +182,7 @@ namespace IfcOpenShell
             return results;
         }
         
-        /// Retrieves the construction type element of an element occurrence
-        ///
-        /// param element: The element occurrence
-        /// type: ifcopenshell.entity_instance
-        /// return: The related type element
-        /// rtype: Union[ifcopenshell.entity_instance, None]
-
-        /// Example:
-
-        ///.. code:: python
-
-        ///   element = ifcopenshell.by_type("IfcWall")[0]
-        ///   element_type = ifcopenshell.util.element.get_type(element)
-        private static EntityInstance get_type(this EntityInstance entityInstance)
-        {
-            if (entityInstance.is_a("IfcTypeObject")) return entityInstance;
-            if (entityInstance.TryGetAttributeAsEntity("IsTypedBy", out var typedBy)) return typedBy;
-            if (entityInstance.TryGetAttributeAsEntityList("IsDefinedBy", out var definedBy)) // ifc2x3
-            {
-                foreach (var definer in definedBy)
-                {
-                    if (definer.is_a("IfcRelDefinesByType"))
-                    {
-                        return definer.TryGetAttributeAsEntity("RelatingType", out var relType) ? relType : null;
-                    }
-                }                
-            }
-            return null;
-        }
-                
-        private static IReadOnlyDictionary<string, EntityInstanceExtensions.ArgumentResult> getPropertyDefinition(this EntityInstance definition,
+        private static IReadOnlyDictionary<string, ArgumentResult> getPropertyDefinition(this EntityInstance definition,
             string? propertyName = null, bool verbose = false)
         {
             if (definition is null)
@@ -225,7 +195,7 @@ namespace IfcOpenShell
                 throw new NotImplementedException();
             }
 
-            var properties = new Dictionary<string, EntityInstanceExtensions.ArgumentResult>();
+            var properties = new Dictionary<string, ArgumentResult>();
 
             switch (ifcClass)
             {
@@ -235,7 +205,8 @@ namespace IfcOpenShell
                         var quantitiesProps = getQuantities(quantities, verbose);
                         foreach (var (name, value) in quantitiesProps)
                         {
-                            properties.Add(name, new EntityInstanceExtensions.ArgumentResult.FromEntityInstance(value));
+                            // TODO: what if already exists?
+                            properties.Add(name, value);
                         }
                     }
                     break;
@@ -252,12 +223,13 @@ namespace IfcOpenShell
                     {
                         if(definition.TryGetAttributeAtIndex(propIndex)?.TryGetValue(out var prop) ?? false)
                         {
-                            properties.Add(definition.get_argument_name(propIndex), new EntityInstanceExtensions.ArgumentResult.FromEntityInstance(prop));
+                            properties.Add(definition.get_argument_name(propIndex), new ArgumentResult.FromEntityInstance(prop));
                         }
                     }
                     break;
                     
             }
+            properties["id"] = new ArgumentResult.FromInt(definition.id());
             return properties;
             
             
@@ -275,9 +247,9 @@ namespace IfcOpenShell
             
         }
 
-        private static IReadOnlyDictionary<string, EntityInstanceExtensions.ArgumentResult> getProperties(IEnumerable<EntityInstance> properties, bool verbose = false)
+        private static IReadOnlyDictionary<string, ArgumentResult> getProperties(IEnumerable<EntityInstance> properties, bool verbose = false)
         {
-            var result = new Dictionary<string, EntityInstanceExtensions.ArgumentResult>();
+            var result = new Dictionary<string, ArgumentResult>();
 
             foreach (var prop in properties)
             {
@@ -290,7 +262,7 @@ namespace IfcOpenShell
                     case "IfcPropertySingleValue":
                         const uint IfcPropertySingleValue_NominalValue = 2;
                         var singleVal = prop.get_argument(IfcPropertySingleValue_NominalValue);
-                        result.Add(name, new EntityInstanceExtensions.ArgumentResult.FromArgumentByType(singleVal));
+                        result.Add(name, new ArgumentResult.FromArgumentByType(singleVal));
                         break;
                     case "IfcPropertyEnumeratedValue":
                         throw new NotImplementedException();
@@ -316,10 +288,86 @@ namespace IfcOpenShell
             return result;
         }
         
-        private static IReadOnlyDictionary<string, EntityInstance> getQuantities(IEnumerable<EntityInstance> quantities, bool verbose = false)
+        private static IReadOnlyDictionary<string, ArgumentResult> getQuantity(IEnumerable<EntityInstance> quantities, string searchName, bool verbose = false)
         {
+            var result = new Dictionary<string, ArgumentResult>();
 
-            throw new NotImplementedException();
+            foreach (var quantity in quantities)
+            {
+                var quantityName = quantity.TryGetAttributeAsString("Name", out var n) ? n : "Unknown";
+                if(quantityName != searchName)
+                    continue;
+                
+                if (quantity.is_a("IfcPhysicalSimpleQuantity") &&
+                    quantity.TryGetAttributeAsEntity("Unit", out var unit))
+                {
+                    result[quantityName] = new ArgumentResult.FromEntityInstance(unit);
+                } else if (quantity.is_a("IfcPhysicalComplexQuantity"))
+                {
+                    foreach (var (name, value) in quantity.GetInfo())
+                    {
+                        if(value != null && name != "Name" && name != "HasQuantities")
+                        {
+                            result.Add(name, value);
+                        }
+                    }
+
+                    if (quantity.TryGetAttributeAsEntityList("HasQuantities", out var subQuantities))
+                    {
+                        throw new NotImplementedException();
+                        // var subQuantitiesProps = getQuantities(subQuantities, verbose);
+                        // foreach (var (subName, value) in subQuantitiesProps)
+                        // {
+                        //     result.Add(subName, value);
+                        // }
+                    }
+                }
+                // python impl also returns inside the loop
+                return result;
+                
+            }
+
+            // fallback: return empty dictionary
+            return result;
+        }
+        
+        
+        private static IReadOnlyDictionary<string, ArgumentResult> getQuantities(IEnumerable<EntityInstance> quantities, bool verbose = false)
+        {
+            var result = new Dictionary<string, ArgumentResult>();
+
+            foreach (var quantity in quantities)
+            {
+                var quantityName = quantity.TryGetAttributeAsString("Name", out var n) ? n : "Unknown";
+                
+                if (quantity.is_a("IfcPhysicalSimpleQuantity"))
+                {
+                    // 3 IfcPhysicalSimpleQuantity.Unit 
+                    result[quantityName] = new ArgumentResult.FromArgumentByType(quantity.get_argument(3));
+                } else if (quantity.is_a("IfcPhysicalComplexQuantity"))
+                {
+                    foreach (var (name, value) in quantity.GetInfo())
+                    {
+                        if(value != null && name != "Name" && name != "HasQuantities")
+                        {
+                            result.Add(name, value);
+                        }
+                    }
+
+                    if (quantity.TryGetAttributeAsEntityList("HasQuantities", out var subQuantities))
+                    {
+                        throw new NotImplementedException("IfcPhysicalComplexQuantity.HasQuantities not implemented");
+                        // var subQuantitiesProps = getQuantities(subQuantities, verbose);
+                        // foreach (var (subName, value) in subQuantitiesProps)
+                        // {
+                        //     result.Add(subName, value);
+                        // }
+                    }
+                }
+            }
+
+            // fallback: return empty dictionary
+            return result;
         }
 
         public static EntityArgument TryGetAttributeAtIndex(this EntityInstance instance, uint key)
