@@ -196,6 +196,7 @@
 	#include "../ifcparse/Argument.h"
 	#include "../ifcparse/aggregate_of_instance.h"
 	#include "../ifcparse/IfcBaseClass.h"
+	#include "../ifcparse/IfcBaseEntity.h"
 	#include "../ifcparse/IfcFile.h"
 	#include "../ifcparse/IfcSchema.h"
 	#include "../ifcparse/utils.h"

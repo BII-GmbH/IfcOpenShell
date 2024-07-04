@@ -642,9 +642,10 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 %inline %{
 	IfcParse::IfcFile* open(const std::string& fn) {
 		IfcParse::IfcFile* f;
-		//Py_BEGIN_ALLOW_THREADS;
 		f = new IfcParse::IfcFile(fn);
-		//Py_END_ALLOW_THREADS;
+		if(!f->good()) {
+			throw std::runtime_error("Error while opening file");
+		}
 		return f;
 	}
 
@@ -654,7 +655,11 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 		IfcParse::IfcFile* f;
 		//Py_BEGIN_ALLOW_THREADS;
 		f = new IfcParse::IfcFile((void *)copiedData, data.length());
-		//Py_END_ALLOW_THREADS;
+		
+		if(!f->good()) {
+			f->
+			throw std::runtime_error("Error while opening file");
+		}
 		return f;
 	}
 
