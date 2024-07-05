@@ -11,6 +11,54 @@ namespace IfcOpenShell
 
         public abstract ArgumentType ArgumentType { get; }
 
+        #region Get
+        public virtual string GetAsString()
+        {
+            return default;
+        }
+
+        public virtual int GetAsInt()
+        {
+            return default;
+        }
+
+        public virtual bool GetAsBool()
+        {
+            return default;
+        }
+        
+        public virtual double GetAsDouble()
+        {
+            return default;
+        }
+        
+        public virtual EntityInstance GetAsEntity()
+        {
+            return null;
+        }
+
+        public virtual IntVector GetAsIntList()
+        {
+            return null;
+        }
+
+        public virtual DoubleVector GetAsDoubleList()
+        {
+            return null;
+        }
+        
+        public virtual StringVector GetAsStringList()
+        {
+            return null;
+        }
+        
+        public virtual aggregate_of_instance GetAsEntityList()
+        {
+            return null;
+        }
+        #endregion
+        
+        #region Try Get
         public virtual bool TryGetAsString(out string val)
         {
             val = default;
@@ -64,6 +112,7 @@ namespace IfcOpenShell
             val = null;
             return false;
         }
+        #endregion
 
         internal class FromArgumentByType : ArgumentResult
         {
@@ -74,6 +123,53 @@ namespace IfcOpenShell
 
             public override ArgumentType ArgumentType => wrapped.first;
 
+            #region Get
+            public override string GetAsString()
+            {
+                return wrapped.TryGetAsString().TryGetValue(out var v) ? v : default;
+            }
+
+            public override int GetAsInt()
+            {
+                return wrapped.TryGetAsInt().TryGetValue(out var v) ? v : default;
+            }
+
+            public override bool GetAsBool()
+            {
+                return wrapped.TryGetAsBool().TryGetValue(out var v) ? v : default;
+            }
+        
+            public override double GetAsDouble()
+            {
+                return wrapped.TryGetAsDouble().TryGetValue(out var v) ? v : default;
+            }
+        
+            public override EntityInstance GetAsEntity()
+            {
+                return wrapped.TryGetAsEntity().TryGetValue(out var v) ? v : null;
+            }
+
+            public override IntVector GetAsIntList()
+            {
+                return wrapped.TryGetAsIntList().TryGetValue(out var v) ? v : null;
+            }
+
+            public override DoubleVector GetAsDoubleList()
+            {
+                return wrapped.TryGetAsDoubleList().TryGetValue(out var v) ? v : null;
+            }
+        
+            public override StringVector GetAsStringList()
+            {
+                return wrapped.TryGetAsStringList().TryGetValue(out var v) ? v : null;
+            }
+        
+            public override aggregate_of_instance GetAsEntityList()
+            {
+                return wrapped.TryGetAsEntityList().TryGetValue(out var v) ? v : null;
+            }
+            #endregion
+            #region Try Get
             public override bool TryGetAsString(out string val)
             {
                 val = default;
@@ -127,7 +223,7 @@ namespace IfcOpenShell
                 val = null;
                 return wrapped.TryGetAsEntityList().TryGetValue(out val);
             }
-
+            #endregion
 
             private readonly ArgumentByType wrapped;
         }
@@ -140,6 +236,11 @@ namespace IfcOpenShell
             }
 
             public override ArgumentType ArgumentType => ArgumentType.Argument_AGGREGATE_OF_ENTITY_INSTANCE;
+
+            public override aggregate_of_instance GetAsEntityList()
+            {
+                return aggregate;
+            }
 
             public override bool TryGetAsEntityList(out aggregate_of_instance val)
             {
@@ -159,6 +260,11 @@ namespace IfcOpenShell
 
             public override ArgumentType ArgumentType => ArgumentType.Argument_ENTITY_INSTANCE;
 
+            public override EntityInstance GetAsEntity()
+            {
+                return instance;
+            }
+            
             public override bool TryGetAsEntity(out EntityInstance val)
             {
                 val = instance;
@@ -177,6 +283,11 @@ namespace IfcOpenShell
 
             public override ArgumentType ArgumentType => ArgumentType.Argument_STRING;
 
+            public override string GetAsString()
+            {
+                return instance;
+            }
+            
             public override bool TryGetAsString(out string val)
             {
                 val = instance;
@@ -195,6 +306,11 @@ namespace IfcOpenShell
 
             public override ArgumentType ArgumentType => ArgumentType.Argument_INT;
 
+            public override int GetAsInt()
+            {
+                return instance;
+            }
+            
             public override bool TryGetAsInt(out int val)
             {
                 val = instance;
@@ -213,6 +329,11 @@ namespace IfcOpenShell
 
             public override ArgumentType ArgumentType => ArgumentType.Argument_DOUBLE;
 
+            public override double GetAsDouble()
+            {
+                return instance;
+            }
+            
             public override bool TryGetAsDouble(out double val)
             {
                 val = instance;
@@ -221,7 +342,5 @@ namespace IfcOpenShell
 
             private readonly double instance;
         }
-
-        
     }
 }

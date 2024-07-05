@@ -216,6 +216,54 @@ namespace IfcOpenShell {
         //     return values.Select(entry => walk(condition, g, entry));
         // }
         
+        #region Get Attribute
+        public static string GetAttributeAsString(this EntityInstance instance , string attributeName)
+        {
+            return instance.GetAttribute(attributeName)?.GetAsString();
+        }
+        
+        public static int GetAttributeAsInt(this EntityInstance instance , string attributeName)
+        {
+            return instance.GetAttribute(attributeName)?.GetAsInt() ?? default;
+        }
+        
+        public static bool GetAttributeAsBool(this EntityInstance instance , string attributeName)
+        {
+            return instance.GetAttribute(attributeName)?.GetAsBool() ?? default;
+        }
+        
+        public static double GetAttributeAsDouble(this EntityInstance instance , string attributeName)
+        {
+            return instance.GetAttribute(attributeName)?.GetAsDouble() ?? default;
+        }
+        
+        public static EntityInstance GetAttributeAsEntity(this EntityInstance instance , string attributeName)
+        {
+            return instance.GetAttribute(attributeName)?.GetAsEntity();
+        }
+        
+        public static IntVector GetAttributeAsIntList(this EntityInstance instance , string attributeName)
+        {
+            return instance.GetAttribute(attributeName)?.GetAsIntList();
+        }
+        
+        public static DoubleVector GetAttributeAsDoubleList(this EntityInstance instance , string attributeName)
+        {
+            return instance.GetAttribute(attributeName)?.GetAsDoubleList();
+        }
+        
+        public static StringVector GetAttributeAsStringList(this EntityInstance instance , string attributeName)
+        {
+            return instance.GetAttribute(attributeName)?.GetAsStringList();
+        }
+        
+        public static aggregate_of_instance GetAttributeAsEntityList(this EntityInstance instance , string attributeName)
+        {
+            return instance.GetAttribute(attributeName)?.GetAsEntityList();
+        }
+        #endregion
+        
+        #region Try Get Attribute
         public static bool TryGetAttributeAsString(this EntityInstance instance , string attributeName, out string attributeValue)
         {
             attributeValue = default;
@@ -270,6 +318,7 @@ namespace IfcOpenShell {
             var att = instance.GetAttribute(attributeName);
             return att?.TryGetAsEntityList(out attributeValue) ?? false;
         }
+        #endregion
         
         public static ArgumentResult GetAttribute(this EntityInstance instance, string attributeName) {
             // attribute categories:

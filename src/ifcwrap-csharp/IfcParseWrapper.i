@@ -657,7 +657,6 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 		f = new IfcParse::IfcFile((void *)copiedData, data.length());
 		
 		if(!f->good()) {
-			f->
 			throw std::runtime_error("Error while opening file");
 		}
 		return f;

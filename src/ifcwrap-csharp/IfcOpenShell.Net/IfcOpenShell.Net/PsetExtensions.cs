@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,7 +7,7 @@ namespace IfcOpenShell
 {
     public static class PsetExtensions
     {
-        public static IReadOnlyDictionary<string, ArgumentResult> GetPset(this EntityInstance element,
+        public static IReadOnlyDictionary<string, ArgumentResult>? GetPset(this EntityInstance element,
             string psetName, 
             string? propertyName = null,
             bool onlyPsets = false, 
@@ -15,8 +16,8 @@ namespace IfcOpenShell
             bool verbose = false
         )
         {
-            EntityInstance pset = null;
-            IReadOnlyDictionary<string, ArgumentResult> type_pset = null;
+            EntityInstance? pset = null;
+            IReadOnlyDictionary<string, ArgumentResult>? typePset = null;
             if (element.is_a("IfcTypeObject") && 
                 element.TryGetAttributeAsEntityList("HasPropertySets", out var typeObjectPsets))
             {
@@ -47,7 +48,7 @@ namespace IfcOpenShell
                 {
                     var elemType = element.GetConstructionType();
                     if (elemType != null)
-                        type_pset = elemType.GetPset(psetName, propertyName, shouldInherit: false, verbose: verbose);
+                        typePset = elemType.GetPset(psetName, propertyName, shouldInherit: false, verbose: verbose);
                     //throw new NotImplementedException();
                 }
 
@@ -77,12 +78,12 @@ namespace IfcOpenShell
                 }
             }
 
-            if (type_pset != null && propertyName == null)
+            if (typePset != null && propertyName == null)
             {
                 throw new NotImplementedException();
             }
 
-            if (pset == null && type_pset == null)
+            if (pset == null && typePset == null)
             {
                 // TODO: null?
                 return new Dictionary<string, ArgumentResult>();
@@ -91,7 +92,7 @@ namespace IfcOpenShell
 
             if (propertyName == null)
             {
-                if (type_pset != null)
+                if (typePset != null)
                 {
                     throw new NotImplementedException();
                 }
@@ -100,9 +101,9 @@ namespace IfcOpenShell
             }
             var value = pset.getPropertyDefinition(propertyName: propertyName, verbose: verbose);
             
-            if(value is null && type_pset != null)
+            if(value is null && typePset != null)
             {
-                return type_pset;
+                return typePset;
             }
             return value;
         }
@@ -182,7 +183,7 @@ namespace IfcOpenShell
             return results;
         }
         
-        private static IReadOnlyDictionary<string, ArgumentResult> getPropertyDefinition(this EntityInstance definition,
+        private static IReadOnlyDictionary<string, ArgumentResult>? getPropertyDefinition(this EntityInstance? definition,
             string? propertyName = null, bool verbose = false)
         {
             if (definition is null)
@@ -233,7 +234,7 @@ namespace IfcOpenShell
             return properties;
             
             
-            void getPropertiesAndAddToResult(EntityInstance fromInstance, string propertyToQuery)
+            void getPropertiesAndAddToResult(EntityInstance? fromInstance, string propertyToQuery)
             {
                 if (fromInstance.TryGetAttributeAsEntityList(propertyToQuery, out var propertiesList))
                 {
@@ -370,7 +371,7 @@ namespace IfcOpenShell
             return result;
         }
 
-        public static EntityArgument TryGetAttributeAtIndex(this EntityInstance instance, uint key)
+        public static EntityArgument TryGetAttributeAtIndex(this EntityInstance? instance, uint key)
         {
             if(key >= instance.Length())
             {

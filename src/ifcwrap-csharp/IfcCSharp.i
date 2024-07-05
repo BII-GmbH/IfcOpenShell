@@ -253,10 +253,11 @@
 %}
 
 
-%newobject TryGetAsString;
 
 %define TRY_GET_AS(TYPE, NAME, TYPECHECK)
 	%extend std::pair<IfcUtil::ArgumentType, Argument*> {
+		
+		%newobject TryGetAsString;
 		TypedArgument<TYPE>* TryGetAs##NAME() {
 			const Argument& arg = *($self->second);
 			const IfcUtil::ArgumentType type = $self->first;
