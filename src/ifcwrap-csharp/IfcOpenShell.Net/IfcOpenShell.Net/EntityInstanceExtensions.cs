@@ -1,5 +1,5 @@
+#nullable enable
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -16,7 +16,7 @@ namespace IfcOpenShell {
         /// </summary>
         /// <param name="element">The element occurrence</param>
         /// <returns>The related type element, can be null</returns>
-        public static EntityInstance GetConstructionType(this EntityInstance element)
+        public static EntityInstance? GetConstructionType(this EntityInstance element)
         {
             if (element.is_a("IfcTypeObject"))
                 return element;
@@ -41,6 +41,22 @@ namespace IfcOpenShell {
         }
 
         /// <summary>
+        /// Return the unique id of the element in the ifc file.
+        /// However, this id only exists for ifc objects that inherit from IfcRoot, so may be null.
+        /// </summary>
+        /// <param name="element"></param>
+        /// <returns></returns>
+        public static string? Guid(this EntityInstance element)
+        {
+            if (element.Declaration().Is("IfcRoot"))
+            {
+                return element.GetAttributeAsString("GlobalId");
+            }
+            return null;
+        } 
+        
+        
+        /// <summary>
         /// Return a dictionary of the entity_instance's properties (Python and IFC) and their values.
         /// </summary>
         /// <param name="instance"></param>
@@ -49,7 +65,7 @@ namespace IfcOpenShell {
         /// <param name="scalarOnly">Filters out all values that are IFC instances</param>
         /// <param name="ignore">A list of attribute names to ignore</param>
         /// <returns>A dictionary of properties and their corresponding values</returns>
-        public static IReadOnlyDictionary<string, ArgumentResult> GetInfo(this EntityInstance instance, bool includeIdentifier=true, bool recursive = false, bool scalarOnly=false, IEnumerable<string> ignore=null)
+        public static IReadOnlyDictionary<string, ArgumentResult> GetInfo(this EntityInstance instance, bool includeIdentifier=true, bool recursive = false, bool scalarOnly=false, IEnumerable<string>? ignore=null)
         {
             var ignoreHashSet = ignore?.ToHashSet() ?? new HashSet<string>();
             
@@ -91,7 +107,7 @@ namespace IfcOpenShell {
         }
         
         // TODO: find a way to have this auto-generated
-    	public static bool TryGetValue(this StringArgument arg, out string value)
+    	public static bool TryGetValue(this StringArgument arg, out string? value)
         {
             if (arg.HasValue())
             {
@@ -146,7 +162,7 @@ namespace IfcOpenShell {
             return false;
         }
         
-        public static bool TryGetValue(this IntListArgument arg, out IntVector value)
+        public static bool TryGetValue(this IntListArgument arg, out IntVector? value)
         {
             if (arg.HasValue())
             {
@@ -157,7 +173,7 @@ namespace IfcOpenShell {
             return false;
         }
         
-        public static bool TryGetValue(this DoubleListArgument arg, out DoubleVector value)
+        public static bool TryGetValue(this DoubleListArgument arg, out DoubleVector? value)
         {
             if (arg.HasValue())
             {
@@ -168,7 +184,7 @@ namespace IfcOpenShell {
             return false;
         }
         
-        public static bool TryGetValue(this StringListArgument arg, out StringVector value)
+        public static bool TryGetValue(this StringListArgument arg, out StringVector? value)
         {
             if (arg.HasValue())
             {
@@ -179,7 +195,7 @@ namespace IfcOpenShell {
             return false;
         }
         
-        public static bool TryGetValue(this EntityListArgument arg, out aggregate_of_instance value)
+        public static bool TryGetValue(this EntityListArgument arg, out aggregate_of_instance? value)
         {
             if (arg.HasValue())
             {
@@ -217,7 +233,7 @@ namespace IfcOpenShell {
         // }
         
         #region Get Attribute
-        public static string GetAttributeAsString(this EntityInstance instance , string attributeName)
+        public static string? GetAttributeAsString(this EntityInstance instance , string attributeName)
         {
             return instance.GetAttribute(attributeName)?.GetAsString();
         }
@@ -237,27 +253,27 @@ namespace IfcOpenShell {
             return instance.GetAttribute(attributeName)?.GetAsDouble() ?? default;
         }
         
-        public static EntityInstance GetAttributeAsEntity(this EntityInstance instance , string attributeName)
+        public static EntityInstance? GetAttributeAsEntity(this EntityInstance instance , string attributeName)
         {
             return instance.GetAttribute(attributeName)?.GetAsEntity();
         }
         
-        public static IntVector GetAttributeAsIntList(this EntityInstance instance , string attributeName)
+        public static IntVector? GetAttributeAsIntList(this EntityInstance instance , string attributeName)
         {
             return instance.GetAttribute(attributeName)?.GetAsIntList();
         }
         
-        public static DoubleVector GetAttributeAsDoubleList(this EntityInstance instance , string attributeName)
+        public static DoubleVector? GetAttributeAsDoubleList(this EntityInstance instance , string attributeName)
         {
             return instance.GetAttribute(attributeName)?.GetAsDoubleList();
         }
         
-        public static StringVector GetAttributeAsStringList(this EntityInstance instance , string attributeName)
+        public static StringVector? GetAttributeAsStringList(this EntityInstance instance , string attributeName)
         {
             return instance.GetAttribute(attributeName)?.GetAsStringList();
         }
         
-        public static aggregate_of_instance GetAttributeAsEntityList(this EntityInstance instance , string attributeName)
+        public static aggregate_of_instance? GetAttributeAsEntityList(this EntityInstance instance , string attributeName)
         {
             return instance.GetAttribute(attributeName)?.GetAsEntityList();
         }
@@ -320,7 +336,22 @@ namespace IfcOpenShell {
         }
         #endregion
         
-        public static ArgumentResult GetAttribute(this EntityInstance instance, string attributeName) {
+        public static EntityArgument? TryGetAttributeAtIndex(this EntityInstance? instance, uint key)
+        {
+            if (instance == null) return null;
+            if(key >= instance.Length())
+            {
+                throw new IndexOutOfRangeException($"Attribute index {key} out of range for instance of type {instance.is_a()}");
+            }
+            return instance.get_argument(key).TryGetAsEntity();
+        }
+
+        public static ArgumentResult GetArgument(this EntityInstance instance, uint argIndex)
+        {
+            return new ArgumentResult.FromArgumentByType(instance.get_argument(argIndex));
+        }
+        
+        public static ArgumentResult? GetAttribute(this EntityInstance instance, string attributeName) {
             // attribute categories:
             const int INVALID = 0;
             const int FORWARD = 1;
@@ -351,8 +382,10 @@ namespace IfcOpenShell {
             // TODO need to understand what the hell the python impl is doing
             // throw new System.NotImplementedException();
             //
-            throw new System.NotImplementedException();
+            //throw new System.NotImplementedException();
             return null;
         }
+        
+        
     }
 }

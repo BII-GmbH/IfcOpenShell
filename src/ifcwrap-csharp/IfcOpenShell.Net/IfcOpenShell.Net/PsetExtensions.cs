@@ -236,7 +236,7 @@ namespace IfcOpenShell
             
             void getPropertiesAndAddToResult(EntityInstance? fromInstance, string propertyToQuery)
             {
-                if (fromInstance.TryGetAttributeAsEntityList(propertyToQuery, out var propertiesList))
+                if (fromInstance != null && fromInstance.TryGetAttributeAsEntityList(propertyToQuery, out var propertiesList))
                 {
                     var props = getProperties(propertiesList, verbose);
                     foreach (var (name, value) in props)
@@ -261,9 +261,9 @@ namespace IfcOpenShell
                 switch (ifcClass)
                 {
                     case "IfcPropertySingleValue":
-                        const uint IfcPropertySingleValue_NominalValue = 2;
-                        var singleVal = prop.get_argument(IfcPropertySingleValue_NominalValue);
-                        result.Add(name, new ArgumentResult.FromArgumentByType(singleVal));
+                        // this diverges from the python version that directly returns the .NominalValue,
+                        // but discarding the unit here makes no sense to me
+                        result.Add(name, new ArgumentResult.FromEntityInstance(prop));
                         break;
                     case "IfcPropertyEnumeratedValue":
                         throw new NotImplementedException();
@@ -370,15 +370,5 @@ namespace IfcOpenShell
             // fallback: return empty dictionary
             return result;
         }
-
-        public static EntityArgument TryGetAttributeAtIndex(this EntityInstance? instance, uint key)
-        {
-            if(key >= instance.Length())
-            {
-                throw new IndexOutOfRangeException($"Attribute index {key} out of range for instance of type {instance.is_a()}");
-            }
-            return instance.get_argument(key).TryGetAsEntity();
-        }
-        
     }
 }

@@ -330,6 +330,8 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 		return t;
 	}
 
+	%csmethodmodifiers get_argument "internal"
+
 	std::pair<IfcUtil::ArgumentType,Argument*> get_argument(unsigned i) {
 		return std::pair<IfcUtil::ArgumentType,Argument*>($self->data().getArgument(i)->type(), $self->data().getArgument(i));
 	}
@@ -350,7 +352,7 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 		return $self->data().toString();
 	}
 
-	std::string to_string(bool valid_spf) const {
+	std::string ToStringSpf(bool valid_spf) const {
 		return $self->data().toString(valid_spf);
 	}
 
