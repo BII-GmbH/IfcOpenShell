@@ -1,9 +1,80 @@
 ﻿using System;
+using System.Linq;
 
 namespace IfcOpenShell
 {
     public static class UnitUtils
     {
+        internal static readonly string[] siUnitNames =
+        {
+            "AMPERE",
+            "BECQUEREL",
+            "CANDELA",
+            "COULOMB",
+            "CUBIC_METRE",
+            "DEGREE_CELSIUS",
+            "FARAD",
+            "GRAM",
+            "GRAY",
+            "HENRY",
+            "HERTZ",
+            "JOULE",
+            "KELVIN",
+            "LUMEN",
+            "LUX",
+            "MOLE",
+            "NEWTON",
+            "OHM",
+            "PASCAL",
+            "RADIAN",
+            "SECOND",
+            "SIEMENS",
+            "SIEVERT",
+            "SQUARE_METRE",
+            "METRE",
+            "STERADIAN",
+            "TESLA",
+            "VOLT",
+            "WATT",
+            "WEBER"
+        };
+
+        // See https://github.com/buildingSMART/IFC4.3.x-development/issues/72
+        internal static string siUnitTypeToUnitName(string unitType) => unitType switch {
+            "ABSORBEDDOSEUNIT" => "GRAY",
+            "AMOUNTOFSUBSTANCEUNIT" => "MOLE",
+            "AREAUNIT" => "SQUARE_METRE",
+            "DOSEEQUIVALENTUNIT" => "SIEVERT",
+            "ELECTRICCAPACITANCEUNIT" => "FARAD",
+            "ELECTRICCHARGEUNIT" => "COULOMB",
+            "ELECTRICCONDUCTANCEUNIT" => "SIEMENS",
+            "ELECTRICCURRENTUNIT" => "AMPERE",
+            "ELECTRICRESISTANCEUNIT" => "OHM",
+            "ELECTRICVOLTAGEUNIT" => "VOLT",
+            "ENERGYUNIT" => "JOULE",
+            "FORCEUNIT" => "NEWTON",
+            "FREQUENCYUNIT" => "HERTZ",
+            "ILLUMINANCEUNIT" => "LUX",
+            "INDUCTANCEUNIT" => "HENRY",
+            "LENGTHUNIT" => "METRE",
+            "LUMINOUSFLUXUNIT" => "LUMEN",
+            "LUMINOUSINTENSITYUNIT" => "CANDELA",
+            "MAGNETICFLUXDENSITYUNIT" => "TESLA",
+            "MAGNETICFLUXUNIT" => "WEBER",
+            "MASSUNIT" => "GRAM",
+            "PLANEANGLEUNIT" => "RADIAN",
+            "POWERUNIT" => "WATT",
+            "PRESSUREUNIT" => "PASCAL",
+            "RADIOACTIVITYUNIT" => "BECQUEREL",
+            "SOLIDANGLEUNIT" => "STERADIAN",
+            "THERMODYNAMICTEMPERATUREUNIT" => "KELVIN", // Or, DEGREE_CELSIUS, but this is a quirk of IFC
+            "TIMEUNIT"=> "SECOND",
+            "VOLUMEUNIT"=> "CUBIC_METRE",
+            "USERDEFINED"=> "METRE",
+            _ => throw new ArgumentOutOfRangeException(nameof(unitType), unitType, $"Unknown unit type {unitType}")
+        };
+        
+        
         internal static string prefixSymbol(string prefix)
         {
             // assume base unit -> no prefix needed
@@ -31,17 +102,45 @@ namespace IfcOpenShell
             };
         }
 
-        internal static string unitSymbol(string unit) => unit switch
+        internal static string unitSymbol(string unit)
+        {
+            // assume base unit -> no prefix needed
+            if(string.IsNullOrEmpty(unit))
+                return string.Empty;
+            return unit switch
             {
-                // TODO: I think this is missing units?!?!?! for example why is hertz not in here?
-                // NOTE: IN PYTHON THE SI UNITS ARE DEFINED AS UPPERCASE - THAT IS ANNOYING THOUGH, so dont do it here
-                // METERs are spelled correctly in c# too!
                 // si units
-                "cubic meter" => "m3",
-                "gram" => "g",
-                "second" => "s",
-                "square meter" => "m2",
-                "meter" => "m",
+                "SECOND" => "s",
+                "METRE" => "m",
+                "GRAM" => "g", // si standard is kilogram, but that would mean weird edge cases for the unit prefix, so use gram instead
+                "AMPERE" => "A",
+                "KELVIN" => "K",
+                "MOLE" => "mol",
+                "CANDELA" => "cd",
+                // derived si units
+                "BECQUEREL" => "Bq",
+                "COULOMB" => "C",
+                "CUBIC_METRE" => "m³",
+                "DEGREE_CELSIUS" => "°C",
+                "FARAD" => "F",
+                "GRAY" => "Gy",
+                "HENRY" => "H",
+                "HERTZ" => "Hz",
+                "JOULE" => "J",
+                "LUMEN" => "lm",
+                "LUX" => "lx",
+                "NEWTON" => "N",
+                "OHM" => "Ω",
+                "PASCAL" => "Pa",
+                "RADIAN" => "rad",
+                "SIEMENS" => "S",
+                "SIEVERT" => "Sv",
+                "SQUARE_METRE" => "m²",
+                "STERADIAN" => "sr",
+                "TESLA" => "T",
+                "VOLT" => "V",
+                "WATT" => "W",
+                "WEBER" => "Wb",
                 // non si units
                 "cubic inch" => "in3",
                 "cubic foot" => "ft3",
@@ -83,7 +182,8 @@ namespace IfcOpenShell
                 "fahrenheit" => "°F",
                 _ => throw new ArgumentOutOfRangeException(nameof(unit), unit, $"Cannot find unit '{unit}'")
             };
-        
+        }
+
         internal static double prefixMultiplier(string prefix)
         {
             if (string.IsNullOrEmpty(prefix))
@@ -161,9 +261,12 @@ namespace IfcOpenShell
             {
                 symbol += prefixSymbol(unit.GetAttributeAsString("Prefix"));
             }
-
-            // NOTE: In the C# implementation the unit symbol method expects everything to be lowercase - this is different in python
-            var unitName = unit.GetAttributeAsString("Name")?.ToLower().Replace("metre", "meter").Replace("_", " ");
+            var unitName = unit.GetAttributeAsString("Name")?.Replace("METER","METRE") ?? string.Empty;
+            // (derived) si units are spelled uppercase, non-si units are lowercase 
+            if(!siUnitNames.Contains(unitName))
+            {
+                unitName = unitName.Replace("_", " ").ToLower();
+            }
             symbol += unitSymbol(unitName);
             return symbol;
         }
