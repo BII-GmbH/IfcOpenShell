@@ -23,52 +23,62 @@
 %ignore boost::hash_value;
 
 // This is only used for RGB colours, hence the size of 3
-%typemap(out) const double* {
-	$result = PyTuple_New(3);
-	for (int i = 0; i < 3; ++i) {
-		PyTuple_SetItem($result, i, PyFloat_FromDouble($1[i]));
-	}
-}
+// %typemap(out) const double* {
+// 	$result = PyTuple_New(3);
+// 	for (int i = 0; i < 3; ++i) {
+// 		PyTuple_SetItem($result, i, PyFloat_FromDouble($1[i]));
+// 	}
+// }
 
-%typemap(out) Eigen::Matrix4d {
-	$result = PyTuple_New(4);
-	for (int i = 0; i < 4; ++i) {
-		auto row = PyTuple_New(4);
-		for (int j = 0; j < 4; ++j) {
-			PyTuple_SetItem(row, j, PyFloat_FromDouble($1(i, j)));
-		}
-		PyTuple_SetItem($result, i, row);
-	}
-}
+// %typemap(out) Eigen::Matrix4d {
+// 	$result = PyTuple_New(4);
+// 	for (int i = 0; i < 4; ++i) {
+// 		auto row = PyTuple_New(4);
+// 		for (int j = 0; j < 4; ++j) {
+// 			PyTuple_SetItem(row, j, PyFloat_FromDouble($1(i, j)));
+// 		}
+// 		PyTuple_SetItem($result, i, row);
+// 	}
+// }
 
 // SWIG does not support bool references in a meaningful way, so the
 // ifcopenshell::geometry::Settings functions degrade to return a read only value
-%typemap(out) double& {
-	$result = SWIG_From_double(*$1);
-}
-%typemap(out) bool& {
-	$result = PyBool_FromLong(static_cast<long>(*$1));
-}
+// %typemap(out) double& {
+// 	$result = SWIG_From_double(*$1);
+// }
+// %typemap(out) bool& {
+// 	$result = PyBool_FromLong(static_cast<long>(*$1));
+// }
 
 %ignore IfcGeom::impl::tree::selector;
 
 // Using RTTI return a more specialized type of Element
 // Note that these elements are not to be owned by SWIG/Python as they will be freed automatically upon the next iteration
 // except for the IfcGeom::Element instances which are returned by Iterator::getObject() calls
-%typemap(out) IfcGeom::Element* {
-	IfcGeom::SerializedElement* serialized_elem = dynamic_cast<IfcGeom::SerializedElement*>($1);
-	IfcGeom::TriangulationElement* triangulation_elem = dynamic_cast<IfcGeom::TriangulationElement*>($1);
-	IfcGeom::BRepElement* brep_elem = dynamic_cast<IfcGeom::BRepElement*>($1);
-	if (triangulation_elem) {
-		$result = SWIG_NewPointerObj(SWIG_as_voidptr(triangulation_elem), SWIGTYPE_p_IfcGeom__TriangulationElement, 0);
-	} else if (serialized_elem) {
-		$result = SWIG_NewPointerObj(SWIG_as_voidptr(serialized_elem), SWIGTYPE_p_IfcGeom__SerializedElement, 0);
-	} else if (brep_elem) {
-		$result = SWIG_NewPointerObj(SWIG_as_voidptr(brep_elem), SWIGTYPE_p_IfcGeom__BRepElement, 0);
-	} else {
-		$result = SWIG_NewPointerObj(SWIG_as_voidptr($1), SWIGTYPE_p_IfcGeom__Element, SWIG_POINTER_OWN);
-	}
+%extend IfcGeom::Element {
+	IfcGeom::SerializedElement* TryGetAsSerializedElement();
+	IfcGeom::TriangulationElement* TryGetAsTriangulationElement();
+	IfcGeom::BRepElement* TryGetAsBRepElement();
 }
+
+
+%inline %{
+	IfcGeom::SerializedElement* IfcGeom_Element_TryGetAsSerializedElement(IfcGeom::Element* elem)
+	{
+		return dynamic_cast<IfcGeom::SerializedElement*>(elem);
+	}
+
+	IfcGeom::TriangulationElement* IfcGeom_Element_TryGetAsTriangulationElement(IfcGeom::Element* elem)
+	{
+		return dynamic_cast<IfcGeom::TriangulationElement*>(elem);
+	}
+
+	IfcGeom::BRepElement* IfcGeom_Element_TryGetAsBRepElement(IfcGeom::Element* elem)
+	{
+		return dynamic_cast<IfcGeom::BRepElement*>(elem);
+	}
+
+%}
 
 %newobject IfcGeom::Representation::BRep::item;
 
@@ -91,60 +101,60 @@
 %newobject IfcGeom::OpaqueNumber::operator*;
 %newobject IfcGeom::OpaqueNumber::operator/;
 
-%inline %{
-template <typename T>
-std::pair<char const*, size_t> vector_to_buffer(const T& t) {
-    using V = typename std::remove_reference<decltype(t)>::type;
-    return { reinterpret_cast<const char*>(t.data()), t.size() * sizeof(typename V::value_type) };
-}
-%}
+// %inline %{
+// template <typename T>
+// std::pair<char const*, size_t> vector_to_buffer(const T& t) {
+//     using V = typename std::remove_reference<decltype(t)>::type;
+//     return { reinterpret_cast<const char*>(t.data()), t.size() * sizeof(typename V::value_type) };
+// }
+// %}
 
-%ignore ifcopenshell::geometry::taxonomy::item::print;
+// %ignore ifcopenshell::geometry::taxonomy::item::print;
 
-%typemap(out) boost::variant<boost::blank, ifcopenshell::geometry::taxonomy::point3::ptr, double> {
-	if ($1.which() == 0) {
-		Py_INCREF(Py_None);
-		return Py_None;
-	} else if ($1.which() == 1) {
-		return SWIG_NewPointerObj(SWIG_as_voidptr(new std::shared_ptr<ifcopenshell::geometry::taxonomy::point3>(boost::get<ifcopenshell::geometry::taxonomy::point3::ptr>($1))), SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__point3_t, 0 | SWIG_POINTER_OWN);
-	} else {
-		return PyFloat_FromDouble(boost::get<double>($1));
-	}
-}
+// %typemap(out) boost::variant<boost::blank, ifcopenshell::geometry::taxonomy::point3::ptr, double> {
+// 	if ($1.which() == 0) {
+// 		Py_INCREF(Py_None);
+// 		return Py_None;
+// 	} else if ($1.which() == 1) {
+// 		return SWIG_NewPointerObj(SWIG_as_voidptr(new std::shared_ptr<ifcopenshell::geometry::taxonomy::point3>(boost::get<ifcopenshell::geometry::taxonomy::point3::ptr>($1))), SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__point3_t, 0 | SWIG_POINTER_OWN);
+// 	} else {
+// 		return PyFloat_FromDouble(boost::get<double>($1));
+// 	}
+// }
 
 
-%typemap(in) ifcopenshell::geometry::taxonomy::item::ptr {
-	// @this is really annoying, but apparently inheritance
-	// is lost in swig in the shared_ptr type hiearchy
-	using namespace ifcopenshell::geometry::taxonomy;
-	if (!$1) $1 = try_upcast<bspline_curve>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__bspline_curve_t);
-	if (!$1) $1 = try_upcast<bspline_surface>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__bspline_surface_t);
-	if (!$1) $1 = try_upcast<circle>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__circle_t);
-	if (!$1) $1 = try_upcast<collection>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__collection_t);
-	if (!$1) $1 = try_upcast<colour>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__colour_t);
-	if (!$1) $1 = try_upcast<cylinder>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__cylinder_t);
-	if (!$1) $1 = try_upcast<direction3>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__direction3_t);
-	if (!$1) $1 = try_upcast<edge>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__edge_t);
-	if (!$1) $1 = try_upcast<ellipse>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__ellipse_t);
-	if (!$1) $1 = try_upcast<extrusion>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__extrusion_t);
-	if (!$1) $1 = try_upcast<face>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__face_t);
-	if (!$1) $1 = try_upcast<line>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__line_t);
-	if (!$1) $1 = try_upcast<loft>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__loft_t);
-	if (!$1) $1 = try_upcast<loop>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__loop_t);
-	if (!$1) $1 = try_upcast<matrix4>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__matrix4_t);
-	if (!$1) $1 = try_upcast<node>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__node_t);
-	if (!$1) $1 = try_upcast<offset_curve>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__offset_curve_t);
-	if (!$1) $1 = try_upcast<piecewise_function>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__piecewise_function_t);
-	if (!$1) $1 = try_upcast<plane>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__plane_t);
-	if (!$1) $1 = try_upcast<point3>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__point3_t);
-	if (!$1) $1 = try_upcast<revolve>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__revolve_t);
-	if (!$1) $1 = try_upcast<shell>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__shell_t);
-	if (!$1) $1 = try_upcast<solid>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__solid_t);
-	if (!$1) $1 = try_upcast<sphere>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__sphere_t);
-	if (!$1) $1 = try_upcast<torus>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__torus_t);
-	if (!$1) $1 = try_upcast<style>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__style_t);
-	if (!$1) $1 = try_upcast<sweep_along_curve>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__sweep_along_curve_t);
-}
+// %typemap(in) ifcopenshell::geometry::taxonomy::item::ptr {
+// 	// @this is really annoying, but apparently inheritance
+// 	// is lost in swig in the shared_ptr type hiearchy
+// 	using namespace ifcopenshell::geometry::taxonomy;
+// 	if (!$1) $1 = try_upcast<bspline_curve>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__bspline_curve_t);
+// 	if (!$1) $1 = try_upcast<bspline_surface>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__bspline_surface_t);
+// 	if (!$1) $1 = try_upcast<circle>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__circle_t);
+// 	if (!$1) $1 = try_upcast<collection>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__collection_t);
+// 	if (!$1) $1 = try_upcast<colour>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__colour_t);
+// 	if (!$1) $1 = try_upcast<cylinder>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__cylinder_t);
+// 	if (!$1) $1 = try_upcast<direction3>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__direction3_t);
+// 	if (!$1) $1 = try_upcast<edge>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__edge_t);
+// 	if (!$1) $1 = try_upcast<ellipse>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__ellipse_t);
+// 	if (!$1) $1 = try_upcast<extrusion>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__extrusion_t);
+// 	if (!$1) $1 = try_upcast<face>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__face_t);
+// 	if (!$1) $1 = try_upcast<line>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__line_t);
+// 	if (!$1) $1 = try_upcast<loft>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__loft_t);
+// 	if (!$1) $1 = try_upcast<loop>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__loop_t);
+// 	if (!$1) $1 = try_upcast<matrix4>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__matrix4_t);
+// 	if (!$1) $1 = try_upcast<node>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__node_t);
+// 	if (!$1) $1 = try_upcast<offset_curve>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__offset_curve_t);
+// 	if (!$1) $1 = try_upcast<piecewise_function>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__piecewise_function_t);
+// 	if (!$1) $1 = try_upcast<plane>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__plane_t);
+// 	if (!$1) $1 = try_upcast<point3>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__point3_t);
+// 	if (!$1) $1 = try_upcast<revolve>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__revolve_t);
+// 	if (!$1) $1 = try_upcast<shell>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__shell_t);
+// 	if (!$1) $1 = try_upcast<solid>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__solid_t);
+// 	if (!$1) $1 = try_upcast<sphere>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__sphere_t);
+// 	if (!$1) $1 = try_upcast<torus>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__torus_t);
+// 	if (!$1) $1 = try_upcast<style>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__style_t);
+// 	if (!$1) $1 = try_upcast<sweep_along_curve>($input, SWIGTYPE_p_std__shared_ptrT_ifcopenshell__geometry__taxonomy__sweep_along_curve_t);
+// }
 
 %inline %{
 std::string taxonomy_item_repr(ifcopenshell::geometry::taxonomy::item::ptr i) {
@@ -223,34 +233,34 @@ std::string taxonomy_item_repr(ifcopenshell::geometry::taxonomy::item::ptr i) {
 	}
 }
 
-%extend ifcopenshell::geometry::taxonomy::point3 {
-	PyObject* coords_() const {
-		auto result = PyTuple_New(3);
-		for (int i = 0; i < 3; ++i) {
-			PyTuple_SET_ITEM(result, i, PyFloat_FromDouble($self->ccomponents().data()[i]));
-		}
-		return result;
-	}
+// %extend ifcopenshell::geometry::taxonomy::point3 {
+// 	PyObject* coords_() const {
+// 		auto result = PyTuple_New(3);
+// 		for (int i = 0; i < 3; ++i) {
+// 			PyTuple_SET_ITEM(result, i, PyFloat_FromDouble($self->ccomponents().data()[i]));
+// 		}
+// 		return result;
+// 	}
 
-	%pythoncode %{
-		coords = property(coords_)
-	%}
-}
+// 	%pythoncode %{
+// 		coords = property(coords_)
+// 	%}
+// }
 
-%extend ifcopenshell::geometry::taxonomy::direction3 {
-	// @todo refactor in macro
-	PyObject* coords_() const {
-		auto result = PyTuple_New(3);
-		for (int i = 0; i < 3; ++i) {
-			PyTuple_SET_ITEM(result, i, PyFloat_FromDouble($self->ccomponents().data()[i]));
-		}
-		return result;
-	}
+// %extend ifcopenshell::geometry::taxonomy::direction3 {
+// 	// @todo refactor in macro
+// 	PyObject* coords_() const {
+// 		auto result = PyTuple_New(3);
+// 		for (int i = 0; i < 3; ++i) {
+// 			PyTuple_SET_ITEM(result, i, PyFloat_FromDouble($self->ccomponents().data()[i]));
+// 		}
+// 		return result;
+// 	}
 
-	%pythoncode %{
-		coords = property(coords_)
-	%}
-}
+// 	%pythoncode %{
+// 		coords = property(coords_)
+// 	%}
+// }
 
 
 %extend ifcopenshell::geometry::taxonomy::loop {
@@ -258,68 +268,68 @@ std::string taxonomy_item_repr(ifcopenshell::geometry::taxonomy::item::ptr i) {
 		return $self->children;
 	}
 
-	%pythoncode %{
-		children = property(children_)
-	%}
+	// %pythoncode %{
+	// 	children = property(children_)
+	// %}
 }
 
 
 %extend ifcopenshell::geometry::Settings {
-	void set_(const std::string& name, bool val) {
+	void Set(const std::string& name, bool val) {
 		return $self->set(name, val);
 	}
-	void set_(const std::string& name, int val) {
+	void Set(const std::string& name, int val) {
 		return $self->set(name, val);
 	}
-	void set_(const std::string& name, ifcopenshell::geometry::settings::IteratorOutputOptions val) {
+	void Set(const std::string& name, ifcopenshell::geometry::settings::IteratorOutputOptions val) {
 		return $self->set(name, val);
 	}
-	void set_(const std::string& name, ifcopenshell::geometry::settings::PiecewiseStepMethod val) {
+	void Set(const std::string& name, ifcopenshell::geometry::settings::PiecewiseStepMethod val) {
 		return $self->set(name, val);
 	}
-	void set_(const std::string& name, ifcopenshell::geometry::settings::OutputDimensionalityTypes val) {
+	void Set(const std::string& name, ifcopenshell::geometry::settings::OutputDimensionalityTypes val) {
 		return $self->set(name, val);
 	}
-	void set_(const std::string& name, double val) {
+	void Set(const std::string& name, double val) {
 		return $self->set(name, val);
 	}
-	void set_(const std::string& name, const std::string& val) {
+	void Set(const std::string& name, const std::string& val) {
 		return $self->set(name, val);
 	}
-	void set_(const std::string& name, const std::set<int>& val) {
+	void Set(const std::string& name, const std::set<int>& val) {
 		return $self->set(name, val);
 	}
-	void set_(const std::string& name, const std::set<std::string>& val) {
+	void Set(const std::string& name, const std::set<std::string>& val) {
 		return $self->set(name, val);
 	}
-	ifcopenshell::geometry::Settings::value_variant_t get_(const std::string& name) {
+	ifcopenshell::geometry::Settings::value_variant_t Get(const std::string& name) {
 		return $self->get(name);
 	}
-	std::vector<std::string> setting_names() {
+	std::vector<std::string> SettingNames() {
 		return $self->setting_names();
 	}
 }
 
 %extend ifcopenshell::geometry::SerializerSettings {
-	void set_(const std::string& name, bool val) {
+	void Set(const std::string& name, bool val) {
 		return $self->set(name, val);
 	}
-	void set_(const std::string& name, int val) {
+	void Set(const std::string& name, int val) {
 		return $self->set(name, val);
 	}
-	void set_(const std::string& name, double val) {
+	void Set(const std::string& name, double val) {
 		return $self->set(name, val);
 	}
-	void set_(const std::string& name, const std::string& val) {
+	void Set(const std::string& name, const std::string& val) {
 		return $self->set(name, val);
 	}
-	void set_(const std::string& name, const std::set<int>& val) {
+	void Set(const std::string& name, const std::set<int>& val) {
 		return $self->set(name, val);
 	}
-	ifcopenshell::geometry::SerializerSettings::value_variant_t get_(const std::string& name) {
+	ifcopenshell::geometry::SerializerSettings::value_variant_t Get(const std::string& name) {
 		return $self->get(name);
 	}
-	std::vector<std::string> setting_names() {
+	std::vector<std::string> SettingNames() {
 		return $self->setting_names();
 	}
 }
@@ -392,24 +402,24 @@ std::string taxonomy_item_repr(ifcopenshell::geometry::taxonomy::item::ptr i) {
 	}
 
 
-    %typemap(in) const std::vector<IfcUtil::IfcBaseClass*>& (std::vector<IfcUtil::IfcBaseClass*> temp) {
-        if (!PyList_Check($input)) {
-            PyErr_SetString(PyExc_TypeError, "Expected a list.");
-            return NULL;
-        }
-        $1 = &temp;  // Set $1 to the address of temp, which SWIG will use as the argument in the wrapped function
-        temp.reserve(PyList_Size($input));  // Pre-allocate memory for efficiency
-        for (Py_ssize_t i = 0; i < PyList_Size($input); ++i) {
-            PyObject* pyObj = PyList_GetItem($input, i);
-            void* ptr = 0;
-            int res = SWIG_ConvertPtr(pyObj, &ptr, SWIGTYPE_p_IfcUtil__IfcBaseClass, 0);
-            if (!SWIG_IsOK(res)) {
-                PyErr_SetString(PyExc_TypeError, "List item is not of type IfcBaseClass.");
-                return NULL;
-            }
-            temp.push_back(reinterpret_cast<IfcUtil::IfcBaseClass*>(ptr));
-        }
-    }
+    // %typemap(in) const std::vector<IfcUtil::IfcBaseClass*>& (std::vector<IfcUtil::IfcBaseClass*> temp) {
+    //     if (!PyList_Check($input)) {
+    //         PyErr_SetString(PyExc_TypeError, "Expected a list.");
+    //         return NULL;
+    //     }
+    //     $1 = &temp;  // Set $1 to the address of temp, which SWIG will use as the argument in the wrapped function
+    //     temp.reserve(PyList_Size($input));  // Pre-allocate memory for efficiency
+    //     for (Py_ssize_t i = 0; i < PyList_Size($input); ++i) {
+    //         PyObject* pyObj = PyList_GetItem($input, i);
+    //         void* ptr = 0;
+    //         int res = SWIG_ConvertPtr(pyObj, &ptr, SWIGTYPE_p_IfcUtil__IfcBaseClass, 0);
+    //         if (!SWIG_IsOK(res)) {
+    //             PyErr_SetString(PyExc_TypeError, "List item is not of type IfcBaseClass.");
+    //             return NULL;
+    //         }
+    //         temp.push_back(reinterpret_cast<IfcUtil::IfcBaseClass*>(ptr));
+    //     }
+    // }
 
        std::vector<clash> clash_intersection_many(const std::vector<IfcUtil::IfcBaseClass*>& set_a, const std::vector<IfcUtil::IfcBaseClass*>& set_b, double tolerance, bool check_all) const {
         std::vector<const IfcUtil::IfcBaseEntity*> set_a_entities;
@@ -471,48 +481,48 @@ std::string taxonomy_item_repr(ifcopenshell::geometry::taxonomy::item::ptr i) {
 #endif
 
 // A visitor
-%{
-struct ShapeRTTI : public boost::static_visitor<PyObject*>
-{
-    PyObject* operator()(IfcGeom::Element* elem) const {
-		IfcGeom::SerializedElement* serialized_elem = dynamic_cast<IfcGeom::SerializedElement*>(elem);
-		IfcGeom::TriangulationElement* triangulation_elem = dynamic_cast<IfcGeom::TriangulationElement*>(elem);
-		IfcGeom::BRepElement* brep_elem = dynamic_cast<IfcGeom::BRepElement*>(elem);
-		if (triangulation_elem) {
-			return SWIG_NewPointerObj(SWIG_as_voidptr(triangulation_elem), SWIGTYPE_p_IfcGeom__TriangulationElement, SWIG_POINTER_OWN);
-		} else if (serialized_elem) {
-			return SWIG_NewPointerObj(SWIG_as_voidptr(serialized_elem), SWIGTYPE_p_IfcGeom__SerializedElement, SWIG_POINTER_OWN);
-		} else if (brep_elem) {
-			return SWIG_NewPointerObj(SWIG_as_voidptr(brep_elem), SWIGTYPE_p_IfcGeom__BRepElement, SWIG_POINTER_OWN);
-		} else {
-			return SWIG_Py_Void();
-		}
-	}
-    PyObject* operator()(IfcGeom::Representation::Representation* representation) const {
-		IfcGeom::Representation::Serialization* serialized_representation = dynamic_cast<IfcGeom::Representation::Serialization*>(representation);
-		IfcGeom::Representation::Triangulation* triangulated_representation = dynamic_cast<IfcGeom::Representation::Triangulation*>(representation);
-		IfcGeom::Representation::BRep* brep_representation = dynamic_cast<IfcGeom::Representation::BRep*>(representation);
-		if (serialized_representation) {
-			return SWIG_NewPointerObj(SWIG_as_voidptr(serialized_representation), SWIGTYPE_p_IfcGeom__Representation__Serialization, SWIG_POINTER_OWN);
-		} else if (triangulated_representation) {
-			return SWIG_NewPointerObj(SWIG_as_voidptr(triangulated_representation), SWIGTYPE_p_IfcGeom__Representation__Triangulation, SWIG_POINTER_OWN);
-		} else if (brep_representation) {
-			return SWIG_NewPointerObj(SWIG_as_voidptr(brep_representation), SWIGTYPE_p_IfcGeom__Representation__BRep, SWIG_POINTER_OWN);
-		} else {
-			return SWIG_Py_Void();
-		}
-	}
-	PyObject* operator()(IfcGeom::Transformation* transformation) const {
-		return SWIG_NewPointerObj(SWIG_as_voidptr(transformation), SWIGTYPE_p_IfcGeom__Transformation, SWIG_POINTER_OWN);
-	}
-};
-%}
+// %{
+// struct ShapeRTTI : public boost::static_visitor<PyObject*>
+// {
+//     PyObject* operator()(IfcGeom::Element* elem) const {
+// 		IfcGeom::SerializedElement* serialized_elem = dynamic_cast<IfcGeom::SerializedElement*>(elem);
+// 		IfcGeom::TriangulationElement* triangulation_elem = dynamic_cast<IfcGeom::TriangulationElement*>(elem);
+// 		IfcGeom::BRepElement* brep_elem = dynamic_cast<IfcGeom::BRepElement*>(elem);
+// 		if (triangulation_elem) {
+// 			return SWIG_NewPointerObj(SWIG_as_voidptr(triangulation_elem), SWIGTYPE_p_IfcGeom__TriangulationElement, SWIG_POINTER_OWN);
+// 		} else if (serialized_elem) {
+// 			return SWIG_NewPointerObj(SWIG_as_voidptr(serialized_elem), SWIGTYPE_p_IfcGeom__SerializedElement, SWIG_POINTER_OWN);
+// 		} else if (brep_elem) {
+// 			return SWIG_NewPointerObj(SWIG_as_voidptr(brep_elem), SWIGTYPE_p_IfcGeom__BRepElement, SWIG_POINTER_OWN);
+// 		} else {
+// 			return SWIG_Py_Void();
+// 		}
+// 	}
+//     PyObject* operator()(IfcGeom::Representation::Representation* representation) const {
+// 		IfcGeom::Representation::Serialization* serialized_representation = dynamic_cast<IfcGeom::Representation::Serialization*>(representation);
+// 		IfcGeom::Representation::Triangulation* triangulated_representation = dynamic_cast<IfcGeom::Representation::Triangulation*>(representation);
+// 		IfcGeom::Representation::BRep* brep_representation = dynamic_cast<IfcGeom::Representation::BRep*>(representation);
+// 		if (serialized_representation) {
+// 			return SWIG_NewPointerObj(SWIG_as_voidptr(serialized_representation), SWIGTYPE_p_IfcGeom__Representation__Serialization, SWIG_POINTER_OWN);
+// 		} else if (triangulated_representation) {
+// 			return SWIG_NewPointerObj(SWIG_as_voidptr(triangulated_representation), SWIGTYPE_p_IfcGeom__Representation__Triangulation, SWIG_POINTER_OWN);
+// 		} else if (brep_representation) {
+// 			return SWIG_NewPointerObj(SWIG_as_voidptr(brep_representation), SWIGTYPE_p_IfcGeom__Representation__BRep, SWIG_POINTER_OWN);
+// 		} else {
+// 			return SWIG_Py_Void();
+// 		}
+// 	}
+// 	PyObject* operator()(IfcGeom::Transformation* transformation) const {
+// 		return SWIG_NewPointerObj(SWIG_as_voidptr(transformation), SWIGTYPE_p_IfcGeom__Transformation, SWIG_POINTER_OWN);
+// 	}
+// };
+// %}
 
 // Note that these elements ARE to be owned by SWIG/Python
-%typemap(out) boost::variant<IfcGeom::Element*, IfcGeom::Representation::Representation*, IfcGeom::Transformation*> {
-	// See which type is set and return appropriate
-	$result = boost::apply_visitor(ShapeRTTI(), (boost::variant<IfcGeom::Element*, IfcGeom::Representation::Representation*, IfcGeom::Transformation*>) $1);
-}
+// %typemap(out) boost::variant<IfcGeom::Element*, IfcGeom::Representation::Representation*, IfcGeom::Transformation*> {
+// 	// See which type is set and return appropriate
+// 	$result = boost::apply_visitor(ShapeRTTI(), (boost::variant<IfcGeom::Element*, IfcGeom::Representation::Representation*, IfcGeom::Transformation*>) $1);
+// }
 
 %newobject construct_iterator_with_include_exclude;
 %newobject construct_iterator_with_include_exclude_globalid;
@@ -545,84 +555,84 @@ struct ShapeRTTI : public boost::static_visitor<PyObject*>
 
 %extend IfcGeom::Representation::Triangulation {
 
-	std::pair<const char*, size_t> faces_buffer() const {
-		return vector_to_buffer(self->faces());
-	}
+	// std::pair<const char*, size_t> faces_buffer() const {
+	// 	return vector_to_buffer(self->faces());
+	// }
 
-	std::pair<const char*, size_t> edges_buffer() const {
-		return vector_to_buffer(self->edges());
-	}
+	// std::pair<const char*, size_t> edges_buffer() const {
+	// 	return vector_to_buffer(self->edges());
+	// }
 
-	std::pair<const char*, size_t> material_ids_buffer() const {
-		return vector_to_buffer(self->material_ids());
-	}
+	// std::pair<const char*, size_t> material_ids_buffer() const {
+	// 	return vector_to_buffer(self->material_ids());
+	// }
 
-	std::pair<const char*, size_t> item_ids_buffer() const {
-		return vector_to_buffer(self->item_ids());
-	}
+	// std::pair<const char*, size_t> item_ids_buffer() const {
+	// 	return vector_to_buffer(self->item_ids());
+	// }
 
-	std::pair<const char*, size_t> verts_buffer() const {
-		return vector_to_buffer(self->verts());
-	}
+	// std::pair<const char*, size_t> verts_buffer() const {
+	// 	return vector_to_buffer(self->verts());
+	// }
 
-	std::pair<const char*, size_t> normals_buffer() const {
-		return vector_to_buffer(self->normals());
-	}
+	// std::pair<const char*, size_t> normals_buffer() const {
+	// 	return vector_to_buffer(self->normals());
+	// }
 
-    PyObject* colors_buffer() const {
-        std::vector<double> clrs;
-        clrs.reserve(self->materials().size() * 4);
-        for (auto& mptr : self->materials()) {
-			auto& m = *mptr;
-            if (m.diffuse) {
-                clrs.push_back(m.diffuse.ccomponents()[0]);
-                clrs.push_back(m.diffuse.ccomponents()[1]);
-                clrs.push_back(m.diffuse.ccomponents()[2]);
-            } else {
-                clrs.push_back(0.);
-                clrs.push_back(0.);
-                clrs.push_back(0.);
-            }
-            if (m.has_transparency()) {
-                clrs.push_back(1. - m.transparency);
-            } else {
-                clrs.push_back(1.);
-            }
-        }
-        auto p = vector_to_buffer(clrs);
-        return PyBytes_FromStringAndSize(p.first, p.second);
-    }
+    // PyObject* colors_buffer() const {
+    //     std::vector<double> clrs;
+    //     clrs.reserve(self->materials().size() * 4);
+    //     for (auto& mptr : self->materials()) {
+	// 		auto& m = *mptr;
+    //         if (m.diffuse) {
+    //             clrs.push_back(m.diffuse.ccomponents()[0]);
+    //             clrs.push_back(m.diffuse.ccomponents()[1]);
+    //             clrs.push_back(m.diffuse.ccomponents()[2]);
+    //         } else {
+    //             clrs.push_back(0.);
+    //             clrs.push_back(0.);
+    //             clrs.push_back(0.);
+    //         }
+    //         if (m.has_transparency()) {
+    //             clrs.push_back(1. - m.transparency);
+    //         } else {
+    //             clrs.push_back(1.);
+    //         }
+    //     }
+    //     auto p = vector_to_buffer(clrs);
+    //     return PyBytes_FromStringAndSize(p.first, p.second);
+    // }
 
-    %pythoncode %{
-        # Hide the getters with read-only property implementations
-        id = property(id)
-        faces = property(faces)
-        edges = property(edges)
-        material_ids = property(material_ids)
-        materials = property(materials)
-        verts = property(verts)
-        normals = property(normals)
-        item_ids = property(item_ids)
+    // %pythoncode %{
+    //     # Hide the getters with read-only property implementations
+    //     id = property(id)
+    //     faces = property(faces)
+    //     edges = property(edges)
+    //     material_ids = property(material_ids)
+    //     materials = property(materials)
+    //     verts = property(verts)
+    //     normals = property(normals)
+    //     item_ids = property(item_ids)
 
-        faces_buffer = property(faces_buffer)
-        edges_buffer = property(edges_buffer)
-        material_ids_buffer = property(material_ids_buffer)
-        item_ids_buffer = property(item_ids_buffer)
-        verts_buffer = property(verts_buffer)
-        normals_buffer = property(normals_buffer)
-        colors_buffer = property(colors_buffer)
-    %}
+    //     faces_buffer = property(faces_buffer)
+    //     edges_buffer = property(edges_buffer)
+    //     material_ids_buffer = property(material_ids_buffer)
+    //     item_ids_buffer = property(item_ids_buffer)
+    //     verts_buffer = property(verts_buffer)
+    //     normals_buffer = property(normals_buffer)
+    //     colors_buffer = property(colors_buffer)
+    // %}
 };
 
-%extend IfcGeom::Representation::Serialization {
-	%pythoncode %{
-        # Hide the getters with read-only property implementations
-        id = property(id)
-        brep_data = property(brep_data)
-        surface_styles = property(surface_styles)
-        surface_style_ids = property(surface_style_ids)
-	%}
-};
+// %extend IfcGeom::Representation::Serialization {
+// 	%pythoncode %{
+//         # Hide the getters with read-only property implementations
+//         id = property(id)
+//         brep_data = property(brep_data)
+//         surface_styles = property(surface_styles)
+//         surface_style_ids = property(surface_style_ids)
+// 	%}
+// };
 
 %extend IfcGeom::Element {
     std::pair<const char*, size_t> transformation_buffer() const {
@@ -635,35 +645,35 @@ struct ShapeRTTI : public boost::static_visitor<PyObject*>
         return $self->product();
     }
 
-    %pythoncode %{
-        # Hide the getters with read-only property implementations
-        id = property(id)
-        parent_id = property(parent_id)
-        name = property(name)
-        type = property(type)
-        guid = property(guid)
-        context = property(context)
-        unique_id = property(unique_id)
-        transformation = property(transformation)
-        product = property(product_)
+    // %pythoncode %{
+    //     # Hide the getters with read-only property implementations
+    //     id = property(id)
+    //     parent_id = property(parent_id)
+    //     name = property(name)
+    //     type = property(type)
+    //     guid = property(guid)
+    //     context = property(context)
+    //     unique_id = property(unique_id)
+    //     transformation = property(transformation)
+    //     product = property(product_)
 
-        transformation_buffer = property(transformation_buffer)
-    %}
+    //     transformation_buffer = property(transformation_buffer)
+    // %}
 };
 
-%extend IfcGeom::TriangulationElement {
-	%pythoncode %{
-        # Hide the getters with read-only property implementations
-        geometry = property(geometry)
-	%}
-};
+// %extend IfcGeom::TriangulationElement {
+// 	%pythoncode %{
+//         # Hide the getters with read-only property implementations
+//         geometry = property(geometry)
+// 	%}
+// };
 
-%extend IfcGeom::SerializedElement {
-	%pythoncode %{
-        # Hide the getters with read-only property implementations
-        geometry = property(geometry)
-	%}
-};
+// %extend IfcGeom::SerializedElement {
+// 	%pythoncode %{
+//         # Hide the getters with read-only property implementations
+//         geometry = property(geometry)
+// 	%}
+// };
 
 %extend IfcGeom::BRepElement {
     double calc_volume_() const {
@@ -684,12 +694,12 @@ struct ShapeRTTI : public boost::static_visitor<PyObject*>
         }
     }
 
-    %pythoncode %{
-        # Hide the getters with read-only property implementations
-        geometry = property(geometry)
-        volume = property(calc_volume_)
-        surface_area = property(calc_surface_area_)
-    %}    
+    // %pythoncode %{
+    //     # Hide the getters with read-only property implementations
+    //     geometry = property(geometry)
+    //     volume = property(calc_volume_)
+    //     surface_area = property(calc_surface_area_)
+    // %}    
 };
 
 /*
@@ -709,26 +719,26 @@ struct ShapeRTTI : public boost::static_visitor<PyObject*>
 };
 */
 
-%extend IfcGeom::Transformation {
-	PyObject* matrix_() const {
-		auto result = PyTuple_New(16);
-		for (int i = 0; i < 16; ++i) {
-			PyTuple_SET_ITEM(result, i, PyFloat_FromDouble(self->data()->ccomponents().data()[i]));
-		}
-		return result;
-	}
-	%pythoncode %{
-        # Hide the getters with read-only property implementations
-        matrix = property(matrix_)
-	%}
-};
+// %extend IfcGeom::Transformation {
+// 	PyObject* matrix_() const {
+// 		auto result = PyTuple_New(16);
+// 		for (int i = 0; i < 16; ++i) {
+// 			PyTuple_SET_ITEM(result, i, PyFloat_FromDouble(self->data()->ccomponents().data()[i]));
+// 		}
+// 		return result;
+// 	}
+// 	%pythoncode %{
+//         # Hide the getters with read-only property implementations
+//         matrix = property(matrix_)
+// 	%}
+// };
 
-%extend IfcGeom::Matrix {
-	%pythoncode %{
-        # Hide the getters with read-only property implementations
-        data = property(data)
-	%}
-};
+// %extend IfcGeom::Matrix {
+// 	%pythoncode %{
+//         # Hide the getters with read-only property implementations
+//         data = property(data)
+// 	%}
+// };
 
 %{
 	template <typename T>
@@ -873,32 +883,32 @@ struct ShapeRTTI : public boost::static_visitor<PyObject*>
 	}
 %}
 
-%typemap(out) ifcopenshell::geometry::taxonomy::item::ptr {
-	$result = item_to_pyobject($1);
-}
+// %typemap(out) ifcopenshell::geometry::taxonomy::item::ptr {
+// 	$result = item_to_pyobject($1);
+// }
 
-%{
-template <typename T>
-ifcopenshell::geometry::taxonomy::item::ptr try_upcast(PyObject* obj0, swig_type_info* info) {
-    typename T::ptr *arg1 = 0 ;
-    void *argp1 ;
-    typename T::ptr tempshared1 ;
+// %{
+// template <typename T>
+// ifcopenshell::geometry::taxonomy::item::ptr try_upcast(PyObject* obj0, swig_type_info* info) {
+//     typename T::ptr *arg1 = 0 ;
+//     void *argp1 ;
+//     typename T::ptr tempshared1 ;
 
-    int newmem = 0;
-    auto res1 = SWIG_ConvertPtrAndOwn(obj0, &argp1, info,  0 , &newmem);
-    if (SWIG_IsOK(res1)) {
-        if (newmem & SWIG_CAST_NEW_MEMORY) {
-            if (argp1) tempshared1 = *reinterpret_cast< typename T::ptr * >(argp1);
-            delete reinterpret_cast< typename T::ptr * >(argp1);
-            arg1 = &tempshared1;
-        } else {
-            arg1 = (argp1) ? reinterpret_cast< typename T::ptr * >(argp1) : &tempshared1;
-        }
-        return std::static_pointer_cast<ifcopenshell::geometry::taxonomy::item>(*arg1);
-    }
-    return nullptr;
-}
-%}
+//     int newmem = 0;
+//     auto res1 = SWIG_ConvertPtrAndOwn(obj0, &argp1, info,  0 , &newmem);
+//     if (SWIG_IsOK(res1)) {
+//         if (newmem & SWIG_CAST_NEW_MEMORY) {
+//             if (argp1) tempshared1 = *reinterpret_cast< typename T::ptr * >(argp1);
+//             delete reinterpret_cast< typename T::ptr * >(argp1);
+//             arg1 = &tempshared1;
+//         } else {
+//             arg1 = (argp1) ? reinterpret_cast< typename T::ptr * >(argp1) : &tempshared1;
+//         }
+//         return std::static_pointer_cast<ifcopenshell::geometry::taxonomy::item>(*arg1);
+//     }
+//     return nullptr;
+// }
+// %}
 
 %inline %{
 	ifcopenshell::geometry::taxonomy::item::ptr map_shape(ifcopenshell::geometry::Settings& settings, IfcUtil::IfcBaseClass* instance) {
@@ -1009,14 +1019,14 @@ ifcopenshell::geometry::taxonomy::item::ptr try_upcast(PyObject* obj0, swig_type
 %ignore svgfill::svg_to_line_segments;
 %ignore svgfill::line_segments_to_polygons;
 
-%template(svg_line_segments) std::vector<std::array<svgfill::point_2, 2>>;
-%template(svg_groups_of_line_segments) std::vector<std::vector<std::array<svgfill::point_2, 2>>>;
-%template(svg_point) std::array<double, 2>;
-%template(line_segment) std::array<svgfill::point_2, 2>;
-%template(svg_polygons) std::vector<svgfill::polygon_2>;
-%template(svg_groups_of_polygons) std::vector<std::vector<svgfill::polygon_2>>;
-%template(svg_loop) std::vector<std::array<double, 2>>;
-%template(svg_loops) std::vector<std::vector<std::array<double, 2>>>;
+//%template(svg_line_segments) std::vector<std::array<svgfill::point_2, 2>>;
+//%template(svg_groups_of_line_segments) std::vector<std::vector<std::array<svgfill::point_2, 2>>>;
+//%template(svg_point) std::array<double, 2>;
+//%template(line_segment) std::array<svgfill::point_2, 2>;
+// %template(svg_polygons) std::vector<svgfill::polygon_2>;
+// %template(svg_groups_of_polygons) std::vector<std::vector<svgfill::polygon_2>>;
+// %template(svg_loop) std::vector<std::array<double, 2>>;
+// %template(svg_loops) std::vector<std::vector<std::array<double, 2>>>;
 
 %template(OpaqueCoordinate_3) IfcGeom::OpaqueCoordinate<3>;
 %template(OpaqueCoordinate_4) IfcGeom::OpaqueCoordinate<4>;
@@ -1035,32 +1045,32 @@ ifcopenshell::geometry::taxonomy::item::ptr try_upcast(PyObject* obj0, swig_type
 	}
 %}
 
-%inline %{
-	IfcGeom::ConversionResultShape* nary_union(PyObject* sequence) {
-		std::vector<const CGAL::Nef_polyhedron_3<CGAL::Epeck>*> nefs;
-		for(Py_ssize_t i = 0; i < PySequence_Size(sequence); ++i) {
-			PyObject* element = PySequence_GetItem(sequence, i);
-			void* argp1 = nullptr;
-			auto res1 = SWIG_ConvertPtr(element, &argp1, SWIGTYPE_p_IfcGeom__ConversionResultShape, 0);
-			if (SWIG_IsOK(res1)) {
-				auto arg1 = reinterpret_cast<IfcGeom::ConversionResultShape*>(argp1);
-				auto cgs = dynamic_cast<ifcopenshell::geometry::CgalShape*>(arg1);
-				if (cgs) {
-					nefs.push_back(&cgs->nef());
-				}
-			}
-		}
-		ifcopenshell::geometry::CgalShape* shp;
-		Py_BEGIN_ALLOW_THREADS;
-		CGAL::Nef_nary_union_3< CGAL::Nef_polyhedron_3<CGAL::Epeck> > accum;
-		for (auto& n : nefs) {
-			accum.add_polyhedron(*n);
-		}
-		shp = new ifcopenshell::geometry::CgalShape(accum.get_union());
-		Py_END_ALLOW_THREADS;
-		return shp;
-	}
-%}
+// %inline %{
+// 	IfcGeom::ConversionResultShape* nary_union(PyObject* sequence) {
+// 		std::vector<const CGAL::Nef_polyhedron_3<CGAL::Epeck>*> nefs;
+// 		for(Py_ssize_t i = 0; i < PySequence_Size(sequence); ++i) {
+// 			PyObject* element = PySequence_GetItem(sequence, i);
+// 			void* argp1 = nullptr;
+// 			auto res1 = SWIG_ConvertPtr(element, &argp1, SWIGTYPE_p_IfcGeom__ConversionResultShape, 0);
+// 			if (SWIG_IsOK(res1)) {
+// 				auto arg1 = reinterpret_cast<IfcGeom::ConversionResultShape*>(argp1);
+// 				auto cgs = dynamic_cast<ifcopenshell::geometry::CgalShape*>(arg1);
+// 				if (cgs) {
+// 					nefs.push_back(&cgs->nef());
+// 				}
+// 			}
+// 		}
+// 		ifcopenshell::geometry::CgalShape* shp;
+// 		Py_BEGIN_ALLOW_THREADS;
+// 		CGAL::Nef_nary_union_3< CGAL::Nef_polyhedron_3<CGAL::Epeck> > accum;
+// 		for (auto& n : nefs) {
+// 			accum.add_polyhedron(*n);
+// 		}
+// 		shp = new ifcopenshell::geometry::CgalShape(accum.get_union());
+// 		Py_END_ALLOW_THREADS;
+// 		return shp;
+// 	}
+// %}
 
 %extend IfcGeom::ConversionResultShape {
 	std::string serialize_obj() {
@@ -1086,13 +1096,13 @@ ifcopenshell::geometry::taxonomy::item::ptr try_upcast(PyObject* obj0, swig_type
 		return result;
 	}
 
-	ConversionResultShape* solid_mt() {
-		IfcGeom::ConversionResultShape* r;
-		Py_BEGIN_ALLOW_THREADS;
-		r = $self->solid();
-		Py_END_ALLOW_THREADS;
-		return r;
-	}
+	// ConversionResultShape* solid_mt() {
+	// 	IfcGeom::ConversionResultShape* r;
+	// 	Py_BEGIN_ALLOW_THREADS;
+	// 	r = $self->solid();
+	// 	Py_END_ALLOW_THREADS;
+	// 	return r;
+	// }
 }
 
 %naturalvar svgfill::polygon_2::boundary;
@@ -1123,11 +1133,11 @@ ifcopenshell::geometry::taxonomy::item::ptr try_upcast(PyObject* obj0, swig_type
 
 %define assign_repr(item_name)
 
-%extend item_name {
-	%pythoncode %{
-		__repr__ = taxonomy_item_repr
-	%}
-};
+// %extend item_name {
+// 	%pythoncode %{
+// 		__repr__ = taxonomy_item_repr
+// 	%}
+// };
 
 %enddef
 

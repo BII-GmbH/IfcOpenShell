@@ -51,6 +51,7 @@
 %include "std_array.i"
 %include "std_vector.i"
 %include "std_string.i"
+%include "std_pair.i"
 %include "exception.i"
 %include "std_shared_ptr.i"
 
@@ -59,8 +60,11 @@
 
 // General python-specific rename rules for comparison operators.
 // Mostly to silence warnings, but might be of use some time.
-%rename("__eq__") operator ==;
-%rename("__lt__") operator <;
+%rename(Equals) operator==;
+%rename(LessThan) operator<;
+%rename(Compare) operator();
+
+%rename("Attribute") IfcParse::attribute;
 
 %exception {
 	try {
@@ -77,6 +81,8 @@
 }
 
 %include "../serializers/serializers_api.h"
+
+%typemap(csbase) IfcGeom::IteratorSettings::Settings "long"
 
 // Include headers for the typemaps to function. This set of includes,
 // can probably be reduced, but for now it's identical to the includes
@@ -132,6 +138,9 @@
 #include "../ifcparse/Ifc4x3_add2.h"
 #endif
 
+	#include "../ifcparse/aggregate_of_instance.h"
+	
+	#include "../ifcparse/Argument.h"
 	#include "../ifcparse/IfcBaseClass.h"
 	#include "../ifcparse/IfcFile.h"
 	#include "../ifcparse/IfcSchema.h"
@@ -150,13 +159,11 @@
 // Create docstrings for generated python code.
 %feature("autodoc", "1");
 
-%include "utils/type_conversion.i"
-
-%include "utils/typemaps_in.i"
-
+%shared_ptr(aggregate_of_instance)
+%include "utils/aggregate_of_instance.i"
 %include "utils/typemaps_out.i"
 
-%module ifcopenshell_wrapper %{
+%module ifcopenshell_net %{
 	#include "../ifcgeom/Converter.h"
 	#include "../ifcgeom/taxonomy.h"
 #ifdef IFOPSH_WITH_OPENCASCADE
@@ -211,6 +218,9 @@
 	#include "../ifcparse/Ifc4x3_add2.h"
 #endif
 
+	#include "../ifcparse/ArgumentType.h"
+	#include "../ifcparse/Argument.h"
+	#include "../ifcparse/aggregate_of_instance.h"
 	#include "../ifcparse/IfcBaseClass.h"
 	#include "../ifcparse/IfcFile.h"
 	#include "../ifcparse/IfcSchema.h"
@@ -226,12 +236,117 @@
 %include "IfcParseWrapper.i"
 %include "std_vector.i"
 	
+%inline %{
+	
+	template<typename T>
+	struct TypedArgument {
+
+		virtual ~TypedArgument() = default;
+
+		virtual bool HasValue() const = 0;
+		virtual T GetValue() const = 0;
+	};
+
+	template<typename T>
+	struct WithValue : public TypedArgument<T> {
+		explicit WithValue(const T& arg) : value(arg) {}
+		explicit WithValue(const T&& arg) : value(std::move(arg)) {}
+
+		inline bool HasValue() const override {
+			return true;
+		}
+
+		inline T GetValue() const override { 
+			return value;
+		}
+
+		private:
+		T value;
+	};
+
+	template <typename T>
+	struct NoValue : public TypedArgument<T> {
+		inline bool HasValue() const override { return false; }
+		inline T GetValue() const override { 
+			throw std::runtime_error("Has no value");
+		}
+	};
+
+%}
+
+
+%apply const std::string& { std::string* }
+
 namespace std {
-  %template(float_array_3) array<double, 3>;
-  %template(FloatVector) vector<float>;
+  %template(Vec3) std::array<double, 3>;
+  %template(Vec4) std::array<double, 4>;
+  %template(FloatVector) std::vector<float>;
   %template(IntVector) std::vector<int>;
   %template(DoubleVector) std::vector<double>;
   %template(StringVector) std::vector<std::string>;
   %template(FloatVectorVector) std::vector<std::vector<float>>;
   %template(DoubleVectorVector) std::vector<std::vector<double>>;
+
+  //%template(MaterialVector) std::vector<IfcGeom::Material>;
+
+  %template(ArgumentByType) std::pair<IfcUtil::ArgumentType, Argument*>;
+
+  %template(EntityPtrList) std::vector<IfcUtil::IfcBaseClass*>;
 }
+
+%extend std::array<double, 3> {
+	const double X;
+	const double Y;
+	const double Z;
+}
+
+%{
+	double std_array_Sl_double_Sc_3_Sg__X_get(const std::array<double, 3>* vec) {
+		return (*vec)[0];
+	}
+
+	double std_array_Sl_double_Sc_3_Sg__Y_get(const std::array<double, 3>* vec) {
+		return (*vec)[1];
+	}
+
+	double std_array_Sl_double_Sc_3_Sg__Z_get(const std::array<double, 3>* vec) {
+		return (*vec)[2];
+	}
+%}
+
+
+
+
+
+%define TRY_GET_AS(TYPE, NAME, TYPECHECK)
+	%extend std::pair<IfcUtil::ArgumentType, Argument*> {
+		
+		%newobject TryGetAsString;
+		TypedArgument<TYPE>* TryGetAs##NAME() {
+			const Argument& arg = *($self->second);
+			const IfcUtil::ArgumentType type = $self->first;
+			if(TYPECHECK)
+			{			
+				TYPE tmp = arg;
+				return new WithValue<TYPE>(tmp);
+			}
+			return new NoValue<TYPE>();
+		}
+	}
+
+	%template(NAME##Argument) TypedArgument<TYPE>;
+%enddef
+
+	// TODO: LOGICAL (whatever that is)
+	// TODO: BINARY
+TRY_GET_AS(std::string, String, type == IfcUtil::Argument_ENUMERATION || type == IfcUtil::Argument_STRING)
+TRY_GET_AS(int, Int, type == IfcUtil::Argument_INT)
+TRY_GET_AS(bool, Bool, type == IfcUtil::Argument_BOOL)
+//TRY_GET_AS(std::uint8_t, Binary, type == IfcUtil::Argument_BINARY)
+TRY_GET_AS(double, Double, type == IfcUtil::Argument_DOUBLE)
+TRY_GET_AS(IfcUtil::IfcBaseClass*, Entity, type == IfcUtil::Argument_ENTITY_INSTANCE)
+TRY_GET_AS(std::vector<int>, IntList, type == IfcUtil::Argument_AGGREGATE_OF_INT)
+//TRY_GET_AS(std::vector<std::uint8_t>, BinaryList, type == IfcUtil::Argument_AGGREGATE_OF_BINARY)
+TRY_GET_AS(std::vector<double>, DoubleList, type == IfcUtil::Argument_AGGREGATE_OF_DOUBLE)
+TRY_GET_AS(std::vector<std::string>, StringList, type == IfcUtil::Argument_AGGREGATE_OF_STRING)
+TRY_GET_AS(aggregate_of_instance::ptr, EntityList, type == IfcUtil::Argument_AGGREGATE_OF_ENTITY_INSTANCE)

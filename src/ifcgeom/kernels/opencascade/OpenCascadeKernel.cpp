@@ -635,7 +635,7 @@ bool IfcGeom::OpenCascadeKernel::convert_openings(const IfcUtil::IfcBaseEntity* 
 // 		guid,
 // 		context_string,
 // 		trsf,
-// 		boost::shared_ptr<IfcGeom::Representation::BRep>(shape),
+// 		std::shared_ptr<IfcGeom::Representation::BRep>(shape),
 // 		product
 // 	);
 // 

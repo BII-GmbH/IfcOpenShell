@@ -131,12 +131,12 @@ namespace IfcGeom {
 
 	class BRepElement : public Element {
 	private:
-		boost::shared_ptr<IfcGeom::Representation::BRep> _geometry;
+		std::shared_ptr<IfcGeom::Representation::BRep> _geometry;
 	public:
-		const boost::shared_ptr<IfcGeom::Representation::BRep>& geometry_pointer() const { return _geometry; }
+		const std::shared_ptr<IfcGeom::Representation::BRep>& geometry_pointer() const { return _geometry; }
 		const IfcGeom::Representation::BRep& geometry() const { return *_geometry; }
 		BRepElement(int id, int parent_id, const std::string& name, const std::string& type, const std::string& guid,
-            const std::string& context, const ifcopenshell::geometry::taxonomy::matrix4::ptr& trsf, const boost::shared_ptr<IfcGeom::Representation::BRep>& geometry,
+            const std::string& context, const ifcopenshell::geometry::taxonomy::matrix4::ptr& trsf, const std::shared_ptr<IfcGeom::Representation::BRep>& geometry,
 			const IfcUtil::IfcBaseEntity* product)
 			: Element(geometry->settings(), id, parent_id, name, type, guid, context, trsf, product)
 			, _geometry(geometry)
@@ -152,15 +152,15 @@ namespace IfcGeom {
 
 	class TriangulationElement : public Element {
 	private:
-		boost::shared_ptr< IfcGeom::Representation::Triangulation > _geometry;
+		std::shared_ptr< IfcGeom::Representation::Triangulation > _geometry;
 	public:
 		const IfcGeom::Representation::Triangulation& geometry() const { return *_geometry; }
-		const boost::shared_ptr< IfcGeom::Representation::Triangulation>& geometry_pointer() const { return _geometry; }
+		const std::shared_ptr< IfcGeom::Representation::Triangulation>& geometry_pointer() const { return _geometry; }
 		TriangulationElement(const IfcGeom::BRepElement& shape_model)
 			: Element(shape_model)
-			, _geometry(boost::shared_ptr<IfcGeom::Representation::Triangulation>(new IfcGeom::Representation::Triangulation(shape_model.geometry())))
+			, _geometry(std::shared_ptr<IfcGeom::Representation::Triangulation>(new IfcGeom::Representation::Triangulation(shape_model.geometry())))
 		{}
-		TriangulationElement(const IfcGeom::Element& element, const boost::shared_ptr<IfcGeom::Representation::Triangulation>& geometry)
+		TriangulationElement(const IfcGeom::Element& element, const std::shared_ptr<IfcGeom::Representation::Triangulation>& geometry)
 			: Element(element)
 			, _geometry(geometry)
 		{}

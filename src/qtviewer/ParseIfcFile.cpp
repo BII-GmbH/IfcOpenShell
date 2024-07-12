@@ -92,7 +92,7 @@ bool ParseIfcFile::Parse(
             continue;
         }
 
-        const boost::shared_ptr<IfcGeom::Representation::Triangulation>& triElemGeom = triElem->geometry_pointer();
+        const auto& triElemGeom = triElem->geometry_pointer();
 
         const std::vector<int>& elemFaces = triElemGeom->faces();
         const std::vector<double>& elemVertices = triElemGeom->verts();

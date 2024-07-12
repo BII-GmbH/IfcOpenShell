@@ -27,7 +27,7 @@
 #include "utils.h"
 
 #include <atomic>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 class Argument;
 class aggregate_of_instance;
@@ -142,7 +142,7 @@ class IFC_PARSE_API IfcBaseEntity : public IfcBaseClass {
     template <typename T>
     T get_value(const std::string& name, const T& default_value) const;
 
-    boost::shared_ptr<aggregate_of_instance> get_inverse(const std::string& name) const;
+    std::shared_ptr<aggregate_of_instance> get_inverse(const std::string& name) const;
 };
 
 // TODO: Investigate whether these should be template classes instead

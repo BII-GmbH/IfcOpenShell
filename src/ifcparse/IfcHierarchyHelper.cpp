@@ -607,7 +607,7 @@ Ifc4x3_rc2::IfcStyledItem* create_styled_item(Ifc4x3_rc2::IfcRepresentationItem*
 
 #ifdef HAS_SCHEMA_4x3_rc3
 Ifc4x3_rc3::IfcStyledItem* create_styled_item(Ifc4x3_rc3::IfcRepresentationItem* item, Ifc4x3_rc3::IfcPresentationStyle* style) {
-    boost::shared_ptr<aggregate_of<Ifc4x3_rc3::IfcPresentationStyle>> styles(new aggregate_of<Ifc4x3_rc3::IfcPresentationStyle>());
+    std::shared_ptr<aggregate_of<Ifc4x3_rc3::IfcPresentationStyle>> styles(new aggregate_of<Ifc4x3_rc3::IfcPresentationStyle>());
     styles->push(style);
     return new Ifc4x3_rc3::IfcStyledItem(item, styles, boost::none);
 }
@@ -615,7 +615,7 @@ Ifc4x3_rc3::IfcStyledItem* create_styled_item(Ifc4x3_rc3::IfcRepresentationItem*
 
 #ifdef HAS_SCHEMA_4x3_rc4
 Ifc4x3_rc4::IfcStyledItem* create_styled_item(Ifc4x3_rc4::IfcRepresentationItem* item, Ifc4x3_rc4::IfcPresentationStyle* style) {
-    boost::shared_ptr<aggregate_of<Ifc4x3_rc4::IfcPresentationStyle>> styles(new aggregate_of<Ifc4x3_rc4::IfcPresentationStyle>());
+    std::shared_ptr<aggregate_of<Ifc4x3_rc4::IfcPresentationStyle>> styles(new aggregate_of<Ifc4x3_rc4::IfcPresentationStyle>());
     styles->push(style);
     return new Ifc4x3_rc4::IfcStyledItem(item, styles, boost::none);
 }
@@ -623,7 +623,7 @@ Ifc4x3_rc4::IfcStyledItem* create_styled_item(Ifc4x3_rc4::IfcRepresentationItem*
 
 #ifdef HAS_SCHEMA_4x3
 Ifc4x3::IfcStyledItem* create_styled_item(Ifc4x3::IfcRepresentationItem* item, Ifc4x3::IfcPresentationStyle* style) {
-    boost::shared_ptr<aggregate_of<Ifc4x3::IfcPresentationStyle>> styles(new aggregate_of<Ifc4x3::IfcPresentationStyle>());
+    std::shared_ptr<aggregate_of<Ifc4x3::IfcPresentationStyle>> styles(new aggregate_of<Ifc4x3::IfcPresentationStyle>());
     styles->push(style);
     return new Ifc4x3::IfcStyledItem(item, styles, boost::none);
 }
@@ -631,7 +631,7 @@ Ifc4x3::IfcStyledItem* create_styled_item(Ifc4x3::IfcRepresentationItem* item, I
 
 #ifdef HAS_SCHEMA_4x3_tc1
 Ifc4x3_tc1::IfcStyledItem* create_styled_item(Ifc4x3_tc1::IfcRepresentationItem* item, Ifc4x3_tc1::IfcPresentationStyle* style) {
-    boost::shared_ptr<aggregate_of<Ifc4x3_tc1::IfcPresentationStyle>> styles(new aggregate_of<Ifc4x3_tc1::IfcPresentationStyle>());
+    std::shared_ptr<aggregate_of<Ifc4x3_tc1::IfcPresentationStyle>> styles(new aggregate_of<Ifc4x3_tc1::IfcPresentationStyle>());
     styles->push(style);
     return new Ifc4x3_tc1::IfcStyledItem(item, styles, boost::none);
 }
@@ -639,7 +639,7 @@ Ifc4x3_tc1::IfcStyledItem* create_styled_item(Ifc4x3_tc1::IfcRepresentationItem*
 
 #ifdef HAS_SCHEMA_4x3_add1
 Ifc4x3_add1::IfcStyledItem* create_styled_item(Ifc4x3_add1::IfcRepresentationItem* item, Ifc4x3_add1::IfcPresentationStyle* style) {
-    boost::shared_ptr<aggregate_of<Ifc4x3_add1::IfcPresentationStyle>> styles(new aggregate_of<Ifc4x3_add1::IfcPresentationStyle>());
+    std::shared_ptr<aggregate_of<Ifc4x3_add1::IfcPresentationStyle>> styles(new aggregate_of<Ifc4x3_add1::IfcPresentationStyle>());
     styles->push(style);
     return new Ifc4x3_add1::IfcStyledItem(item, styles, boost::none);
 }
@@ -647,7 +647,7 @@ Ifc4x3_add1::IfcStyledItem* create_styled_item(Ifc4x3_add1::IfcRepresentationIte
 
 #ifdef HAS_SCHEMA_4x3_add2
 Ifc4x3_add2::IfcStyledItem* create_styled_item(Ifc4x3_add2::IfcRepresentationItem* item, Ifc4x3_add2::IfcPresentationStyle* style) {
-    boost::shared_ptr<aggregate_of<Ifc4x3_add2::IfcPresentationStyle>> styles(new aggregate_of<Ifc4x3_add2::IfcPresentationStyle>());
+    std::shared_ptr<aggregate_of<Ifc4x3_add2::IfcPresentationStyle>> styles(new aggregate_of<Ifc4x3_add2::IfcPresentationStyle>());
     styles->push(style);
     return new Ifc4x3_add2::IfcStyledItem(item, styles, boost::none);
 }
@@ -985,9 +985,9 @@ void push_back_to_maybe_optional(T& t, U* u) {
 // In IFC4 the IfcContext.RepresentationContexts has been made optional, so we need
 // some boiler plate to push back to a list that might be optional.
 template <typename T, typename U>
-void push_back_to_maybe_optional(boost::optional<boost::shared_ptr<T>>& t, U* u) {
+void push_back_to_maybe_optional(boost::optional<std::shared_ptr<T>>& t, U* u) {
     if (!t) {
-        t = boost::shared_ptr<T>(new T);
+        t = std::shared_ptr<T>(new T);
     }
     (*t)->push(u);
 }

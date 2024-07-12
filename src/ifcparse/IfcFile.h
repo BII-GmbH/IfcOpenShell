@@ -287,7 +287,7 @@ class IFC_PARSE_API IfcFile {
     ///
     /// Attention when running removeEntity inside a loop over a list of entities to be removed.
     /// This invalidates the iterator. A workaround is to reverse the loop:
-    /// boost::shared_ptr<aggregate_of_instance> entities = ...;
+    /// std::shared_ptr<aggregate_of_instance> entities = ...;
     /// for (auto it = entities->end() - 1; it >= entities->begin(); --it) {
     ///    IfcUtil::IfcBaseClass *const inst = *it;
     ///    model->removeEntity(inst);
