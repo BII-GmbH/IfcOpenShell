@@ -86,7 +86,6 @@ def copy_to_container(ifc, collector, spatial, obj=None, containers=None):
     element = ifc.get_entity(obj)
     if not element:
         return
-    collector.sync(obj)
     from_container = spatial.get_container(element)
     if from_container:
         matrix = spatial.get_relative_object_matrix(obj, ifc.get_object(from_container))
@@ -238,3 +237,7 @@ def toggle_hide_spaces(ifc, spatial):
     if not spaces:
         return
     spatial.toggle_hide_spaces(spaces)
+
+
+def set_default_container(spatial: tool.Spatial, container: ifcopenshell.entity_instance):
+    spatial.set_default_container(container)
