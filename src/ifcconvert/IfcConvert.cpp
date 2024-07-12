@@ -856,7 +856,7 @@ int main(int argc, char** argv) {
 		IfcGeom::update_default_style("IfcSpace").Transparency().reset(force_space_transparency);
 	}
 
-	boost::shared_ptr<GeometrySerializer> serializer; /**< @todo use std::unique_ptr when possible */
+	std::shared_ptr<GeometrySerializer> serializer; /**< @todo use std::unique_ptr when possible */
 	if (output_extension == OBJ) {
         // Do not use temp file for MTL as it's such a small file.
         const path_t mtl_filename = change_extension(output_filename, MTL);
@@ -1667,7 +1667,7 @@ void fix_quantities(IfcParse::IfcFile& f, bool no_progress, bool quiet, bool std
 
 	IfcUtil::IfcBaseClass* quantity = nullptr;
 	aggregate_of_instance::ptr objects;
-	boost::shared_ptr<IfcGeom::Representation::BRep> previous_geometry_pointer;
+	std::shared_ptr<IfcGeom::Representation::BRep> previous_geometry_pointer;
 
 	for (;; ++num_created) {
 		bool has_more = true;

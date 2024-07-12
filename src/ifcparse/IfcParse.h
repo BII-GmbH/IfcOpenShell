@@ -43,7 +43,6 @@
 #include <cstring>
 #include <map>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
 
 #include "ifc_parse_api.h"

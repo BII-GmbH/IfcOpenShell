@@ -51,11 +51,11 @@ option(USE_MMAP "Adds a command line options to parse IFC files from memory mapp
 option(NO_WARN "Disable all warnings" OFF)
 
 option(BUILD_IFCGEOM "Build IfcGeom." ON)
-option(BUILD_IFCPYTHON "Build IfcPython." ON)
+option(BUILD_IFCPYTHON "Build IfcPython." OFF)
 option(BUILD_IFC_CSHARP "Build C# Wrapper." ON)
-option(BUILD_CONVERT "Build IfcConvert executable." ON)
+option(BUILD_CONVERT "Build IfcConvert executable." OFF)
 option(BUILD_DOCUMENTATION "Build IfcOpenShell Documentation." OFF)
-option(BUILD_EXAMPLES "Build example applications." ON)
+option(BUILD_EXAMPLES "Build example applications." OFF)
 option(BUILD_GEOMSERVER "Build IfcGeomServer executable." ON)
 option(BUILD_IFCMAX "Build IfcMax, a 3ds Max plug-in, Windows-only." OFF)
 option(BUILD_QTVIEWER "Build IfcOpenShell Qt GUI Viewer" OFF) # QtViewer requires Qt6
@@ -68,7 +68,7 @@ option(WITH_PROJ "Enable output of Earth-Centered Earth-Fixed glTF output using 
 option(IFCXML_SUPPORT "Build IfcParse with ifcXML support (requires libxml2)." ON)
 option(USD_SUPPORT "Build IfcConvert with USD support (requires pixar's USD library)." OFF)
 
-option(USERSPACE_PYTHON_PREFIX "Installs IfcPython for the current user only instead of system-wide." OFF)
+option(USERSPACE_PYTHON_PREFIX "Installs IfcPython for the current user only instead of system-wide." ON)
 option(ADD_COMMIT_SHA "Add commit sha and branch in version number, warning results in many rebuilds, requires git" OFF)
 
 if(MINIMAL_BUILD)

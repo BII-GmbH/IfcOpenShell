@@ -54,6 +54,7 @@
 
 %ignore IfcGeom::impl::tree::selector;
 
+%shared_ptr(IfcGeom::SurfaceStyle)
 %include "../ifcgeom_schema_agnostic/ifc_geom_api.h"
 %include "../ifcgeom_schema_agnostic/IfcGeomIteratorSettings.h"
 %include "../ifcgeom_schema_agnostic/IfcGeomElement.h"
@@ -62,6 +63,7 @@
 %include "../ifcgeom_schema_agnostic/IfcGeomIterator.h"
 %include "../ifcgeom_schema_agnostic/GeometrySerializer.h"
 
+%include "../ifcgeom_schema_agnostic/IfcGeomRenderStyles.h"
 // Declare an input typemap that suppresses requiring any input and
 // declare a temporary stack variable to hold the return data.
 // %typemap(in,numinputs=0) IfcGeom::SerializedElement* serializedElement (IfcGeom::SerializedElement tmp) {

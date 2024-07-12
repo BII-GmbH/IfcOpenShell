@@ -799,7 +799,7 @@ IfcGeom::BRepElement* IfcGeom::Kernel::create_brep_for_representation_and_produc
 		guid,
 		context_string,
 		trsf,
-		boost::shared_ptr<IfcGeom::Representation::BRep>(shape),
+		std::shared_ptr<IfcGeom::Representation::BRep>(shape),
 		product
 	);
 

@@ -34,7 +34,7 @@
 %include "std_string.i"
 %include "std_pair.i"
 %include "exception.i"
-%include <boost_shared_ptr.i>
+%include <std_shared_ptr.i>
 
 %shared_ptr(aggregate_of_instance)
 

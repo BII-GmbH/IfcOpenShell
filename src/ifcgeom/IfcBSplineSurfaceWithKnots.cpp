@@ -31,7 +31,7 @@
 #ifdef SCHEMA_HAS_IfcBSplineSurfaceWithKnots
 
 bool IfcGeom::Kernel::convert(const IfcSchema::IfcBSplineSurfaceWithKnots* l, TopoDS_Shape& face) {
-	boost::shared_ptr< aggregate_of_aggregate_of<IfcSchema::IfcCartesianPoint> > cps = l->ControlPointsList();
+	std::shared_ptr< aggregate_of_aggregate_of<IfcSchema::IfcCartesianPoint> > cps = l->ControlPointsList();
 	std::vector<double> uknots = l->UKnots();
 	std::vector<double> vknots = l->VKnots();
 	std::vector<int> umults = l->UMultiplicities();

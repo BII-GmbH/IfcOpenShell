@@ -84,8 +84,8 @@ private:
 
 private:
 
-	std::map<std::string, boost::shared_ptr<IfcGeom::Representation::BRep>> brep_cache_;
-	std::map<std::string, boost::shared_ptr<IfcGeom::Representation::Triangulation>> triangulation_cache_;
+	std::map<std::string, std::shared_ptr<IfcGeom::Representation::BRep>> brep_cache_;
+	std::map<std::string, std::shared_ptr<IfcGeom::Representation::Triangulation>> triangulation_cache_;
 	std::map<std::string, std::string> group_cache_;
 
 	H5::Group createRepresentationGroup(const H5::Group& element_group, const std::string& gid);

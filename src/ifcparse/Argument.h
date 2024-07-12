@@ -30,7 +30,7 @@
 
 #include "../ifcparse/aggregate_of_instance.h"
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/logic/tribool.hpp>
 

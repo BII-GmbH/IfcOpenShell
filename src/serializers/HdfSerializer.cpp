@@ -298,8 +298,8 @@ IfcGeom::Element* HdfSerializer::read(IfcParse::IfcFile& f, const std::string& g
 	IfcGeom::ElementSettings element_settings(settings_, f.getUnit("LENGTHUNIT").second, type);
 	auto inst = f.instance_by_id(id)->as<IfcUtil::IfcBaseEntity>();
 
-	boost::shared_ptr<IfcGeom::Representation::BRep> brep_geometry;
-	boost::shared_ptr<IfcGeom::Representation::Triangulation> triangulation_geometry;
+	std::shared_ptr<IfcGeom::Representation::BRep> brep_geometry;
+	std::shared_ptr<IfcGeom::Representation::Triangulation> triangulation_geometry;
 
 	if (rt == READ_BREP) {
 		auto it = brep_cache_.find(representation_id_str);
@@ -415,7 +415,7 @@ IfcGeom::Element* HdfSerializer::read(IfcParse::IfcFile& f, const std::string& g
 			trsf = gp_Trsf();
 		}
 
-		brep_geometry = boost::shared_ptr<IfcGeom::Representation::BRep>(new IfcGeom::Representation::BRep(element_settings, geom_id, shapes));
+		brep_geometry = std::shared_ptr<IfcGeom::Representation::BRep>(new IfcGeom::Representation::BRep(element_settings, geom_id, shapes));
 
 
 		if (!settings_.get(IfcGeom::IteratorSettings::USE_WORLD_COORDS)) {
@@ -463,7 +463,7 @@ IfcGeom::Element* HdfSerializer::read(IfcParse::IfcFile& f, const std::string& g
 			read_surface_style(surface_styles[i], surface_style_ptrs[i]);
 		}
 
-		triangulation_geometry = boost::shared_ptr<IfcGeom::Representation::Triangulation>(new IfcGeom::Representation::Triangulation(
+		triangulation_geometry = std::shared_ptr<IfcGeom::Representation::Triangulation>(new IfcGeom::Representation::Triangulation(
 			element_settings,
 			geom_id,
 			verts,

@@ -17,6 +17,7 @@
 
 #include <osg/Vec3>
 #include <vector>
+#include <memory>
 
 ParseIfcFile::ParseIfcFile() {}
 
@@ -92,7 +93,7 @@ bool ParseIfcFile::Parse(
             continue;
         }
 
-        const boost::shared_ptr<IfcGeom::Representation::Triangulation>& triElemGeom = triElem->geometry_pointer();
+        const std::shared_ptr<IfcGeom::Representation::Triangulation>& triElemGeom = triElem->geometry_pointer();
 
         const std::vector<int>& elemFaces = triElemGeom->faces();
         const std::vector<double>& elemVertices = triElemGeom->verts();

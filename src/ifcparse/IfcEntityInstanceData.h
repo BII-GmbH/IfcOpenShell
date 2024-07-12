@@ -23,8 +23,8 @@
 #include "../ifcparse/ArgumentType.h"
 
 #include <boost/optional.hpp>
-#include <boost/shared_ptr.hpp>
 
+#include <memory>
 #include <vector>
 
 class Argument;
@@ -62,7 +62,7 @@ public:
 
 	virtual ~IfcEntityInstanceData();
 
-	boost::shared_ptr<aggregate_of_instance> getInverse (const IfcParse::declaration* type, int attribute_index) const;
+	std::shared_ptr<aggregate_of_instance> getInverse (const IfcParse::declaration* type, int attribute_index) const;
 
 	Argument* getArgument(size_t i) const;
 

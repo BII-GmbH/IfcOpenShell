@@ -22,7 +22,7 @@
 
 #include "../ifcparse/IfcBaseClass.h"
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <set>
 
@@ -32,7 +32,7 @@ class aggregate_of;
 class IFC_PARSE_API aggregate_of_instance {
 	std::vector<IfcUtil::IfcBaseClass*> ls;
 public:
-	typedef boost::shared_ptr<aggregate_of_instance> ptr;
+	typedef std::shared_ptr<aggregate_of_instance> ptr;
 	typedef std::vector<IfcUtil::IfcBaseClass*>::const_iterator it;
 	void push(IfcUtil::IfcBaseClass* l);
 	void push(const ptr& l);
@@ -61,7 +61,7 @@ template <class T>
 class aggregate_of {
 	std::vector<T*> ls;
 public:
-	typedef boost::shared_ptr< aggregate_of<T> > ptr;
+	typedef std::shared_ptr< aggregate_of<T> > ptr;
 	typedef typename std::vector<T*>::const_iterator it;
 	void push(T* t) { if (t) { ls.push_back(t); } }
 	void push(ptr t) { if (t) { for (typename T::list::it it = t->begin(); it != t->end(); ++it) push(*it); } }
@@ -95,7 +95,7 @@ class aggregate_of_aggregate_of;
 class IFC_PARSE_API aggregate_of_aggregate_of_instance {
 	std::vector< std::vector<IfcUtil::IfcBaseClass*> > ls;
 public:
-	typedef boost::shared_ptr< aggregate_of_aggregate_of_instance > ptr;
+	typedef std::shared_ptr< aggregate_of_aggregate_of_instance > ptr;
 	typedef std::vector< std::vector<IfcUtil::IfcBaseClass*> >::const_iterator outer_it;
 	typedef std::vector<IfcUtil::IfcBaseClass*>::const_iterator inner_it;
 	void push(const std::vector<IfcUtil::IfcBaseClass*>& l) {
@@ -149,7 +149,7 @@ template <class T>
 class aggregate_of_aggregate_of {
 	std::vector< std::vector<T*> > ls;
 public:
-	typedef typename boost::shared_ptr< aggregate_of_aggregate_of<T> > ptr;
+	typedef typename std::shared_ptr< aggregate_of_aggregate_of<T> > ptr;
 	typedef typename std::vector< std::vector<T*> >::const_iterator outer_it;
 	typedef typename std::vector<T*>::const_iterator inner_it;
 	void push(const std::vector<T*>& t) { ls.push_back(t); }

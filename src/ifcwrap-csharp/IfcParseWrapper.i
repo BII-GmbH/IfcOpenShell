@@ -116,13 +116,9 @@ private:
 %}
 %enddef
 
-// TODO: while this works for now, modify this to simply apply to the aggregate_of_instance::ptr type
-//RENAME_AND_COPY_TO_VECTOR(instances_by_type, ByType, const std::string& type, type)
-//RENAME_AND_COPY_TO_VECTOR(instances_by_type_excl_subtypes, ByTypeExcludingSubtypes, const std::string& type, type)
-//RENAME_AND_COPY_TO_VECTOR(instance_by_id, ById, int id, id)
-
-
-//%rename("ByTypeExcludingSubtypes") instances_by_type_excl_subtypes;
+%rename("ByType") instances_by_type;
+%rename("ById") instance_by_id;
+%rename("ByTypeExclSubtypes") instances_by_type_excl_subtypes;
 
 %rename(Declaration) declaration;
 %rename(DeclarationType) IfcParse::declaration;
@@ -143,6 +139,8 @@ class attribute_value_derived {};
 	%}
 }
 */
+
+%include 
 
 %{
 

@@ -25,7 +25,7 @@
 #include "IfcBaseClass.h"
 #include "aggregate_of_instance.h"
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <atomic>
 
@@ -42,7 +42,7 @@ namespace IfcUtil {
 
 		Argument* get(const std::string& name) const;
 
-		boost::shared_ptr<aggregate_of_instance> get_inverse(const std::string& a) const;
+		std::shared_ptr<aggregate_of_instance> get_inverse(const std::string& a) const;
 	};
 }
 

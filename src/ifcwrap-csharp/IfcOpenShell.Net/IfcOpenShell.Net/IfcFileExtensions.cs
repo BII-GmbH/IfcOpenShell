@@ -11,7 +11,7 @@ namespace IfcOpenShell
         /// <returns>The scale factor</returns>
         public static double CalculateUnitScale(this IfcFile file, string unitType = "LENGTHUNIT")
         {
-            var unitAssignment = file.instances_by_type("IfcUnitAssignment");
+            var unitAssignment = file.ByType("IfcUnitAssignment");
             if (unitAssignment == null || unitAssignment.Count == 0)
             {
                 return 1.0;

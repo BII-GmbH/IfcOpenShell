@@ -26,8 +26,6 @@
 #include "../ifcparse/IfcSchema.h"
 #include "../ifcparse/utils.h"
 
-#include <boost/shared_ptr.hpp>
-
 #include <atomic>
 
 class Argument;
