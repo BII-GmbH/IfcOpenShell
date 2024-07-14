@@ -287,7 +287,7 @@ namespace std {
   %template(FloatVectorVector) std::vector<std::vector<float>>;
   %template(DoubleVectorVector) std::vector<std::vector<double>>;
 
-  //%template(MaterialVector) std::vector<IfcGeom::Material>;
+  %template(MaterialVector) std::vector<std::shared_ptr<ifcopenshell::geometry::taxonomy::style>>;
 
   %template(ArgumentByType) std::pair<IfcUtil::ArgumentType, Argument*>;
 
@@ -311,6 +311,31 @@ namespace std {
 
 	double std_array_Sl_double_Sc_3_Sg__Z_get(const std::array<double, 3>* vec) {
 		return (*vec)[2];
+	}
+%}
+
+%extend std::array<double, 4> {
+	const double X;
+	const double Y;
+	const double Z;
+	const double W;
+}
+
+%{
+	double std_array_Sl_double_Sc_4_Sg__X_get(const std::array<double, 4>* vec) {
+		return (*vec)[0];
+	}
+
+	double std_array_Sl_double_Sc_4_Sg__Y_get(const std::array<double, 4>* vec) {
+		return (*vec)[1];
+	}
+
+	double std_array_Sl_double_Sc_4_Sg__Z_get(const std::array<double, 4>* vec) {
+		return (*vec)[2];
+	}
+
+	double std_array_Sl_double_Sc_4_Sg__W_get(const std::array<double, 4>* vec) {
+		return (*vec)[3];
 	}
 %}
 

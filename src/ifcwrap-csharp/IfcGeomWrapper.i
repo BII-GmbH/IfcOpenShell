@@ -30,16 +30,45 @@
 // 	}
 // }
 
-// %typemap(out) Eigen::Matrix4d {
-// 	$result = PyTuple_New(4);
-// 	for (int i = 0; i < 4; ++i) {
-// 		auto row = PyTuple_New(4);
-// 		for (int j = 0; j < 4; ++j) {
-// 			PyTuple_SetItem(row, j, PyFloat_FromDouble($1(i, j)));
-// 		}
-// 		PyTuple_SetItem($result, i, row);
-// 	}
-// }
+%extend ifcopenshell::geometry::taxonomy::matrix4 {
+
+    %newobject Col0;
+    %newobject Col1;
+    %newobject Col2;
+    %newobject Col3;
+
+    const std::array<double,4> Col0;
+    const std::array<double,4> Col1;
+    const std::array<double,4> Col2;
+    const std::array<double,4> Col3;
+
+}
+
+%{
+    std::array<double,4>* ifcopenshell_geometry_taxonomy_matrix4_Col0_get(const ifcopenshell::geometry::taxonomy::matrix4* mat) {
+        auto col = mat->ccomponents().col(0);
+
+        return new  std::array<double,4> { col.x(), col.y(), col.z(), col.w() };
+    }
+
+    std::array<double,4>* ifcopenshell_geometry_taxonomy_matrix4_Col1_get(const ifcopenshell::geometry::taxonomy::matrix4* mat) {
+        auto col = mat->ccomponents().col(1);
+
+        return new std::array<double,4> { col.x(), col.y(), col.z(), col.w() };
+    }
+
+    std::array<double,4>* ifcopenshell_geometry_taxonomy_matrix4_Col2_get(const ifcopenshell::geometry::taxonomy::matrix4* mat) {
+        auto col = mat->ccomponents().col(2);
+
+        return new std::array<double,4> { col.x(), col.y(), col.z(), col.w() };
+    }
+
+    std::array<double,4>* ifcopenshell_geometry_taxonomy_matrix4_Col3_get(const ifcopenshell::geometry::taxonomy::matrix4* mat) {
+        auto col = mat->ccomponents().col(3);
+
+        return new std::array<double,4> { col.x(), col.y(), col.z(), col.w() };
+    }
+%}
 
 // SWIG does not support bool references in a meaningful way, so the
 // ifcopenshell::geometry::Settings functions degrade to return a read only value
@@ -264,7 +293,7 @@ std::string taxonomy_item_repr(ifcopenshell::geometry::taxonomy::item::ptr i) {
 
 
 %extend ifcopenshell::geometry::taxonomy::loop {
-	const std::vector<ifcopenshell::geometry::taxonomy::edge::ptr>& children_() const {
+	const std::vector<ifcopenshell::geometry::taxonomy::edge::ptr>& Children() const {
 		return $self->children;
 	}
 
