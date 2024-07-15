@@ -7,6 +7,7 @@ namespace IfcOpenShell
 {
     public static class PlacementExtensions
     {
+        // TODO: use the matrix4 type that ifcopenshell 0.8.0 introduced
         /// <summary>
         /// Parse a local placement into a 4x4 transformation matrix.
         /// This is typically used to find the location and rotation of an element. The
@@ -72,7 +73,6 @@ namespace IfcOpenShell
             
             
             var ifcClass = placement.Is();
-            
             switch (ifcClass)
             {
                 case "IfcAxis2Placement3D":

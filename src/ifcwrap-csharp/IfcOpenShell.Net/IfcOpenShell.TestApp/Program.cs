@@ -10,7 +10,7 @@ Console.WriteLine("Hello, World!");
 var i = Console.Read();
 
 //const string fileName = "I:\\MPAL VA Gleise + IRA-Bahnsteig_1023-1.IFC";
-const string fileName = "I:\\sampleHouse.IFC";
+const string fileName = "C:\\LocalDirs\\schnepp\\IfcOpenShell-Progress\\sampleHouse.IFC";
 
 
 var model = ifcopenshell_net.open(fileName);
@@ -18,18 +18,19 @@ var settings = new Settings();
 settings.Set("generate-uvs", true);
 settings.Set("weld-vertices", false);
 settings.Set("no-normals", false);
-var iterator = new Iterator("cgal", settings, model, Environment.ProcessorCount);
-using var task = Task.Run(() =>
-{
+var iterator = new Iterator("opencascade", settings, model, Environment.ProcessorCount);
+//using var task = Task.Run(() =>
+//var task = async () =>
+//{
     try
     {
-       
+
 
         Stopwatch watch = Stopwatch.StartNew();
         Console.WriteLine($"Importing with {Environment.ProcessorCount}");
         var defaultUnitsInIfc = ImmutableDictionary.CreateRange(
             model.ByType("IfcUnitAssignment")
-                .SelectMany(ass => ass.GetAttributeAsEntityList("Units"))
+                .SelectMany(ass => ass?.GetAttributeAsEntityList("Units"))
                 .Where(e => e != null)
                 .Select(unit =>
                 {
@@ -119,12 +120,13 @@ using var task = Task.Run(() =>
     }
 
     return 0;
-});
-var taskResult = await task;
-iterator.Dispose();
-model.Dispose();
-
-Console.WriteLine($"Task completed with result {taskResult}");
+//};
+//});
+//var taskResult = await task();
+// iterator.Dispose();
+// model.Dispose();
+//
+// Console.WriteLine($"Task completed with result {taskResult}");
 
 
 
