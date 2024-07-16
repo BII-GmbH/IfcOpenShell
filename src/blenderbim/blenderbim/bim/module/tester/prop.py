@@ -48,12 +48,14 @@ class FailedEntities(PropertyGroup):
 
 
 class IfcTesterProperties(PropertyGroup):
-    specs: StringProperty(default="", name="IDS File")
-    ifc_file: StringProperty(default="", name="IFC File")
-    should_load_from_memory: BoolProperty(default=False, name="Load from Memory")
-    generate_html_report: BoolProperty(default=False, name="Generate HTML report")
-    generate_ods_report: BoolProperty(default=False, name="Generate ODS report")
-    flag: BoolProperty(default=False, name="Flag Failed Entities")
+    specs: StringProperty(default="", name="IDS File(s)")
+    specs_files: CollectionProperty(name="IDS Files", type=StrProperty)
+    ifc_file: StringProperty(default="", name="IFC File(s)")
+    ifc_files: CollectionProperty(name="IFC Files", type=StrProperty)
+    should_load_from_memory: BoolProperty(default=False, name="Load from Memory", options=set())
+    generate_html_report: BoolProperty(default=False, name="Generate HTML report", options=set())
+    generate_ods_report: BoolProperty(default=False, name="Generate ODS report", options=set())
+    flag: BoolProperty(default=False, name="Flag Failed Entities", options=set())
     active_specification_index: IntProperty(name="Active Specification Index", update=update_active_specification_index)
     old_index: IntProperty(name="", default=0)
     active_failed_entity_index: IntProperty(name="Active Failed Entity Index")

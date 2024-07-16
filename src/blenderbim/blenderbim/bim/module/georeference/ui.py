@@ -60,14 +60,20 @@ class BIM_PT_gis(Panel):
             if attribute.name == "XAxisAbscissa":
                 row = self.layout.row(align=True)
                 row.prop(props, "grid_north_angle", text="Angle")
-                row.prop(props, "x_axis_is_null", icon="RADIOBUT_OFF" if props.x_axis_is_null else "RADIOBUT_ON", text="")
+                row.prop(
+                    props, "x_axis_is_null", icon="RADIOBUT_OFF" if props.x_axis_is_null else "RADIOBUT_ON", text=""
+                )
                 row = self.layout.row(align=True)
                 row.prop(props, "x_axis_abscissa", text="XAxis Abscissa")
-                row.prop(props, "x_axis_is_null", icon="RADIOBUT_OFF" if props.x_axis_is_null else "RADIOBUT_ON", text="")
+                row.prop(
+                    props, "x_axis_is_null", icon="RADIOBUT_OFF" if props.x_axis_is_null else "RADIOBUT_ON", text=""
+                )
             elif attribute.name == "XAxisOrdinate":
                 row = self.layout.row(align=True)
                 row.prop(props, "x_axis_ordinate", text="XAxis Ordinate")
-                row.prop(props, "x_axis_is_null", icon="RADIOBUT_OFF" if props.x_axis_is_null else "RADIOBUT_ON", text="")
+                row.prop(
+                    props, "x_axis_is_null", icon="RADIOBUT_OFF" if props.x_axis_is_null else "RADIOBUT_ON", text=""
+                )
                 if hasattr(context.scene, "sun_pos_properties"):
                     row = self.layout.row(align=True)
                     row.operator("bim.set_ifc_grid_north", text="Set IFC North")
@@ -83,33 +89,18 @@ class BIM_PT_gis(Panel):
             row.label(text="IFC2X3 Fallback In Use", icon="INFO")
 
         if not GeoreferenceData.data["projected_crs"]:
-            row = self.layout.row()
+            row = self.layout.row(align=True)
             row.label(text="Not Georeferenced", icon="ERROR")
+            row.prop(props, "should_visualise", icon="HIDE_OFF", text="")
             if tool.Ifc.get_schema() != "IFC2X3":
                 row = self.layout.row(align=True)
                 row.prop(props, "coordinate_operation_class", text="")
                 row.operator("bim.add_georeferencing", icon="ADD", text="")
 
-        if props.has_blender_offset:
-            row = self.layout.row()
-            row.label(text="Blender Session Coordinates", icon="TRACKING_REFINE_FORWARDS")
-
-            row = self.layout.row(align=True)
-            row.label(text=f"Eastings ({GeoreferenceData.data['local_unit_symbol']})")
-            row.label(text=props.blender_eastings)
-            row = self.layout.row(align=True)
-            row.label(text=f"Northings ({GeoreferenceData.data['local_unit_symbol']})")
-            row.label(text=props.blender_northings)
-            row = self.layout.row(align=True)
-            row.label(text=f"OrthogonalHeight ({GeoreferenceData.data['local_unit_symbol']})")
-            row.label(text=props.blender_orthogonal_height)
-            row = self.layout.row(align=True)
-            row.label(text="Angle to Grid North")
-            row.label(text=props.blender_project_north)
-
         if GeoreferenceData.data["projected_crs"]:
             row = self.layout.row(align=True)
             row.label(text="Projected CRS", icon="WORLD")
+            row.prop(props, "should_visualise", icon="HIDE_OFF", text="")
             if tool.Ifc.get_schema() != "IFC2X3":
                 row.operator("bim.enable_editing_georeferencing", icon="GREASEPENCIL", text="")
                 row.operator("bim.remove_georeferencing", icon="X", text="")
@@ -195,6 +186,39 @@ class BIM_PT_gis_true_north(Panel):
             row = self.layout.row(align=True)
             row.label(text="No True North Found", icon="LIGHT_SUN")
             row.operator("bim.enable_editing_true_north", icon="GREASEPENCIL", text="")
+
+
+class BIM_PT_gis_blender(Panel):
+    bl_idname = "BIM_PT_gis_blender"
+    bl_label = "Blender Coordinates"
+    bl_options = {"DEFAULT_CLOSED"}
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "scene"
+    bl_parent_id = "BIM_PT_gis"
+
+    def draw(self, context):
+        if not GeoreferenceData.is_loaded:
+            GeoreferenceData.load()
+
+        props = context.scene.BIMGeoreferenceProperties
+
+        if props.has_blender_offset:
+            row = self.layout.row()
+            row.label(text="Temporary Offset Is Active", icon="TRACKING_REFINE_FORWARDS")
+
+        row = self.layout.row(align=True)
+        row.label(text=f"Eastings ({GeoreferenceData.data['local_unit_symbol']})")
+        row.label(text=props.model_origin.split(",")[0])
+        row = self.layout.row(align=True)
+        row.label(text=f"Northings ({GeoreferenceData.data['local_unit_symbol']})")
+        row.label(text=props.model_origin.split(",")[1])
+        row = self.layout.row(align=True)
+        row.label(text=f"OrthogonalHeight ({GeoreferenceData.data['local_unit_symbol']})")
+        row.label(text=props.model_origin.split(",")[2])
+        row = self.layout.row(align=True)
+        row.label(text="Angle to Grid North")
+        row.label(text=props.model_project_north)
 
 
 class BIM_PT_gis_wcs(Panel):

@@ -42,6 +42,7 @@ def edit_georeferencing(ifc, georeference):
         coordinate_operation=georeference.get_coordinate_operation_attributes(),
     )
     georeference.disable_editing()
+    georeference.set_model_origin()
 
 
 def set_ifc_grid_north(georeference):
@@ -98,6 +99,7 @@ def edit_wcs(ifc, georeference):
     wcs = georeference.export_wcs()
     georeference.set_wcs(wcs)
     georeference.disable_editing_wcs()
+    georeference.set_model_origin()
 
 
 def enable_editing_true_north(georeference):

@@ -61,7 +61,7 @@ class BIM_PT_spatial(Panel):
             row = self.layout.row(align=True)
             if SpatialData.data["label"]:
                 row.label(text=SpatialData.data["label"])
-                row.operator("bim.select_container", icon="OBJECT_DATA", text="")
+                row.operator("bim.select_container", icon="OBJECT_DATA", text="").container = 0
                 row.operator("bim.select_similar_container", icon="RESTRICT_SELECT_OFF", text="")
                 row.operator("bim.enable_editing_container", icon="GREASEPENCIL", text="")
                 if SpatialData.data["is_directly_contained"]:
@@ -115,14 +115,13 @@ class BIM_PT_spatial_decomposition(Panel):
                 text=f"Default: {SpatialDecompositionData.data['default_container']}",
                 icon="OUTLINER_COLLECTION",
             )
-            row.operator("bim.import_spatial_decomposition", icon="FILE_REFRESH", text="")
         else:
             row = self.layout.row(align=True)
             row.label(text="Warning: No Default Container", icon="ERROR")
-            row.operator("bim.import_spatial_decomposition", icon="FILE_REFRESH", text="")
+        row.operator("bim.import_spatial_decomposition", icon="FILE_REFRESH", text="")
 
         if self.props.active_container:
-            ifc_definition_id = self.props.active_container.ifc_definition_id if self.props.active_container else 0
+            ifc_definition_id = self.props.active_container.ifc_definition_id
             row = self.layout.row(align=True)
             row.prop(self.props, "subelement_class", text="")
             op = row.operator("bim.add_part_to_object", icon="ADD", text="")
@@ -134,7 +133,16 @@ class BIM_PT_spatial_decomposition(Panel):
                 row.enabled = False
             op = row.operator("bim.set_default_container", icon="OUTLINER_COLLECTION", text="Set Default")
             op.container = ifc_definition_id
-            row.operator("bim.select_decomposed_elements", icon="HIDE_OFF", text=f"Isolate {self.props.active_container.ifc_class}")
+            op = row.operator("bim.set_container_visibility", icon="FULLSCREEN_EXIT", text="Isolate")
+            op.mode = "ISOLATE"
+            op.container = ifc_definition_id
+            op = row.operator("bim.set_container_visibility", icon="HIDE_OFF", text="")
+            op.mode = "SHOW"
+            op.container = ifc_definition_id
+            op = row.operator("bim.set_container_visibility", icon="HIDE_ON", text="")
+            op.mode = "HIDE"
+            op.container = ifc_definition_id
+            row.operator("bim.select_container", icon="OBJECT_DATA", text="").container = ifc_definition_id
             op = row.operator("bim.delete_container", icon="X", text="")
             op.container = ifc_definition_id
 
@@ -152,13 +160,17 @@ class BIM_PT_spatial_decomposition(Panel):
             return
 
         if not self.props.total_elements:
-            row = self.layout.row()
+            row = self.layout.row(align=True)
             row.label(text="No Contained Elements", icon="FILE_3D")
+            row.prop(self.props, "should_include_children", text="", icon="OUTLINER")
             return
 
         row = self.layout.row(align=True)
         row.label(text=f"{self.props.total_elements} Contained Elements", icon="FILE_3D")
-        row.operator("bim.select_decomposed_elements", icon="RESTRICT_SELECT_OFF", text="")
+        row.prop(self.props, "should_include_children", text="", icon="OUTLINER")
+        op = row.operator("bim.select_decomposed_elements", icon="RESTRICT_SELECT_OFF", text="")
+        op.ifc_class = self.props.active_container.ifc_class
+        op.container = ifc_definition_id
 
         self.layout.template_list(
             "BIM_UL_elements",
@@ -198,18 +210,22 @@ class BIM_UL_containers_manager(UIList):
             row.label(text="", icon="BLANK1")
         if item.ifc_class == "IfcProject":
             row.label(text="", icon="FILE")
-        elif item.ifc_class == "IfcSite":
-            row.label(text="", icon="WORLD")
-        elif item.ifc_class == "IfcBuilding":
-            row.label(text="", icon="HOME")
-        elif item.ifc_class == "IfcBuildingStorey":
-            row.label(text="", icon="LINENUMBERS_OFF")
-        elif item.ifc_class == "IfcSpace":
-            row.label(text="", icon="ANTIALIASED")
-        elif "Part" in item.ifc_class:
-            row.label(text="", icon="MOD_FLUID")
         else:
-            row.label(text="", icon="META_PLANE")
+            icon = {
+                "IfcSite": "WORLD",
+                "IfcBuilding": "HOME",
+                "IfcBuildingStorey": "LINENUMBERS_OFF",
+                "IfcSpace": "ANTIALIASED",
+                "IfcFacilityPart": "MOD_FLUID",
+                "IfcBridgePart": "MOD_FLUID",
+                "IfcFacilityPartCommon": "MOD_FLUID",
+                "IfcMarinePart": "MOD_FLUID",
+                "IfcRailwayPart": "MOD_FLUID",
+                "IfcRoadPart": "MOD_FLUID",
+            }.get(item.ifc_class, "META_PLANE")
+            op = row.operator("bim.select_decomposed_elements", icon=icon, text="", emboss=False)
+            op.ifc_class = item.ifc_class
+            op.container = item.ifc_definition_id
 
 
 class BIM_UL_elements(UIList):

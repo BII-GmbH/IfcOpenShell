@@ -27,6 +27,7 @@ import ifctester.reporter
 import ifcopenshell
 import blenderbim.tool as tool
 import blenderbim.bim.handler
+from blenderbim.bim.operator import MultipleFileSelector
 from pathlib import Path
 
 
@@ -42,22 +43,35 @@ class ExecuteIfcTester(bpy.types.Operator, tool.Ifc.Operator):
     def execute(self, context):
         props = context.scene.IfcTesterProperties
 
+        props.specifications.clear()
+
+        if props.should_load_from_memory and tool.Ifc.get():
+            ifc_data = tool.Ifc.get()
+            ifc_path = tool.Ifc.get_path()
+
+            for f in props.specs_files:
+                self.execute_tester(ifc_data, ifc_path, f.name)
+        else:
+            for ifc_file in props.ifc_files:
+                ifc_data = ifcopenshell.open(ifc_file.name)
+
+                for f in props.specs_files:
+                    self.execute_tester(ifc_data, ifc_file.name, f.name)
+
+        blenderbim.bim.handler.refresh_ui_data()
+        return {"FINISHED"}
+
+    def execute_tester(self, ifc_data, ifc_path, specs_path):
+        props = bpy.context.scene.IfcTesterProperties
+
         with tempfile.TemporaryDirectory() as dirpath:
             start = time.time()
-            output = Path(os.path.join(dirpath, "{}.html".format(props.specs)))
+            output = Path(os.path.join(dirpath, "{}_{}.html".format(ifc_path, os.path.basename(specs_path))))
 
-            filepath = None
-            if props.should_load_from_memory and tool.Ifc.get():
-                ifc = tool.Ifc.get()
-                filepath = tool.Ifc.get_path()
-            else:
-                ifc = ifcopenshell.open(props.ifc_file)
-                filepath = props.ifc_file
-
-            specs = ifctester.ids.open(props.specs)
+            specs = ifctester.ids.open(specs_path)
             print("Finished loading:", time.time() - start)
             start = time.time()
-            specs.validate(ifc, filepath=filepath)
+            specs.validate(ifc_data, filepath=ifc_path)
 
             print("Finished validating:", time.time() - start)
             start = time.time()
@@ -80,7 +94,7 @@ class ExecuteIfcTester(bpy.types.Operator, tool.Ifc.Operator):
             if report:
                 tool.Tester.specs = specs
                 tool.Tester.report = report
-            props.specifications.clear()
+
             for spec in report:
                 print(spec)
                 new_spec = props.specifications.add()
@@ -88,42 +102,32 @@ class ExecuteIfcTester(bpy.types.Operator, tool.Ifc.Operator):
                 new_spec.description = spec["description"]
                 new_spec.status = spec["status"]
 
-        blenderbim.bim.handler.refresh_ui_data()
-        return {"FINISHED"}
 
-
-class SelectSpecs(bpy.types.Operator):
+class SelectSpecs(MultipleFileSelector):
     bl_idname = "bim.select_specs"
     bl_label = "Select IDS"
-    bl_options = {"REGISTER", "UNDO"}
     filename_ext = ".ids"
     filter_glob: bpy.props.StringProperty(default="*.ids;*.xml", options={"HIDDEN"})
     filepath: bpy.props.StringProperty(subtype="FILE_PATH")
 
     def execute(self, context):
-        context.scene.IfcTesterProperties.specs = self.filepath
+        props = context.scene.IfcTesterProperties
+
+        self.update_props(props, "specs", props.specs_files)
         return {"FINISHED"}
 
-    def invoke(self, context, event):
-        context.window_manager.fileselect_add(self)
-        return {"RUNNING_MODAL"}
 
-
-class SelectIfcTesterIfcFile(bpy.types.Operator):
+class SelectIfcTesterIfcFile(MultipleFileSelector):
     bl_idname = "bim.select_ifctester_ifc_file"
     bl_label = "Select IfcTester IFC File"
-    bl_options = {"REGISTER", "UNDO"}
     filename_ext = ".ifc"
     filter_glob: bpy.props.StringProperty(default="*.ifc;*.ifczip;*.ifcxml", options={"HIDDEN"})
-    filepath: bpy.props.StringProperty(subtype="FILE_PATH")
 
     def execute(self, context):
-        context.scene.IfcTesterProperties.ifc_file = self.filepath
-        return {"FINISHED"}
+        props = context.scene.IfcTesterProperties
 
-    def invoke(self, context, event):
-        context.window_manager.fileselect_add(self)
-        return {"RUNNING_MODAL"}
+        self.update_props(props, "ifc_file", props.ifc_files)
+        return {"FINISHED"}
 
 
 class SelectRequirement(bpy.types.Operator):

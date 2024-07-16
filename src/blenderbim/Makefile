@@ -101,7 +101,7 @@ endif
 	cp -r blenderbim/* dist/blenderbim/
 
 	# Provides IfcOpenShell Python functionality
-	cd dist/working && wget https://s3.amazonaws.com/ifcopenshell-builds/ifcopenshell-python-$(PYNUMBER)-v$(VERSION)-${OLD}-$(PLATFORM)64.zip
+	cd dist/working && wget https://s3.amazonaws.com/ifcopenshell-builds/ifcopenshell-python-$(PYNUMBER)-v0.7.9-${OLD}-$(PLATFORM)64.zip
 	cd dist/working && unzip ifcopenshell-python*
 	cp -r dist/working/ifcopenshell dist/blenderbim/libs/site/packages/
 
@@ -218,7 +218,13 @@ endif
 	cd dist/working && . env/bin/activate && $(PIP) install python-socketio[asyncio_client] --target=./site-packages
 	cd dist/working && . env/bin/activate && $(PIP) install aiohttp --target=./site-packages
 	# Required by light module
+ifeq ($(PLATFORM), linux)
+	# See https://github.com/LBNL-ETA/pyradiance/issues/34
+	cd dist/working && . env/bin/activate && $(PIP) install pyradiance --platform manylinux1_x86_64 --python-version $(PYPI_VERSION) --implementation $(PYPI_IMP) --only-binary=:all: --target=./site-packages
+else ifneq ($(PLATFORM), macos)
+	# No support for MacOS Intel from upstream. Too bad :(
 	cd dist/working && . env/bin/activate && $(PIP) install pyradiance $(PYPI_PLATFORM) --python-version $(PYPI_VERSION) --implementation $(PYPI_IMP) --only-binary=:all: --target=./site-packages
+endif
 
 	cp -r dist/working/site-packages/* dist/blenderbim/libs/site/packages/
 	rm -rf dist/working

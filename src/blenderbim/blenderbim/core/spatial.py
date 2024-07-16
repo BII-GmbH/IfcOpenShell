@@ -109,11 +109,8 @@ def copy_to_container(
     return result_objs
 
 
-def select_container(ifc: tool.Ifc, spatial: tool.Spatial, obj: bpy.types.Object) -> None:
-    element = ifc.get_entity(obj)
-    if not element:
-        return
-    spatial.set_active_object(ifc.get_object(spatial.get_container(element)))
+def select_container(ifc: tool.Ifc, spatial: tool.Spatial, container: ifcopenshell.entity_instance) -> None:
+    spatial.set_active_object(ifc.get_object(container))
 
 
 def select_similar_container(ifc: tool.Ifc, spatial: tool.Spatial, obj: bpy.types.Object) -> None:
@@ -152,10 +149,8 @@ def delete_container(
     spatial.import_spatial_decomposition()
 
 
-def select_decomposed_elements(spatial: tool.Spatial) -> None:
-    container = spatial.get_active_container()
-    if container:
-        spatial.select_products(spatial.get_decomposed_elements(container))
+def select_decomposed_elements(spatial: tool.Spatial, container: ifcopenshell.entity_instance) -> None:
+    spatial.select_products(spatial.get_decomposed_elements(container))
 
 
 def generate_space(ifc: tool.Ifc, model: tool.Model, root: tool.Root, spatial: tool.Spatial, type: tool.Type) -> None:

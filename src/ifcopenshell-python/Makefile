@@ -44,7 +44,7 @@ ifeq ($(PLATFORM), win64)
 PLATFORMTAG:=win_amd64
 endif
 
-IOS_URL:=https://s3.amazonaws.com/ifcopenshell-builds/ifcopenshell-python-$(PYNUMBER)-v$(VERSION)-c18e4ea-$(PLATFORM).zip
+IOS_URL:=https://s3.amazonaws.com/ifcopenshell-builds/ifcopenshell-python-$(PYNUMBER)-v0.7.9-c18e4ea-$(PLATFORM).zip
 
 .PHONY: test
 test:
@@ -93,14 +93,7 @@ endif
 
 	cd dist/working && wget $(IOS_URL)
 	cd dist/working && unzip ifcopenshell-python*
-	cp -r dist/working/ifcopenshell/ifcopenshell_wrapper.py dist/ifcopenshell/
-ifeq ($(PLATFORM), win64)
-	cp -r dist/working/ifcopenshell/_ifcopenshell_wrapper.pyd dist/ifcopenshell/
-else ifeq ($(PLATFORM), win32)
-	cp -r dist/working/ifcopenshell/_ifcopenshell_wrapper.pyd dist/ifcopenshell/
-else
-	cp -r dist/working/ifcopenshell/_ifcopenshell_wrapper.so dist/ifcopenshell/
-endif
+	cp -r dist/working/ifcopenshell/*ifcopenshell_wrapper* dist/ifcopenshell/
 	rm -rf dist/working
 	$(SED) 's/version = "0.0.0"/version = "$(VERSION)"/' dist/ifcopenshell/__init__.py
 	cd dist && zip -r ifcopenshell-python-$(VERSION)-$(PYVERSION)-$(PLATFORM).zip ifcopenshell
@@ -118,14 +111,7 @@ endif
 
 	cd dist/working && wget $(IOS_URL)
 	cd dist/working && unzip ifcopenshell-python*
-	cp -r dist/working/ifcopenshell/ifcopenshell_wrapper.py dist/ifcopenshell/
-ifeq ($(PLATFORM), win64)
-	cp -r dist/working/ifcopenshell/_ifcopenshell_wrapper.pyd dist/ifcopenshell/
-else ifeq ($(PLATFORM), win32)
-	cp -r dist/working/ifcopenshell/_ifcopenshell_wrapper.pyd dist/ifcopenshell/
-else
-	cp -r dist/working/ifcopenshell/_ifcopenshell_wrapper.so dist/ifcopenshell/
-endif
+	cp -r dist/working/ifcopenshell/*ifcopenshell_wrapper* dist/ifcopenshell/
 	rm -rf dist/working
 	# distutils cannot access anything outside the cwd, so hackishly swap out the README.md
 	cp README.md ../README.bak
