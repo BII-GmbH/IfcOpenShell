@@ -342,7 +342,7 @@ namespace std {
 
 
 
-
+// TODO: Check if this is even still required. Maybe we can instead rename the Argument overloaded operator()s
 %define TRY_GET_AS(TYPE, NAME, TYPECHECK)
 	%extend std::pair<IfcUtil::ArgumentType, Argument*> {
 		

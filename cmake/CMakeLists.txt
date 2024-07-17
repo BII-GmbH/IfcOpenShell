@@ -60,6 +60,9 @@ option(NO_WARN "Disable all warnings" OFF)
 option(BUILD_IFCGEOM "Build IfcGeom." ON)
 option(BUILD_IFCPYTHON "Build IfcPython." OFF)
 option(BUILD_IFC_CSHARP "Build Ifc CSharp Wrapper." ON)
+
+# TURNED OFF BECAUSE IT WOULD REQUIRE CHANGES TO THE CITYJSON SUBMODULE CODE (boost::shared_ptr -> std::shared_ptr) 
+# WHICH I DIT NOT FEEL LIKE DOING FOR SOMETHING WE DO NOT USE ANYWAY
 option(BUILD_CONVERT "Build IfcConvert executable." OFF)
 option(BUILD_DOCUMENTATION "Build IfcOpenShell Documentation." OFF)
 option(BUILD_EXAMPLES "Build example applications." OFF)
@@ -76,7 +79,9 @@ option(HDF5_SUPPORT "Enable HDF5 support (requires HDF5, zlib)" ON)
 option(WITH_PROJ "Enable output of Earth-Centered Earth-Fixed glTF output using the PROJ library" OFF)
 option(IFCXML_SUPPORT "Build IfcParse with ifcXML support (requires libxml2)." ON)
 option(USD_SUPPORT "Build IfcConvert with USD support (requires pixar's USD library)." OFF)
-option(CITYJSON_SUPPORT "Build IfcConvert with CityJSON support (requires CityJSON library)." ON)
+# TURNED OFF BECAUSE IT WOULD REQUIRE CHANGES TO THE SUBMODULE CODE (boost::shared_ptr -> std::shared_ptr) 
+# WHICH I DIT NOT FEEL LIKE DOING FOR SOMETHING WE DO NOT USE ANYWAY
+option(CITYJSON_SUPPORT "Build IfcConvert with CityJSON support (requires CityJSON library)." OFF)
 option(WITH_RELATIONSHIP_VALIDATION "Build IfcConvert with option to validate geometrical relationships." OFF)
 
 option(USERSPACE_PYTHON_PREFIX "Installs IfcPython for the current user only instead of system-wide." OFF)
