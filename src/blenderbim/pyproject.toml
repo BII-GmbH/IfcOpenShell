@@ -3,29 +3,27 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ifc5d"
+name = "blenderbim"
 version = "0.0.0"
 authors = [
   { name="Dion Moult", email="dion@thinkmoult.com" },
 ]
-description = "IFC 5D costing library for quantity take-off and schedule production"
-readme = "README.md"
-keywords = ["IFC", "5D", "BIM"]
+description = "A native Building Information Model authoring platform using IFC"
+keywords = ["IFC", "Blender", "BIM"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
 ]
 dependencies = [
     "ifcopenshell",
 ]
 
 [project.urls]
-Homepage = "http://ifcopenshell.org"
-Documentation = "https://docs.ifcopenshell.org"
+Homepage = "http://blenderbim.org"
+Documentation = "https://docs.blenderbim.org"
 Issues = "https://github.com/IfcOpenShell/IfcOpenShell/issues"
 
 [tool.setuptools.packages.find]
-include = ["ifc5d*"]
+include = ["blenderbim*"]
 exclude = ["test*"]
 
 [tool.setuptools.package-data]

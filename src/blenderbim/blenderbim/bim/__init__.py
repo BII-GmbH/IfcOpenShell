@@ -19,7 +19,6 @@
 import os
 import bpy
 import bpy.utils.previews
-import blenderbim
 import importlib
 from pathlib import Path
 from . import handler, ui, prop, operator, helper
@@ -75,7 +74,6 @@ modules = {
     "clash": None,
     "csv": None,
     "tester": None,
-    "bimtester": None,
     "diff": None,
     "patch": None,
     "gis": None,
@@ -169,6 +167,7 @@ classes = [
     # Services and systems
     ui.BIM_PT_tab_services,
     ui.BIM_PT_tab_zones,
+    ui.BIM_PT_tab_solar_analysis,
     # Structural analysis
     ui.BIM_PT_tab_structural,
     # Construction scheduling
@@ -253,17 +252,6 @@ def register():
             icon_preview.load(icon_name, icon_path, "IMAGE")
 
     icons = icon_preview
-
-    global last_commit_hash
-    try:
-        import git
-
-        path = Path(__file__).resolve().parent
-        repo = git.Repo(str(path), search_parent_directories=True)
-        last_commit_hash = repo.head.object.hexsha
-    except:
-        pass
-
     bpy.app.translations.register("blenderbim", translations_dict)
 
 

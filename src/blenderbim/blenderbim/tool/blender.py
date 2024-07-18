@@ -27,6 +27,7 @@ import blenderbim.core.tool
 import blenderbim.tool as tool
 import blenderbim.bim
 import addon_utils
+import types
 from mathutils import Vector
 from pathlib import Path
 from blenderbim.bim.ifc import IFC_CONNECTED_TYPE
@@ -245,6 +246,13 @@ class Blender(blenderbim.core.tool.Blender):
             for area in window.screen.areas:
                 if area.type == "VIEW_3D":
                     return area
+
+    @classmethod
+    def get_view3d_space(cls):
+        if area := cls.get_view3d_area():
+            for space in area.spaces:
+                if space.type == "VIEW_3D":
+                    return space
 
     @classmethod
     def get_blender_prop_default_value(cls, props, prop_name: str) -> Any:
@@ -910,6 +918,18 @@ class Blender(blenderbim.core.tool.Blender):
                         yield child_obj
 
     @classmethod
+    def get_last_commit_hash(cls) -> Union[str, None]:
+        """Get 8 symbols of last commit hash if it's present or return None otherwise."""
+        commit_hash = blenderbim.bim.last_commit_hash
+
+        # Commit hash is unset - user is using __init__ from repo
+        # without setting up git repository.
+        if commit_hash == "8888888":
+            return None
+
+        return commit_hash[:7]
+
+    @classmethod
     def get_blenderbim_version(cls):
         version = ".".join(
             [
@@ -921,8 +941,8 @@ class Blender(blenderbim.core.tool.Blender):
                 ][0]
             ]
         )
-        if blenderbim.bim.last_commit_hash != "8888888":
-            version += f"-{blenderbim.bim.last_commit_hash[:7]}"
+        if commit_hash := cls.get_last_commit_hash():
+            version += f"-{commit_hash}"
         return version
 
     @classmethod
@@ -1089,11 +1109,38 @@ class Blender(blenderbim.core.tool.Blender):
 
     @classmethod
     def get_blender_addon_package_name(cls) -> str:
-        if bpy.app.version >= (4, 2, 0):
-            return blenderbim.BLENDER_PACKAGE_NAME
+        for package_name in bpy.context.preferences.addons.keys():
+            if package_name.endswith(".blenderbim"):
+                return package_name
         return "blenderbim"
 
     @classmethod
     def get_addon_preferences(cls) -> blenderbim.bim.ui.BIM_ADDON_preferences:
         blender_package_name = cls.get_blender_addon_package_name()
         return bpy.context.preferences.addons[blender_package_name].preferences
+
+    @classmethod
+    def get_sun_position_addon(cls) -> Union[types.ModuleType, None]:
+        # Check if it's installed as legacy Blender addon.
+        import importlib
+
+        try:
+            sun_position = importlib.import_module("sun_position")
+        except ImportError:
+            sun_position = None
+
+        if sun_position:
+            return sun_position
+
+        # No extensions prior to 4.2.
+        if bpy.app.version < (4, 2, 0):
+            return sun_position
+
+        if sun_position:
+            return sun_position
+
+        for package_name in bpy.context.preferences.addons.keys():
+            if package_name.endswith(".sun_position"):
+                sun_position = importlib.import_module(package_name)
+
+        return sun_position
