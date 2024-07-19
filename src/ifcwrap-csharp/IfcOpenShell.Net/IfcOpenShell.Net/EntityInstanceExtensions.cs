@@ -258,22 +258,22 @@ namespace IfcOpenShell {
             return instance.GetAttribute(attributeName)?.GetAsEntity();
         }
         
-        public static IntVector? GetAttributeAsIntList(this EntityInstance instance , string attributeName)
+        public static IReadOnlyList<int>? GetAttributeAsIntList(this EntityInstance instance , string attributeName)
         {
             return instance.GetAttribute(attributeName)?.GetAsIntList();
         }
         
-        public static DoubleVector? GetAttributeAsDoubleList(this EntityInstance instance , string attributeName)
+        public static IReadOnlyList<double>? GetAttributeAsDoubleList(this EntityInstance instance , string attributeName)
         {
             return instance.GetAttribute(attributeName)?.GetAsDoubleList();
         }
         
-        public static StringVector? GetAttributeAsStringList(this EntityInstance instance , string attributeName)
+        public static IReadOnlyList<string>? GetAttributeAsStringList(this EntityInstance instance , string attributeName)
         {
             return instance.GetAttribute(attributeName)?.GetAsStringList();
         }
         
-        public static aggregate_of_instance? GetAttributeAsEntityList(this EntityInstance instance , string attributeName)
+        public static IReadOnlyList<EntityInstance>? GetAttributeAsEntityList(this EntityInstance instance , string attributeName)
         {
             return instance.GetAttribute(attributeName)?.GetAsEntityList();
         }
@@ -310,25 +310,25 @@ namespace IfcOpenShell {
             return instance.GetAttribute(attributeName)?.TryGetAsEntity(out attributeValue) ?? false;
         }
         
-        public static bool TryGetAttributeAsIntList(this EntityInstance instance , string attributeName, out IntVector attributeValue)
+        public static bool TryGetAttributeAsIntList(this EntityInstance instance , string attributeName, out IReadOnlyList<int>? attributeValue)
         {
             attributeValue = default;
             return instance.GetAttribute(attributeName)?.TryGetAsIntList(out attributeValue) ?? false;
         }
         
-        public static bool TryGetAttributeAsDoubleList(this EntityInstance instance , string attributeName, out DoubleVector attributeValue)
+        public static bool TryGetAttributeAsDoubleList(this EntityInstance instance , string attributeName, out IReadOnlyList<double>? attributeValue)
         {
             attributeValue = default;
             return instance.GetAttribute(attributeName)?.TryGetAsDoubleList(out attributeValue) ?? false;
         }
         
-        public static bool TryGetAttributeAsStringList(this EntityInstance instance , string attributeName, out StringVector attributeValue)
+        public static bool TryGetAttributeAsStringList(this EntityInstance instance , string attributeName, out IReadOnlyList<string>? attributeValue)
         {
             attributeValue = default;
             return instance.GetAttribute(attributeName)?.TryGetAsStringList(out attributeValue) ?? false;
         }
         
-        public static bool TryGetAttributeAsEntityList(this EntityInstance instance , string attributeName, out aggregate_of_instance attributeValue)
+        public static bool TryGetAttributeAsEntityList(this EntityInstance instance , string attributeName, out IReadOnlyList<EntityInstance>? attributeValue)
         {
             attributeValue = default;
             var att = instance.GetAttribute(attributeName);

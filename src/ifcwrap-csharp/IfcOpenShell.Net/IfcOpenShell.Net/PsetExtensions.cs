@@ -5,13 +5,14 @@ using System.Linq;
 
 namespace IfcOpenShell
 {
+    /// The methods in this file are incomplete duplications of the methods in ifcopenshell-python/util/element.py
     public static class PsetExtensions
     {
         public static IReadOnlyDictionary<string, ArgumentResult>? GetPset(this EntityInstance element,
             string psetName, 
             string? propertyName = null,
             bool onlyPsets = false, 
-            bool onlyQtos = false,
+            bool onlyQuantities = false,
             bool shouldInherit = true,
             bool verbose = false
         )
@@ -49,7 +50,6 @@ namespace IfcOpenShell
                     var elemType = element.GetConstructionType();
                     if (elemType != null)
                         typePset = elemType.GetPset(psetName, propertyName, shouldInherit: false, verbose: verbose);
-                    //throw new NotImplementedException();
                 }
 
                 foreach (var relationship in definedBy)
@@ -72,7 +72,7 @@ namespace IfcOpenShell
                 if(onlyPsets && !pset.Is("IfcPropertySet"))
                 {
                     pset = null;
-                } else if(onlyQtos && !pset.Is("IfcElementQuantity"))
+                } else if(onlyQuantities && !pset.Is("IfcElementQuantity"))
                 {
                     pset = null;
                 }
@@ -80,20 +80,23 @@ namespace IfcOpenShell
 
             if (typePset != null && propertyName == null)
             {
+                // branch has not been encountered in our testing.
+                // If this is needed in the future look at ifcopenshell-python/util/element.py:get_pset
                 throw new NotImplementedException();
             }
 
             if (pset == null && typePset == null)
             {
-                // TODO: null?
+                // python returns null here - i don't like null, so return empty list instead
                 return new Dictionary<string, ArgumentResult>();
             }
-
-
             if (propertyName == null)
             {
                 if (typePset != null)
                 {
+                    // Currently unreachable because the branch in line 83 is the only way this can be reached
+                    // branch has not been encountered in our testing.
+                    // If this is needed in the future look at ifcopenshell-python/util/element.py:get_pset
                     throw new NotImplementedException();
                 }
 
@@ -101,7 +104,7 @@ namespace IfcOpenShell
             }
             var value = pset.getPropertyDefinition(propertyName: propertyName, verbose: verbose);
             
-            if(value is null && typePset != null)
+            if(value != null && typePset != null)
             {
                 return typePset;
             }
@@ -111,10 +114,10 @@ namespace IfcOpenShell
         public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, ArgumentResult>>
             GetPsets(this EntityInstance instance,
                 bool onlyPsets = false,
-                bool onlyQtos = false,
+                bool onlyQuantities = false,
                 bool shouldInherit = true,
                 bool verbose = false
-                )
+            )
         {
             var results =
                 new Dictionary<string, IReadOnlyDictionary<string, ArgumentResult>>();
@@ -126,7 +129,7 @@ namespace IfcOpenShell
                 {
                     var name = definition.TryGetAttributeAsString("Name", out var n) ? n : "Unknown";
                     if ((onlyPsets && !definition.Is("IfcPropertySet")) ||
-                        (onlyQtos && !definition.Is("IfcElementQuantity")))
+                        (onlyQuantities && !definition.Is("IfcElementQuantity")))
                     {
                         continue;
                     }
@@ -136,7 +139,7 @@ namespace IfcOpenShell
                 }
             } else if (instance.Is("IfcMaterialDefinition") || instance.Is("IfcProfileDef"))
             {
-                if (onlyQtos)
+                if (onlyQuantities)
                     return results;
                 // ifc2x3 may be missing this
                 if(instance.TryGetAttributeAsEntityList("HasProperties", out var props))
@@ -155,7 +158,7 @@ namespace IfcOpenShell
                     var type = instance.GetConstructionType();
                     if (type != null)
                     {
-                        var typeResults = GetPsets(type, onlyPsets, onlyQtos, shouldInherit: false, verbose: verbose);
+                        var typeResults = GetPsets(type, onlyPsets, onlyQuantities, shouldInherit: false, verbose: verbose);
                         foreach (var kvp in typeResults)
                         {
                             results.Add(kvp.Key, kvp.Value);
@@ -169,7 +172,7 @@ namespace IfcOpenShell
                         relationship.TryGetAttributeAsEntity("RelatingPropertyDefinition", out var def))
                     {
                         if ((onlyPsets && !def.Is("IfcPropertySet")) || 
-                            (onlyQtos && !def.Is("IfcElementQuantity")))
+                            (onlyQuantities && !def.Is("IfcElementQuantity")))
                         {
                             continue;
                         }
@@ -266,25 +269,43 @@ namespace IfcOpenShell
                         result.Add(name, new ArgumentResult.FromEntityInstance(prop));
                         break;
                     case "IfcPropertyEnumeratedValue":
-                        throw new NotImplementedException();
+                    {
+                        // argument index 2 is the enumeration values
+                        var enumValues = prop.get_argument(2).TryGetAsEntityList();
+                        if (enumValues.TryGetValue(out var enumConstants))
+                        {
+                            var stringValues = enumConstants.Select(e => e.GetAttributeAsString("wrappedValue"));
+                            result.Add(name, new ArgumentResult.FromStringList(stringValues));
+                        }
+
                         break;
+                    }
                     case "IfcPropertyListValue":
-                        throw new NotImplementedException();
+                    {
+                        // argument index 2 is the enumeration values
+                        var enumValues = prop.get_argument(2).TryGetAsEntityList();
+                        if (enumValues.TryGetValue(out var enumConstants))
+                        {
+                            var stringValues = enumConstants.Select(e => e.GetAttributeAsString("wrappedValue"));
+                            result.Add(name, new ArgumentResult.FromStringList(stringValues));
+                        }
+
                         break;
+                    }
                     case "IfcPropertyBoundedValue":
+                        // implementing this type is really easy, except for return type magic because we suddenly need to wrap a dictionary<string, EntityInstance>
                         throw new NotImplementedException();
                         break;
                     case "IfcPropertyTableValue":
+                        // implementing this type is really easy, except for return type magic because we suddenly need to wrap a dictionary<string, EntityInstance>
                         throw new NotImplementedException();
                         break;
                     case "IfcComplexProperty":
+                        // implementing this type is not that complicated, except for return type magic because we suddenly need to wrap a dictionary<string, EntityInstance>
                         throw new NotImplementedException();
                         break;
                     default: break;
                 }
-                
-                // TODO: actually read property values
-                
             }
             return result;
         }
@@ -316,11 +337,6 @@ namespace IfcOpenShell
                     if (quantity.TryGetAttributeAsEntityList("HasQuantities", out var subQuantities))
                     {
                         throw new NotImplementedException();
-                        // var subQuantitiesProps = getQuantities(subQuantities, verbose);
-                        // foreach (var (subName, value) in subQuantitiesProps)
-                        // {
-                        //     result.Add(subName, value);
-                        // }
                     }
                 }
                 // python impl also returns inside the loop
@@ -358,11 +374,6 @@ namespace IfcOpenShell
                     if (quantity.TryGetAttributeAsEntityList("HasQuantities", out var subQuantities))
                     {
                         throw new NotImplementedException("IfcPhysicalComplexQuantity.HasQuantities not implemented");
-                        // var subQuantitiesProps = getQuantities(subQuantities, verbose);
-                        // foreach (var (subName, value) in subQuantitiesProps)
-                        // {
-                        //     result.Add(subName, value);
-                        // }
                     }
                 }
             }

@@ -3,7 +3,7 @@
     #include "../ifcparse/IfcBaseClass.h"
 %}
 
-%typemap(csinterfaces) aggregate_of_instance "global::System.IDisposable, global::System.Collections.IEnumerable, global::System.Collections.Generic.IEnumerable<$typemap(cstype, IfcUtil::IfcBaseClass*)>\n"
+%typemap(csinterfaces) aggregate_of_instance "global::System.IDisposable, global::System.Collections.IEnumerable, global::System.Collections.Generic.IEnumerable<$typemap(cstype, IfcUtil::IfcBaseClass*)>, global::System.Collections.Generic.IReadOnlyList<$typemap(cstype, IfcUtil::IfcBaseClass*)>\n"
 
 
 // %extend aggregate_of_instance {

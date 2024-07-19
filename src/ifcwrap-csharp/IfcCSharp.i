@@ -49,7 +49,7 @@
 
 %include "stdint.i"
 %include "std_array.i"
-%include "std_vector.i"
+%include "utils/readonly_vector.i"
 %include "std_string.i"
 %include "std_pair.i"
 %include "exception.i"
@@ -234,7 +234,6 @@
 
 %include "IfcGeomWrapper.i"
 %include "IfcParseWrapper.i"
-%include "std_vector.i"
 	
 %inline %{
 	

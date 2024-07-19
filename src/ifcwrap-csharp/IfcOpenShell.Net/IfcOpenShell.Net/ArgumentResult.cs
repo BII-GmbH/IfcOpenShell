@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 
 namespace IfcOpenShell
@@ -37,22 +39,22 @@ namespace IfcOpenShell
             return null;
         }
 
-        public virtual IntVector GetAsIntList()
+        public virtual IReadOnlyList<int> GetAsIntList()
         {
             return null;
         }
 
-        public virtual DoubleVector GetAsDoubleList()
+        public virtual IReadOnlyList<double> GetAsDoubleList()
         {
             return null;
         }
         
-        public virtual StringVector GetAsStringList()
+        public virtual IReadOnlyList<string> GetAsStringList()
         {
             return null;
         }
         
-        public virtual aggregate_of_instance GetAsEntityList()
+        public virtual IReadOnlyList<EntityInstance> GetAsEntityList()
         {
             return null;
         }
@@ -89,25 +91,25 @@ namespace IfcOpenShell
             return false;
         }
 
-        public virtual bool TryGetAsIntList(out IntVector val)
+        public virtual bool TryGetAsIntList(out IReadOnlyList<int> val)
         {
             val = null;
             return false;
         }
 
-        public virtual bool TryGetAsDoubleList(out DoubleVector val)
+        public virtual bool TryGetAsDoubleList(out IReadOnlyList<double> val)
         {
             val = null;
             return false;
         }
 
-        public virtual bool TryGetAsStringList(out StringVector val)
+        public virtual bool TryGetAsStringList(out IReadOnlyList<string> val)
         {
             val = null;
             return false;
         }
 
-        public virtual bool TryGetAsEntityList(out aggregate_of_instance val)
+        public virtual bool TryGetAsEntityList(out IReadOnlyList<EntityInstance> val)
         {
             val = null;
             return false;
@@ -149,22 +151,23 @@ namespace IfcOpenShell
                 return wrapped.TryGetAsEntity().TryGetValue(out var v) ? v : null;
             }
 
-            public override IntVector GetAsIntList()
+            public override IReadOnlyList<int> GetAsIntList()
             {
                 return wrapped.TryGetAsIntList().TryGetValue(out var v) ? v : null;
             }
 
-            public override DoubleVector GetAsDoubleList()
+            public override IReadOnlyList<double> GetAsDoubleList()
             {
+                
                 return wrapped.TryGetAsDoubleList().TryGetValue(out var v) ? v : null;
             }
         
-            public override StringVector GetAsStringList()
+            public override IReadOnlyList<string> GetAsStringList()
             {
                 return wrapped.TryGetAsStringList().TryGetValue(out var v) ? v : null;
             }
         
-            public override aggregate_of_instance GetAsEntityList()
+            public override IReadOnlyList<EntityInstance> GetAsEntityList()
             {
                 return wrapped.TryGetAsEntityList().TryGetValue(out var v) ? v : null;
             }
@@ -200,28 +203,49 @@ namespace IfcOpenShell
                 return wrapped.TryGetAsEntity().TryGetValue(out val);
             }
 
-            public override bool TryGetAsIntList(out IntVector val)
+            public override bool TryGetAsIntList(out IReadOnlyList<int> val)
             {
                 val = null;
-                return wrapped.TryGetAsIntList().TryGetValue(out val);
+                if (wrapped.TryGetAsIntList().TryGetValue(out var vec))
+                {
+                    val = vec;
+                    return true;
+                }
+                return false;
+                
             }
 
-            public override bool TryGetAsDoubleList(out DoubleVector val)
+            public override bool TryGetAsDoubleList(out IReadOnlyList<double> val)
             {
                 val = null;
-                return wrapped.TryGetAsDoubleList().TryGetValue(out val);
+                if (wrapped.TryGetAsDoubleList().TryGetValue(out var vec))
+                {
+                    val = vec;
+                    return true;
+                }
+                return false;
             }
 
-            public override bool TryGetAsStringList(out StringVector val)
+            public override bool TryGetAsStringList(out IReadOnlyList<string> val)
             {
                 val = null;
-                return wrapped.TryGetAsStringList().TryGetValue(out val);
+                if (wrapped.TryGetAsStringList().TryGetValue(out var vec))
+                {
+                    val = vec;
+                    return true;
+                }
+                return false;
             }
 
-            public override bool TryGetAsEntityList(out aggregate_of_instance val)
+            public override bool TryGetAsEntityList(out IReadOnlyList<EntityInstance> val)
             {
                 val = null;
-                return wrapped.TryGetAsEntityList().TryGetValue(out val);
+                if (wrapped.TryGetAsEntityList().TryGetValue(out var vec))
+                {
+                    val = vec;
+                    return true;
+                }
+                return false;
             }
             #endregion
 
@@ -237,12 +261,12 @@ namespace IfcOpenShell
 
             public override ArgumentType ArgumentType => ArgumentType.Argument_AGGREGATE_OF_ENTITY_INSTANCE;
 
-            public override aggregate_of_instance GetAsEntityList()
+            public override IReadOnlyList<EntityInstance> GetAsEntityList()
             {
                 return aggregate;
             }
 
-            public override bool TryGetAsEntityList(out aggregate_of_instance val)
+            public override bool TryGetAsEntityList(out IReadOnlyList<EntityInstance> val)
             {
                 val = aggregate;
                 return true;
@@ -341,6 +365,24 @@ namespace IfcOpenShell
             }
 
             private readonly double instance;
+        }
+        
+        internal class FromStringList : ArgumentResult
+        {
+            public FromStringList(IEnumerable<string> strings)
+            {
+                instance = strings.ToList();
+            }
+
+            public override ArgumentType ArgumentType => ArgumentType.Argument_AGGREGATE_OF_STRING;
+
+            public override IReadOnlyList<string> GetAsStringList()
+            {
+                return instance;
+            }
+            
+
+            private readonly List<string> instance;
         }
     }
 }
