@@ -93,8 +93,17 @@ def format_debug_info(info: dict):
 
 
 if IN_BLENDER:
+
     def get_binary_info() -> dict[str, Any]:
         info = {}
+        py_version = sys.version_info
+        site_path = (
+            Path(bpy.utils.user_resource("EXTENSIONS"))
+            / ".local"
+            / "lib"
+            / f"python{py_version.major}.{py_version.minor}"
+            / "site-packages"
+        )
         lib = site_path / "ifcopenshell"
         binary = next((i for i in lib.glob("_ifcopenshell_wrapper.*")), None)
         if binary is None:
@@ -155,6 +164,21 @@ if IN_BLENDER:
             blenderbim.bim.unregister()
 
     except:
+
+        def show_scene_properties() -> None:
+            # By default in Blender object properties are selected.
+            # Or user may have some other properties selected in their startup file.
+            # Select scene properties to ensure user will see our error handler.
+            for area in bpy.context.screen.areas:
+                if area.type != "PROPERTIES":
+                    continue
+                space = area.spaces.active
+                assert isinstance(space, bpy.types.SpaceProperties)
+                space.context = "SCENE"
+
+        # Use a timer as we're not allowed to make changes to data during register().
+        bpy.app.timers.register(show_scene_properties, first_interval=0.1)
+
         last_error = traceback.format_exc()
 
         print(last_error)

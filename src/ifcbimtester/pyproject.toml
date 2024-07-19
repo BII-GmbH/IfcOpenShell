@@ -3,19 +3,21 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ifctester"
+name = "bimtester"
 version = "0.0.0"
 authors = [
   { name="Dion Moult", email="dion@thinkmoult.com" },
 ]
-description = "IFC model auditing tool with support for IDS"
+description = "Gherkin based tests for BIM data"
 readme = "README.md"
-keywords = ["IFC", "IDS", "BIM"]
+keywords = ["IFC", "Gherkin", "BIM"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
 ]
-dependencies = ["ifcopenshell", "python-dateutil", "xmlschema", "numpy"]
+dependencies = [
+    "ifcopenshell",
+]
 
 [project.urls]
 Homepage = "http://ifcopenshell.org"
@@ -23,8 +25,9 @@ Documentation = "https://docs.ifcopenshell.org"
 Issues = "https://github.com/IfcOpenShell/IfcOpenShell/issues"
 
 [tool.setuptools.packages.find]
-include = ["ifctester*"]
+include = ["bimtester*"]
 exclude = ["test*"]
+namespaces = true
 
 [tool.setuptools.package-data]
 "*" = ["*.*"]
