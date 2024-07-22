@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace IfcOpenShell
+namespace IfcOpenShell.Net
 {
     public static class PlacementExtensions
     {
@@ -60,6 +60,7 @@ namespace IfcOpenShell
         
         public static matrix4 GetAxis2Placement(EntityInstance placement)
         {
+            // implementation adapted from get_axis2placement from ifcopenshell/util/placement.py
             if (placement == null)
             {
                 return matrix4.Identity();
@@ -81,12 +82,14 @@ namespace IfcOpenShell
                 case "IfcAxis2Placement3D":
                 case "IfcAxis2PlacementLinear":
                     if (placement.TryGetAttributeAsEntity("Axis", out var axis) &&
+                        axis != null &&
                         axis.TryGetAttributeAsDoubleList("DirectionRatios", out var ratios))
                     {
                         z = Vec3.New(ratios[0], ratios[1], ratios[2]);
                     }
                     
                     if (placement.TryGetAttributeAsEntity("RefDirection", out var refAxis) &&
+                        refAxis != null &&
                         refAxis.TryGetAttributeAsDoubleList("DirectionRatios", out var r2))
                     {
                         x = Vec3.New(r2[0], r2[1], r2[2]);
@@ -94,6 +97,7 @@ namespace IfcOpenShell
 
                     // Location can be one of multiple types, but only IfcCartesianPoint is supported
                     if (placement.TryGetAttributeAsEntity("Location", out var location) &&
+                        location != null &&
                         location.TryGetAttributeAsDoubleList("Coordinates", out var coords))
                     {
                         o = Vec3.New(coords[0], coords[1], coords[2]);
@@ -107,6 +111,7 @@ namespace IfcOpenShell
                     break;
                 case "IfcAxis2Placement2D":
                     if (placement.TryGetAttributeAsEntity("RefDirection", out var refAxis2D) &&
+                        refAxis2D != null &&
                         refAxis2D.TryGetAttributeAsDoubleList("DirectionRatios", out var r2d))
                     {
                         x = Vec3.New(r2d[0], r2d[1], 0);
@@ -116,6 +121,7 @@ namespace IfcOpenShell
                         x = unitX;
                     }
                     if (placement.TryGetAttributeAsEntity("Location", out var location2d) &&
+                        location2d != null &&
                         location2d.TryGetAttributeAsDoubleList("Coordinates", out var coords2d))
                     {
                         o = Vec3.New(coords2d[0], coords2d[1], 0.0);
@@ -129,13 +135,14 @@ namespace IfcOpenShell
                     break;
                 
                 case "IfcAxis1Placement":
-                    if (placement.TryGetAttributeAsEntity("Axis", out var axis1))
+                    if (placement.TryGetAttributeAsEntity("Axis", out var axis1) && axis1 != null)
                     {
                         z = axis1.TryGetAttributeAsDoubleList("DirectionRatios", out var ratios1)
                             ? Vec3.New(ratios1[0], ratios1[1], ratios1[2])
                             : unitZ;
                         
                         if (placement.TryGetAttributeAsEntity("Location", out var location1) &&
+                            location1 != null &&
                             location1.TryGetAttributeAsDoubleList("Coordinates", out var coords1))
                         {
                             o = Vec3.New(coords1[0], coords1[1], coords1[2]);

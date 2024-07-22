@@ -3,47 +3,31 @@
     #include "../ifcparse/IfcBaseClass.h"
 %}
 
+// make the wrapper class for aggregrate_of_instance inherit from additional C# interfaces - in particular IEnumerable & IReadOnlyList
 %typemap(csinterfaces) aggregate_of_instance "global::System.IDisposable, global::System.Collections.IEnumerable, global::System.Collections.Generic.IEnumerable<$typemap(cstype, IfcUtil::IfcBaseClass*)>, global::System.Collections.Generic.IReadOnlyList<$typemap(cstype, IfcUtil::IfcBaseClass*)>\n"
 
-
-// %extend aggregate_of_instance {
-//     IfcUtil::IfcBaseClass* getitem(int index) throw (std::out_of_range) {
-//         if (index>=0 && index<(int)$self->size())
-//         return (*$self)[index];
-//         else
-//         throw std::out_of_range("index");
-//     }
-// }
-
+// ignore begin & end methods - these return an iterator, which would be really awkward to wrap
 %ignore aggregate_of_instance::begin;
 %ignore aggregate_of_instance::end;
+
+// rename & make the operator[] private
 %rename("getitem") aggregate_of_instance::operator[];
 %csmethodmodifiers aggregate_of_instance::operator[] "private"
 
+// adding additional methods & nested classes to the generated class for aggregate_of_instance - these are the methods required for implementing the additional interfaces defined above
 %typemap(cscode) aggregate_of_instance %{
     
-    public bool IsEmpty {
-        get {
-        return Count > 0;
-        }
-    }
+    public bool IsEmpty => Count > 0;
 
-    public int Count {
-        get {
-        return (int)size();
-        }
-    }
+    public int Count => (int)size();
 
     public $typemap(cstype, IfcUtil::IfcBaseClass*) this[int index]  {
-    get {
-        if (index>=0 && index < (int)size())
-            return getitem(index);
-        throw new global::System.IndexOutOfRangeException($"Index {index} outside of valid range 0-{(int)size()}");
+        get {
+            if (index>=0 && index < (int)size())
+                return getitem(index);
+            throw new global::System.IndexOutOfRangeException($"Index {index} outside of valid range 0-{(int)size()}");
+        }
     }
-    // set {
-    //   setitem(index, value);
-    // }
-  }
 
     global::System.Collections.Generic.IEnumerator<$typemap(cstype, IfcUtil::IfcBaseClass*)> global::System.Collections.Generic.IEnumerable<$typemap(cstype, IfcUtil::IfcBaseClass*)>.GetEnumerator() {
         return new $csclassnameEnumerator(this);
@@ -53,7 +37,7 @@
         return new $csclassnameEnumerator(this);
     }
 
-    // Type-safe enumerator
+    /// Type-safe enumerator
     /// Note that the IEnumerator documentation requires an InvalidOperationException to be thrown
     /// whenever the collection is modified. This has been done for changes in the size of the
     /// collection but not when one of the elements of the collection is modified as it is a bit
@@ -75,42 +59,42 @@
 
         // Type-safe iterator Current
         public $typemap(cstype, IfcUtil::IfcBaseClass*) Current {
-        get {
-            if (currentIndex == -1)
-            throw new global::System.InvalidOperationException("Enumeration not started.");
-            if (currentIndex > currentSize - 1)
-            throw new global::System.InvalidOperationException("Enumeration finished.");
-            if (currentObject == null)
-            throw new global::System.InvalidOperationException("Collection modified.");
-            return ($typemap(cstype, IfcUtil::IfcBaseClass*))currentObject;
-        }
+            get {
+                if (currentIndex == -1)
+                throw new global::System.InvalidOperationException("Enumeration not started.");
+                if (currentIndex > currentSize - 1)
+                throw new global::System.InvalidOperationException("Enumeration finished.");
+                if (currentObject == null)
+                throw new global::System.InvalidOperationException("Collection modified.");
+                return ($typemap(cstype, IfcUtil::IfcBaseClass*))currentObject;
+            }
         }
 
         // Type-unsafe IEnumerator.Current
         object global::System.Collections.IEnumerator.Current {
-        get {
-            return Current;
-        }
+            get {
+                return Current;
+            }
         }
 
         public bool MoveNext() {
-        int size = collectionRef.Count;
-        bool moveOkay = (currentIndex+1 < size) && (size == currentSize);
-        if (moveOkay) {
-            currentIndex++;
-            currentObject = collectionRef[currentIndex];
-        } else {
-            currentObject = null;
-        }
-        return moveOkay;
+            int size = collectionRef.Count;
+            bool moveOkay = (currentIndex+1 < size) && (size == currentSize);
+            if (moveOkay) {
+                currentIndex++;
+                currentObject = collectionRef[currentIndex];
+            } else {
+                currentObject = null;
+            }
+            return moveOkay;
         }
 
         public void Reset() {
-        currentIndex = -1;
-        currentObject = null;
-        if (collectionRef.Count != currentSize) {
-            throw new global::System.InvalidOperationException("Collection modified.");
-        }
+            currentIndex = -1;
+            currentObject = null;
+            if (collectionRef.Count != currentSize) {
+                throw new global::System.InvalidOperationException("Collection modified.");
+            }
         }
 
         public void Dispose() {

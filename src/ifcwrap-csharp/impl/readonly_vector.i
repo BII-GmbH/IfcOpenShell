@@ -1,5 +1,10 @@
-// Adapted from std_vector.i in the swig source
-// Kind of required because C# collection interfaces are an absolute mess
+// Adapted from std_vector.i in the swig source code at
+// https://github.com/swig/swig/blob/v3.0.12/Lib/std/std_vector.i
+//
+// Q: Why does this exist?
+// A: We want to be able to use the vector as IReadOnlyList<T> in C#. However, the default std_vector.i wrapper implements IList<T>, 
+// which for some reason does not implement IReadOnlyList. Since at the moment we do not require mutability, this is fine for now.
+
 /* -----------------------------------------------------------------------------
  * std_vector.i
  *

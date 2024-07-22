@@ -3,13 +3,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace IfcOpenShell {   
+namespace IfcOpenShell.Net {   
     public static class EntityInstanceExtensions {
 
-        public static class Settings
-        {
-            public const bool UnpackNonAggregateInverses = false;
-        }
+        // TODO WS for maintainer: In Python this boolean can be changed before using the apis in this file to change the behavior of the api using
+        // ifcopenshell-python/ifcopenshell/settings.py
+        // We dont need this currently, so we ignore it.
+        // If someone wants to be able to use this, additional implementation work is needed in 
+        // EntityInstanceExtensions.GetAttribute()
+        
+        // public static class Settings
+        // {
+        //     public const bool UnpackNonAggregateInverses = false;
+        // }
 
         /// <summary>
         /// Retrieves the construction type element of an element occurrence
@@ -20,14 +26,14 @@ namespace IfcOpenShell {
         {
             if (element.Is("IfcTypeObject"))
                 return element;
-            else if(element.TryGetAttributeAsEntityList("IsTypedBy", out var typedBy) && typedBy.Count > 0)
+            else if(element.TryGetAttributeAsEntityList("IsTypedBy", out var typedBy) && typedBy != null && typedBy.Count > 0)
             {
                 // according to doc there can be either 0 or one elements
                 // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/IfcObject.htm
                 if(typedBy.First().TryGetAttributeAsEntity("RelatingType", out var type))
                     return type;
             }
-            else if (element.TryGetAttributeAsEntityList("IsDefinedBy", out var definers)) // ifc 2x3
+            else if (element.TryGetAttributeAsEntityList("IsDefinedBy", out var definers) && definers != null) // ifc 2x3
             {
                 foreach (var def in definers)
                 {
@@ -46,18 +52,11 @@ namespace IfcOpenShell {
         /// </summary>
         /// <param name="element"></param>
         /// <returns></returns>
-        public static string? Guid(this EntityInstance element)
-        {
-            if (element.Is("IfcRoot"))
-            {
-                return element.GetAttributeAsString("GlobalId");
-            }
-            return null;
-        } 
-        
-        
+        public static string? Guid(this EntityInstance element) => element.Is("IfcRoot") ? element.GetAttributeAsString("GlobalId") : null;
+
+
         /// <summary>
-        /// Return a dictionary of the entity_instance's properties (Python and IFC) and their values.
+        /// Return a dictionary of the EntityInstance's IFC properties and their values.
         /// </summary>
         /// <param name="instance"></param>
         /// <param name="includeIdentifier">Whether or not to include the STEP numerical identifier</param>
@@ -65,8 +64,12 @@ namespace IfcOpenShell {
         /// <param name="scalarOnly">Filters out all values that are IFC instances</param>
         /// <param name="ignore">A list of attribute names to ignore</param>
         /// <returns>A dictionary of properties and their corresponding values</returns>
-        public static IReadOnlyDictionary<string, ArgumentResult> GetInfo(this EntityInstance instance, bool includeIdentifier=true, bool recursive = false, bool scalarOnly=false, IEnumerable<string>? ignore=null)
+        public static IReadOnlyDictionary<string, ArgumentResult> GetInfo(this EntityInstance instance,
+            bool includeIdentifier = true, bool recursive = false, bool scalarOnly = false,
+            IEnumerable<string>? ignore = null)
         {
+            // method copied & adapted from ifcopenshell/entity_instance.py
+            
             var ignoreHashSet = ignore?.ToHashSet() ?? new HashSet<string>();
             
             var result = new Dictionary<string, ArgumentResult>();
@@ -77,7 +80,7 @@ namespace IfcOpenShell {
             }
             catch (Exception e)
             {
-                // TODO: logging instead
+                // TODO WS for maintainer: log instead
                 throw;
             }
 
@@ -93,20 +96,20 @@ namespace IfcOpenShell {
                         continue;
                     var shouldInclude = true;
                     if (recursive || scalarOnly)
-                        throw new NotImplementedException();
+                        throw new NotImplementedException("GetInfo: recursive and scalarOnly parameters are not implemented yet");
                     if(shouldInclude)
                         result.Add(attributeName, new ArgumentResult.FromEntityInstance(attribute));
                 }
                 catch (Exception e)
                 {
-                    // TODO: logging instead
+                    // TODO WS for maintainer: log instead
                     throw;
                 }
             }
             return result;
         }
         
-        // TODO: find a way to have this auto-generated
+        // TODO WS for maintainer: find a way to have this auto-generated
     	public static bool TryGetValue(this StringArgument arg, out string? value)
         {
             if (arg.HasValue())
@@ -151,7 +154,7 @@ namespace IfcOpenShell {
             return false;
         }
         
-        public static bool TryGetValue(this EntityArgument arg, out EntityInstance value)
+        public static bool TryGetValue(this EntityArgument arg, out EntityInstance? value)
         {
             if (arg.HasValue())
             {
@@ -206,32 +209,6 @@ namespace IfcOpenShell {
             return false;
         }
         
-        // internal static EntityInstance wrapValue(IfcBaseInterface value, IfcFile file)
-        // {
-        //     return value is EntityInstance ei ? new EntityInstance()
-        // }
-        // {
-        //     return 
-        // }
-
-        // internal static IfcBaseInterface walk<T, Ret>(Func<T, bool> condition, Func<T, Ret> g, T value) 
-        //     where T: IfcBaseInterface where Ret: IfcBaseInterface
-        // {
-        //     if (condition(value))
-        //     {
-        //         return g(value);
-        //     }
-        //     else
-        //     {
-        //         return value;
-        //     }
-        // }
-        
-        // internal static IEnumerable<Ret> walk<T, Ret>(Func<T, bool> condition, Func<T, Ret> g, IEnumerable<T> values)
-        // {
-        //     return values.Select(entry => walk(condition, g, entry));
-        // }
-        
         #region Get Attribute
         public static string? GetAttributeAsString(this EntityInstance instance , string attributeName)
         {
@@ -280,7 +257,7 @@ namespace IfcOpenShell {
         #endregion
         
         #region Try Get Attribute
-        public static bool TryGetAttributeAsString(this EntityInstance instance , string attributeName, out string attributeValue)
+        public static bool TryGetAttributeAsString(this EntityInstance instance , string attributeName, out string? attributeValue)
         {
             attributeValue = default;
             return instance.GetAttribute(attributeName)?.TryGetAsString(out attributeValue) ?? false;
@@ -304,7 +281,7 @@ namespace IfcOpenShell {
             return instance.GetAttribute(attributeName)?.TryGetAsDouble(out attributeValue) ?? false;
         }
         
-        public static bool TryGetAttributeAsEntity(this EntityInstance instance , string attributeName, out EntityInstance attributeValue)
+        public static bool TryGetAttributeAsEntity(this EntityInstance instance , string attributeName, out EntityInstance? attributeValue)
         {
             attributeValue = default;
             return instance.GetAttribute(attributeName)?.TryGetAsEntity(out attributeValue) ?? false;
@@ -352,8 +329,9 @@ namespace IfcOpenShell {
         }
         
         public static ArgumentResult? GetAttribute(this EntityInstance instance, string attributeName) {
+            // this implementation is adapted from the python implementation in __getattr__ in ifcopenshell/entity_instance.py
+            
             // attribute categories:
-            const int INVALID = 0;
             const int FORWARD = 1;
             const int INVERSE = 2;
             
@@ -362,27 +340,29 @@ namespace IfcOpenShell {
             if (attributeCategory == FORWARD)
             {
                 var idx = instance.get_argument_index(attributeName);
-                // TODO need to implement weird pointer lookup thing
-
+                // TODO WS for maintainer: The python implementation in  __getattr__ in ifcopenshell/entity_instance.py has
+                // an additional check before returning the value. I do not understand what that check does,
+                // so I am leaving it out for now.
                 return new ArgumentResult.FromArgumentByType(instance.get_argument(idx));
             }
             else if(attributeCategory == INVERSE)
             {
                 var inverse = instance.get_inverse(attributeName);
-                if (Settings.UnpackNonAggregateInverses)
-                {
-                    // TODO need to understand what the hell the python impl is doing
-                    throw new System.NotImplementedException();
-                }
+                // TODO WS for maintainer: We dont need this setting at the moment. If that changes this if statement
+                // needs to be adapted from the python implementation in __getattr__ in ifcopenshell/entity_instance.py
+                // if (Settings.UnpackNonAggregateInverses)
+                // {
+                //     throw new System.NotImplementedException();
+                // }
                 return new ArgumentResult.FromAggregateOfInstance(inverse);
             }
+            // TODO WS for maintainer: Our testing so far suggests that we do not need this branch at the moment. If that changes, this
+            // needs to be adapted from the python implementation in __getattr__ in ifcopenshell/entity_instance.py
+            throw new System.NotImplementedException();
 
+            // is it a derived attribute?
             var schema_name = instance.Is(true).Split('.')[0];
             
-            // TODO need to understand what the hell the python impl is doing
-            // throw new System.NotImplementedException();
-            //
-            //throw new System.NotImplementedException();
             return null;
         }
         

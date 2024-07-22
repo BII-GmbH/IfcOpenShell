@@ -18,24 +18,6 @@
  ********************************************************************************/
 
 %begin %{
-#if defined(_DEBUG) && defined(SWIG_PYTHON_INTERPRETER_NO_DEBUG)
-/* https://github.com/swig/swig/issues/325 */
-# include <basetsd.h>
-# include <assert.h>
-# include <ctype.h>
-# include <errno.h>
-# include <io.h>
-# include <math.h>
-# include <sal.h>
-# include <stdarg.h>
-# include <stddef.h>
-# include <stdio.h>
-# include <stdlib.h>
-# include <string.h>
-# include <sys/stat.h>
-# include <time.h>
-# include <wchar.h>
-#endif
 
 #ifdef _MSC_VER
 # pragma warning(push)
@@ -47,18 +29,22 @@
 // TODO add '# pragma warning(pop)' to the very end of the file
 %}
 
+// include pre-defined wrappers for many standard library types
 %include "stdint.i"
 %include "std_array.i"
-%include "utils/readonly_vector.i"
 %include "std_string.i"
 %include "std_pair.i"
 %include "exception.i"
+// custom version of the std_vector.i from swig that instead wraps as IReadOnlyList
+%include "impl/readonly_vector.i"
+
+// Choosing this prevents us from also wrapping boost::shared_ptr - thats why all usages of boost::shared_ptr were replaced!
 %include "std_shared_ptr.i"
 
 %ignore IfcGeom::NumberNativeDouble;
 %ignore ifcopenshell::geometry::Converter;
 
-// General python-specific rename rules for comparison operators.
+// General csharp-specific rename rules for comparison operators.
 // Mostly to silence warnings, but might be of use some time.
 %rename(Equals) operator==;
 %rename(LessThan) operator<;
@@ -66,6 +52,7 @@
 
 %rename("Attribute") IfcParse::attribute;
 
+// define a default set of exceptions to catch & log
 %exception {
 	try {
 		$action
@@ -81,8 +68,6 @@
 }
 
 %include "../serializers/serializers_api.h"
-
-%typemap(csbase) IfcGeom::IteratorSettings::Settings "long"
 
 // Include headers for the typemaps to function. This set of includes,
 // can probably be reduced, but for now it's identical to the includes
@@ -155,13 +140,13 @@
 #endif
 %}
 
-// Create docstrings for generated python code.
-%feature("autodoc", "1");
-
+// apply the shared_ptr wrapping to aggregate_of_instance - this has to be before the type is included
 %shared_ptr(aggregate_of_instance)
-%include "utils/aggregate_of_instance.i"
-%include "utils/typemaps_out.i"
 
+// now include aggregate_of_instance through a custom wrapper file
+%include "impl/aggregate_of_instance.i"
+
+// define the wrapper module
 %module ifcopenshell_net %{
 	#include "../ifcgeom/Converter.h"
 	#include "../ifcgeom/taxonomy.h"
@@ -234,6 +219,11 @@
 %include "IfcGeomWrapper.i"
 %include "IfcParseWrapper.i"
 	
+
+// Define types used for wrapping the results of some calls.
+// to be able to retain & use type information of the result from C#.
+// Could be moved into its own file if it gets longer.
+// This code is included directly in the Cpp-Code generated for the wrapper library file & wrapped into C#.
 %inline %{
 	
 	template<typename T>
@@ -272,9 +262,11 @@
 
 %}
 
-
+// apply the pre-defined wrapping rules for std::string& from std_string.i to std::string* too -
+// for which no default rules are defined
 %apply const std::string& { std::string* }
 
+// tell SWIG about & name some template instantiations that we will be needing
 namespace std {
   %template(Vec3) std::array<double, 3>;
   %template(Vec4) std::array<double, 4>;
@@ -292,6 +284,8 @@ namespace std {
   %template(EntityPtrList) std::vector<IfcUtil::IfcBaseClass*>;
 }
 
+// This type is used as the return value to get individual vertices in IfcGeom.
+// We extend this with properties to get the individual coordinates out nicely & create new instances
 %extend std::array<double, 3> {
 	const double X;
 	const double Y;
@@ -303,20 +297,8 @@ namespace std {
 	}
 }
 
-%{
-	double std_array_Sl_double_Sc_3_Sg__X_get(const std::array<double, 3>* vec) {
-		return (*vec)[0];
-	}
-
-	double std_array_Sl_double_Sc_3_Sg__Y_get(const std::array<double, 3>* vec) {
-		return (*vec)[1];
-	}
-
-	double std_array_Sl_double_Sc_3_Sg__Z_get(const std::array<double, 3>* vec) {
-		return (*vec)[2];
-	}
-%}
-
+// This type is used as the return value to get individual vertices & matrix columns in IfcGeom.
+// We extend this with properties to get the individual coordinates out nicely & create new instances
 %extend std::array<double, 4> {
 	const double X;
 	const double Y;
@@ -329,7 +311,23 @@ namespace std {
 	}
 }
 
+// These weirdly named methods are the implementations of the above properties for std::array<double,3> & std::array<double,4>.
+// For some reason SWIG did not accept the implementations to be defined inline & it wanted them to be/ named like this, found by trial and error.
 %{
+	// Vec3
+	double std_array_Sl_double_Sc_3_Sg__X_get(const std::array<double, 3>* vec) {
+		return (*vec)[0];
+	}
+
+	double std_array_Sl_double_Sc_3_Sg__Y_get(const std::array<double, 3>* vec) {
+		return (*vec)[1];
+	}
+
+	double std_array_Sl_double_Sc_3_Sg__Z_get(const std::array<double, 3>* vec) {
+		return (*vec)[2];
+	}
+
+	// Vec4
 	double std_array_Sl_double_Sc_4_Sg__X_get(const std::array<double, 4>* vec) {
 		return (*vec)[0];
 	}
@@ -344,24 +342,22 @@ namespace std {
 
 	double std_array_Sl_double_Sc_4_Sg__W_get(const std::array<double, 4>* vec) {
 		return (*vec)[3];
-	}
-
-	
+	}	
 %}
 
+// utilities for getting results out of the return type of functions like get_attribute
 
-
-
-// TODO: Check if this is even still required. Maybe we can instead rename the Argument overloaded operator()s
+// TODO WS for maintainer: Check if this is even still required. Maybe we can instead rename the Argument overloaded operator()s
 %define TRY_GET_AS(TYPE, NAME, TYPECHECK)
 	%extend std::pair<IfcUtil::ArgumentType, Argument*> {
 		
-		%newobject TryGetAsString;
+		%newobject TryGetAs##NAME;
 		TypedArgument<TYPE>* TryGetAs##NAME() {
 			const Argument& arg = *($self->second);
 			const IfcUtil::ArgumentType type = $self->first;
 			if(TYPECHECK)
-			{			
+			{	
+				// NOTE: this is using the explicit casting operator<TYPE>()		
 				TYPE tmp = arg;
 				return new WithValue<TYPE>(tmp);
 			}
@@ -372,16 +368,15 @@ namespace std {
 	%template(NAME##Argument) TypedArgument<TYPE>;
 %enddef
 
-	// TODO: LOGICAL (whatever that is)
-	// TODO: BINARY
+// TODO: LOGICAL (whatever that is)
+// TODO: BINARY
+// TODO: BINARY List
 TRY_GET_AS(std::string, String, type == IfcUtil::Argument_ENUMERATION || type == IfcUtil::Argument_STRING)
 TRY_GET_AS(int, Int, type == IfcUtil::Argument_INT)
 TRY_GET_AS(bool, Bool, type == IfcUtil::Argument_BOOL)
-//TRY_GET_AS(std::uint8_t, Binary, type == IfcUtil::Argument_BINARY)
 TRY_GET_AS(double, Double, type == IfcUtil::Argument_DOUBLE)
 TRY_GET_AS(IfcUtil::IfcBaseClass*, Entity, type == IfcUtil::Argument_ENTITY_INSTANCE)
 TRY_GET_AS(std::vector<int>, IntList, type == IfcUtil::Argument_AGGREGATE_OF_INT)
-//TRY_GET_AS(std::vector<std::uint8_t>, BinaryList, type == IfcUtil::Argument_AGGREGATE_OF_BINARY)
 TRY_GET_AS(std::vector<double>, DoubleList, type == IfcUtil::Argument_AGGREGATE_OF_DOUBLE)
 TRY_GET_AS(std::vector<std::string>, StringList, type == IfcUtil::Argument_AGGREGATE_OF_STRING)
 TRY_GET_AS(aggregate_of_instance::ptr, EntityList, type == IfcUtil::Argument_AGGREGATE_OF_ENTITY_INSTANCE)

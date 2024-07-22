@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace IfcOpenShell
+namespace IfcOpenShell.Net
 {
     /// The methods in this file are incomplete duplications of the methods in ifcopenshell-python/util/element.py
     public static class PsetExtensions
@@ -20,7 +20,8 @@ namespace IfcOpenShell
             EntityInstance? pset = null;
             IReadOnlyDictionary<string, ArgumentResult>? typePset = null;
             if (element.Is("IfcTypeObject") && 
-                element.TryGetAttributeAsEntityList("HasPropertySets", out var typeObjectPsets))
+                element.TryGetAttributeAsEntityList("HasPropertySets", out var typeObjectPsets) &&
+                typeObjectPsets != null)
             {
                 foreach (var definition in typeObjectPsets)
                 {
@@ -32,11 +33,13 @@ namespace IfcOpenShell
                 }
             } 
             else if ((element.Is("IfcMaterialDefinition") || element.Is("IfcProfileDef")) && 
-                       element.TryGetAttributeAsEntityList("HasProperties", out var materialPsets))
+                element.TryGetAttributeAsEntityList("HasProperties", out var materialPsets) &&
+                materialPsets != null)
             {
                 foreach (var definition in materialPsets)
                 {
-                    if (definition.TryGetAttributeAsString("Name", out var pname) && pname.Equals(psetName))
+                    var pname = definition.GetAttributeAsString("Name");
+                    if (pname.Equals(psetName))
                     {
                         pset = definition;
                         break;

@@ -87,6 +87,7 @@ IF %VS_VER%==2008 set PATH=C:\Windows\Microsoft.NET\Framework\v3.5;%PATH%
 
 :: User-configurable build options
 IF NOT DEFINED IFCOS_INSTALL_PYTHON set IFCOS_INSTALL_PYTHON=TRUE
+:: Subtract 4 from the total number of processors so the PC stays usable while compiling - value arbitrarily chosen
 IF NOT DEFINED IFCOS_NUM_BUILD_PROCS set /a IFCOS_NUM_BUILD_PROCS=%NUMBER_OF_PROCESSORS% - 4
 
 :: For subroutines

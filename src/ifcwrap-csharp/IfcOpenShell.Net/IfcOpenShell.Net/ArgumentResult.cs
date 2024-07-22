@@ -1,62 +1,69 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Emit;
 
-namespace IfcOpenShell
+namespace IfcOpenShell.Net
 {
+    /// Abstraction class to wrap the typed result of an GetAttributeXXX call on <see cref="EntityInstance"/>.
+    /// Because C#, unlike Python, is a strongly typed language (we dont talk about dynamic),
+    /// we need to wrap the result of the GetAttributeXXX calls to return useful type
+    /// information about the return value.
+    ///
+    /// The alternative would be to use dynamic, but that throws away all type safety.
     public abstract class ArgumentResult
     {
+        // prevent outside inheritance
         private ArgumentResult()
         {
         }
 
         public abstract ArgumentType ArgumentType { get; }
 
+        // default implementations always return no result.
         #region Get
         public virtual string GetAsString()
         {
-            return default;
+            throw new InvalidCastException($"Cannot cast argument of type {ArgumentType} to string");
         }
 
         public virtual int GetAsInt()
         {
-            return default;
+            throw new InvalidCastException($"Cannot cast argument of type {ArgumentType} to int");
         }
 
         public virtual bool GetAsBool()
         {
-            return default;
+            throw new InvalidCastException($"Cannot cast argument of type {ArgumentType} to bool");
         }
         
         public virtual double GetAsDouble()
         {
-            return default;
+            throw new InvalidCastException($"Cannot cast argument of type {ArgumentType} to double");
         }
         
         public virtual EntityInstance GetAsEntity()
         {
-            return null;
+            throw new InvalidCastException($"Cannot cast argument of type {ArgumentType} to EntityInstance");
         }
 
         public virtual IReadOnlyList<int> GetAsIntList()
         {
-            return null;
+            throw new InvalidCastException($"Cannot cast argument of type {ArgumentType} to List<int>");
         }
 
         public virtual IReadOnlyList<double> GetAsDoubleList()
         {
-            return null;
+            throw new InvalidCastException($"Cannot cast argument of type {ArgumentType} to List<double>");
         }
         
         public virtual IReadOnlyList<string> GetAsStringList()
         {
-            return null;
+            throw new InvalidCastException($"Cannot cast argument of type {ArgumentType} to List<string>");
         }
         
         public virtual IReadOnlyList<EntityInstance> GetAsEntityList()
         {
-            return null;
+            throw new InvalidCastException($"Cannot cast argument of type {ArgumentType} to List<EntityInstance>");
         }
         #endregion
         
@@ -116,8 +123,13 @@ namespace IfcOpenShell
         }
         #endregion
 
+        /// Used to wrap the result of the C++ get_attribute call result.
+        /// This may wrap one of many types, which is determined by
+        /// the cpp result.
         internal class FromArgumentByType : ArgumentResult
         {
+            private readonly ArgumentByType wrapped;
+            
             public FromArgumentByType(ArgumentByType type)
             {
                 wrapped = type;
@@ -248,12 +260,14 @@ namespace IfcOpenShell
                 return false;
             }
             #endregion
-
-            private readonly ArgumentByType wrapped;
         }
         
+        /// Used to wrap an <see cref="aggregate_of_instance"/> that we need to return as ArgumentResult to satisfy an interface.
+        /// Used only from within the C# extension layer.
         internal class FromAggregateOfInstance : ArgumentResult
         {
+            private readonly aggregate_of_instance aggregate;
+            
             public FromAggregateOfInstance(aggregate_of_instance agg)
             {
                 aggregate = agg;
@@ -271,12 +285,14 @@ namespace IfcOpenShell
                 val = aggregate;
                 return true;
             }
-
-            private readonly aggregate_of_instance aggregate;
         }
-
+        
+        /// Used to wrap an <see cref="EntityInstance"/> that we need to return as ArgumentResult to satisfy an interface.
+        /// Used only from within the C# extension layer.
         internal class FromEntityInstance : ArgumentResult
         {
+            private readonly EntityInstance instance;
+            
             public FromEntityInstance(EntityInstance agg)
             {
                 instance = agg;
@@ -294,12 +310,14 @@ namespace IfcOpenShell
                 val = instance;
                 return true;
             }
-
-            private readonly EntityInstance instance;
         }
         
+        /// Used to wrap an <see cref="string"/> that we need to return as ArgumentResult to satisfy an interface.
+        /// Used only from within the C# extension layer.
         internal class FromString : ArgumentResult
         {
+            private readonly string instance;
+            
             public FromString(string agg)
             {
                 instance = agg;
@@ -317,12 +335,14 @@ namespace IfcOpenShell
                 val = instance;
                 return true;
             }
-
-            private readonly string instance;
         }
         
+        /// Used to wrap an <see cref="int"/> that we need to return as ArgumentResult to satisfy an interface.
+        /// Used only from within the C# extension layer.
         internal class FromInt : ArgumentResult
         {
+            private readonly int instance;
+            
             public FromInt(int agg)
             {
                 instance = agg;
@@ -340,12 +360,14 @@ namespace IfcOpenShell
                 val = instance;
                 return true;
             }
-
-            private readonly int instance;
         }
         
+        /// Used to wrap a <see cref="double"/> that we need to return as ArgumentResult to satisfy an interface.
+        /// Used only from within the C# extension layer.
         internal class FromDouble : ArgumentResult
         {
+            private readonly double instance;
+            
             public FromDouble(double agg)
             {
                 instance = agg;
@@ -363,12 +385,15 @@ namespace IfcOpenShell
                 val = instance;
                 return true;
             }
-
-            private readonly double instance;
         }
         
+        /// Used to wrap an <see cref="IEnumerable{T}"/> with T=string that we need to return as ArgumentResult to satisfy an interface.
+        /// Note that the enumerable will be evaluated when creating this object & stored as a list.
+        /// Used only from within the C# extension layer.
         internal class FromStringList : ArgumentResult
         {
+            private readonly List<string> instance;
+         
             public FromStringList(IEnumerable<string> strings)
             {
                 instance = strings.ToList();
@@ -380,9 +405,6 @@ namespace IfcOpenShell
             {
                 return instance;
             }
-            
-
-            private readonly List<string> instance;
         }
     }
 }

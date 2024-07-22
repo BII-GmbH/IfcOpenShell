@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Linq;
 
-namespace IfcOpenShell
+namespace IfcOpenShell.Net
 {
     public static class UnitUtils
     {
+        // copied from unit_names in ifcopenshell-python/util/unit.py
         internal static readonly string[] siUnitNames =
         {
             "AMPERE",
@@ -39,6 +40,7 @@ namespace IfcOpenShell
             "WEBER"
         };
 
+        // adapted from si_type_names from ifcopenshell-python/util/unit.py
         // See https://github.com/buildingSMART/IFC4.3.x-development/issues/72
         internal static string siUnitTypeToUnitName(string unitType) => unitType switch {
             "ABSORBEDDOSEUNIT" => "GRAY",
@@ -74,7 +76,7 @@ namespace IfcOpenShell
             _ => throw new ArgumentOutOfRangeException(nameof(unitType), unitType, $"Unknown unit type {unitType}")
         };
         
-        
+        // adapted from prefix_symbols from ifcopenshell-python/util/unit.py
         internal static string prefixSymbol(string prefix)
         {
             // assume base unit -> no prefix needed
@@ -98,10 +100,11 @@ namespace IfcOpenShell
                 "PICO" => "p",
                 "FEMTO" => "f",
                 "ATTO" => "a",
-                _ => throw new ArgumentOutOfRangeException(nameof(prefix), prefix, $"Cannot find prefix symbol '{prefix}'")
+                _ => throw new ArgumentOutOfRangeException(nameof(prefix), prefix, $"Cannot find prefix symbol for '{prefix}'")
             };
         }
 
+        // adapted & filled in missing units from unit_symbols from ifcopenshell-python/util/unit.py
         internal static string unitSymbol(string unit)
         {
             // assume base unit -> no prefix needed
@@ -184,6 +187,7 @@ namespace IfcOpenShell
             };
         }
 
+        // adapted from prefixes from ifcopenshell-python/util/unit.py
         internal static double prefixMultiplier(string prefix)
         {
             if (string.IsNullOrEmpty(prefix))
@@ -208,30 +212,34 @@ namespace IfcOpenShell
                 "PICO" => 1e-12,
                 "FEMTO" => 1e-15,
                 "ATTO" => 1e-18,
-                _ => 1.0
+                _ => throw new ArgumentOutOfRangeException($"Cannot find prefix multiplier for '{prefix}'")
             };
         }
         
-        
-        private static readonly string[] measureClasses =
-        {
-            "IfcNumericMeasure",
-            "IfcLengthMeasure",
-            "IfcAreaMeasure",
-            "IfcVolumeMeasure",
-            "IfcMassMeasure"
-        };
-
         private static readonly string[] measureClassModifiers =
         {
             "Ifc", "Measure", "Non", "Positive", "Negative"
         };
 
+
+        // adapted from get_measure_unit_type in ifcopenshell-python/util/unit.py
+        ///Get the unit type of an IFC measure class
+        ///
+        ///IFC has different unit types which can be associated with units (e.g. SI
+        ///units, imperial units, derived units, etc). An example of a unit type (i.e.
+        ///an IfcUnitEnum) is ``LENGTHUNIT``. An example of the correlating measure
+        ///class used to store length data is ``IfcLengthMeasure``.
+        ///
+        /// <param name="measureClass">The measure class, such as ``IfcLengthMeasure``. If
+        ///    you have an ``IfcPropertySingleValue``, you can get this using
+        ///    ``prop.GetAttributeAsEntity("NominalValue").is_a()</param>
+        /// <returns>The unit type, as an uppercase value of IfcUnitEnum.</returns>
         public static string GetMeasureUnitType(string measureClass)
         {
             if (measureClass == "IfcNumericMeasure")
                 // See https://github.com/buildingSMART/IFC4.3.x-development/issues/71
                 return "USERDEFINED";
+            // remove all modifiers from the measure class name
             foreach (var text in measureClassModifiers)
             {
                 measureClass = measureClass.Replace(text, "");
@@ -239,16 +247,12 @@ namespace IfcOpenShell
 
             return measureClass.ToUpper() + "UNIT";
         }
-        
-        // def get_unit_symbol(unit: ifcopenshell.entity_instance) -> str:
-        // symbol = ""
-        // if unit.Is("IfcSIUnit"):
-        // symbol += prefix_symbols.get(unit.Prefix, "")
-        //     symbol += unit_symbols.get(unit.Name.replace("METER", "METRE"), "?")
-        // if unit.Is("IfcContextDependentUnit") and unit.UnitType == "USERDEFINED":
-        // symbol = unit.Name
-        // return symbol
 
+        
+        // adapted from get_unit_symbol in ifcopenshell-python/util/unit.py
+        /// <remarks>
+        /// units with METER in their name will be renamed to METRE, as that is the spelling used by ifc
+        /// </remarks>
         public static string GetUnitSymbol(EntityInstance unit)
         {
             if(unit.Is("IfcContextDependentUnit") && unit.GetAttributeAsString("UnitType") == "USERDEFINED")
@@ -272,4 +276,4 @@ namespace IfcOpenShell
         }
     }
 }
-            
+                    
