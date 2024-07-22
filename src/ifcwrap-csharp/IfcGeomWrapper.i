@@ -42,6 +42,52 @@
     const std::array<double,4> Col2;
     const std::array<double,4> Col3;
 
+	%newobject New;
+	static ifcopenshell::geometry::taxonomy::matrix4* New(std::array<double,4> Col0, std::array<double,4> Col1, std::array<double,4> Col2,std::array<double,4> Col3)
+	{
+		//auto o = Eigen::Vector3d& o, const Eigen::Vector3d& z, const Eigen::Vector3d&
+
+		auto mat = Eigen::Matrix4d();
+		mat <<
+			Col0[0], Col1[0], Col2[0], Col3[0],
+			Col0[1], Col1[1], Col2[1], Col3[1],
+			Col0[2], Col1[2], Col2[2], Col3[2],
+			Col0[3], Col1[3], Col2[3], Col3[3];
+
+		return new ifcopenshell::geometry::taxonomy::matrix4(mat);
+	}
+
+	%newobject Identity;
+	static ifcopenshell::geometry::taxonomy::matrix4* Identity()
+	{
+		auto mat = Eigen::Matrix4d();
+		mat <<
+			1, 0, 0, 0,
+			0, 1, 0, 0,
+			0, 0, 1, 0,
+			0, 0, 0, 1;
+
+		return new ifcopenshell::geometry::taxonomy::matrix4(mat);
+	}
+
+	%newobject FromOriginAndAxes;
+	static ifcopenshell::geometry::taxonomy::matrix4* FromOriginAndAxes(std::array<double,3> origin, std::array<double,3> z, std::array<double,3> x)
+	{
+		auto o_ = Eigen::Vector3d(origin[0], origin[1], origin[2]);
+		auto z_ = Eigen::Vector3d(z[0], z[1], z[2]);
+		auto x_ = Eigen::Vector3d(x[0], x[1], x[2]);
+		return new ifcopenshell::geometry::taxonomy::matrix4(o_,z_,x_);
+	}
+
+	%newobject Multiply;
+	static ifcopenshell::geometry::taxonomy::matrix4* Multiply(const ifcopenshell::geometry::taxonomy::matrix4*a, const ifcopenshell::geometry::taxonomy::matrix4* b)
+	{
+		auto mat = a->ccomponents() * b->ccomponents();
+		return new ifcopenshell::geometry::taxonomy::matrix4(mat);
+	}
+
+	%ignore print;
+
 }
 
 %{
@@ -241,6 +287,7 @@ std::string taxonomy_item_repr(ifcopenshell::geometry::taxonomy::item::ptr i) {
 %include "../ifcgeom/IfcGeomRepresentation.h"
 %include "../ifcgeom/Iterator.h"
 %include "../ifcgeom/GeometrySerializer.h"
+
 %include "../ifcgeom/taxonomy.h"
 
 %include "../serializers/SvgSerializer.h"

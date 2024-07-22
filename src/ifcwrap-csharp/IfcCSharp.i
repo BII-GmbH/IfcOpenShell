@@ -150,7 +150,6 @@
 	#include "../ifcgeom/ConversionResult.h"
 
 	#include "../svgfill/src/svgfill.h"
-
 #ifdef IFOPSH_WITH_CGAL
 	#include "../ifcgeom/kernels/cgal/CgalConversionResult.h"
 #endif
@@ -297,6 +296,11 @@ namespace std {
 	const double X;
 	const double Y;
 	const double Z;
+
+	%newobject New;
+	static std::array<double,3>* New(double x, double y, double z) {
+		return new std::array<double,3> {x,y,z};
+	}
 }
 
 %{
@@ -318,6 +322,11 @@ namespace std {
 	const double Y;
 	const double Z;
 	const double W;
+
+	%newobject New;
+	static std::array<double,4>* New(double x, double y, double z, double w) {
+		return new std::array<double,4> {x,y,z,w};
+	}
 }
 
 %{
@@ -336,6 +345,8 @@ namespace std {
 	double std_array_Sl_double_Sc_4_Sg__W_get(const std::array<double, 4>* vec) {
 		return (*vec)[3];
 	}
+
+	
 %}
 
 
