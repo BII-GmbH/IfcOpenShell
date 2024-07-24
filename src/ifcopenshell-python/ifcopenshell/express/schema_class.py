@@ -304,8 +304,10 @@ class EarlyBoundCodeWriter:
 
         self.statements.extend(
             (
-                "static std::unique_ptr<schema_definition> schema;",
+                "static std::shared_ptr<schema_definition> schema;",
                 "",
+                "// Release our hold on the object - if something else still needs it, it stays around for them - "
+                "// A rug-pull is never nice (if we would just free it)"
                 "void %s::clear_schema() {" % schema_name_title,
                 "    schema.reset();",
                 "}",
@@ -315,11 +317,11 @@ class EarlyBoundCodeWriter:
 
         self.statements.extend(
             (
-                "const schema_definition& %s::get_schema() {" % schema_name_title,
+                "std::shared_ptr<schema_definition> %s::get_schema() {" % schema_name_title,
                 "    if (!schema) {",
                 "        schema.reset(%(schema_name)s_populate_schema());" % locals(),
                 "    }",
-                "    return *schema;",
+                "    return schema;",
                 "}",
                 "",
                 "",
