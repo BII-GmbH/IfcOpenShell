@@ -3797,7 +3797,7 @@ IfcParse::schema_definition* IFC4X3_ADD2_populate_schema() {
 }
 static std::shared_ptr<schema_definition> schema;
 
-// Release our hold on the object - if something else still needs it, it stays around for them - // A rug-pull is never nice (if we would just free it)void Ifc4x3_add2::clear_schema() {
+void Ifc4x3_add2::clear_schema() {
     schema.reset();
 }
 

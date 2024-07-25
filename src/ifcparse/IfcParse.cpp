@@ -1593,7 +1593,7 @@ IfcFile::IfcFile(IfcParse::IfcSpfStream* s) {
     initialize_(s);
 }
 
-IfcFile::IfcFile(const IfcParse::schema_definition* schema)
+IfcFile::IfcFile(std::shared_ptr<IfcParse::schema_definition> schema)
     : parsing_complete_(true),
       schema_(schema),
       ifcroot_type_(schema_->declaration_by_name("IfcRoot")),
@@ -1616,7 +1616,7 @@ void IfcFile::initialize_(IfcParse::IfcSpfStream* s) {
     MaxId = 0;
     tokens = 0;
     stream = 0;
-    schema_ = 0;
+    schema_ = {};
 
     setDefaultHeaderValues();
 
@@ -1907,7 +1907,7 @@ IfcUtil::IfcBaseClass* IfcFile::addEntity(IfcUtil::IfcBaseClass* entity, int id)
         throw IfcParse::IfcException("An instance with id " + boost::lexical_cast<std::string>(id) + " is already part of this file");
     }
 
-    if (entity->declaration().schema() != schema()) {
+    if (entity->declaration().schema() != schema().get()) {
         throw IfcParse::IfcException("Unabled to add instance from " + entity->declaration().schema()->name() + " schema to file with " + schema()->name() + " schema");
     }
 

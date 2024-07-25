@@ -130,7 +130,7 @@ class IFC_PARSE_API IfcFile {
     bool parsing_complete_;
     file_open_status good_ = file_open_status::SUCCESS;
 
-    const IfcParse::schema_definition* schema_;
+    std::shared_ptr<IfcParse::schema_definition> schema_;
     const IfcParse::declaration* ifcroot_type_;
 
     std::vector<Argument*> internal_attribute_vector_, internal_attribute_vector_simple_type_;
@@ -178,7 +178,7 @@ class IFC_PARSE_API IfcFile {
     IfcFile(std::istream& stream, int length);
     IfcFile(void* data, int length);
     IfcFile(IfcParse::IfcSpfStream* stream);
-    IfcFile(const IfcParse::schema_definition* schema = IfcParse::schema_by_name("IFC4"));
+    IfcFile(std::shared_ptr<IfcParse::schema_definition> schema = IfcParse::schema_by_name("IFC4"));
 
     /// Deleting the file will also delete all new instances that were added to the file (via memory allocation)
     virtual ~IfcFile();
@@ -307,7 +307,7 @@ class IFC_PARSE_API IfcFile {
     void register_inverse(unsigned, const IfcParse::entity* from_entity, IfcUtil::IfcBaseClass*, int attribute_index);
     void unregister_inverse(unsigned, const IfcParse::entity* from_entity, IfcUtil::IfcBaseClass*, int attribute_index);
 
-    const IfcParse::schema_definition* schema() const { return schema_; }
+    std::shared_ptr<IfcParse::schema_definition> schema() const { return schema_; }
 
     std::pair<IfcUtil::IfcBaseClass*, double> getUnit(const std::string& unit_type);
 

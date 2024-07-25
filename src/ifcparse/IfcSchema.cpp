@@ -18,47 +18,10 @@
  ********************************************************************************/
 
 #include "IfcSchema.h"
-
+#include "IfcStaticData.h"
 #include "IfcBaseClass.h"
 
 #include <map>
-
-#ifdef HAS_SCHEMA_2x3
-#include "Ifc2x3.h"
-#endif
-#ifdef HAS_SCHEMA_4
-#include "Ifc4.h"
-#endif
-#ifdef HAS_SCHEMA_4x1
-#include "Ifc4x1.h"
-#endif
-#ifdef HAS_SCHEMA_4x2
-#include "Ifc4x2.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_rc1
-#include "Ifc4x3_rc1.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_rc2
-#include "Ifc4x3_rc2.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_rc3
-#include "Ifc4x3_rc3.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_rc4
-#include "Ifc4x3_rc4.h"
-#endif
-#ifdef HAS_SCHEMA_4x3
-#include "Ifc4x3.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_tc1
-#include "Ifc4x3_tc1.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_add1
-#include "Ifc4x3_add1.h"
-#endif
-#ifdef HAS_SCHEMA_4x3_add2
-#include "Ifc4x3_add2.h"
-#endif
 
 bool IfcParse::declaration::is(const std::string& name) const {
     const std::string* name_ptr = &name;
@@ -119,7 +82,6 @@ IfcParse::entity::~entity() {
         delete inverse_attribute;
     }
 }
-static std::map<std::string, const IfcParse::schema_definition*> schemas;
 
 IfcParse::schema_definition::schema_definition(const std::string& name, const std::vector<const declaration*>& declarations, instance_factory* factory)
     : name_(name),
@@ -142,7 +104,6 @@ IfcParse::schema_definition::schema_definition(const std::string& name, const st
             entities_.push_back((**it).as_entity());
         }
     }
-    schemas[name_] = this;
 }
 
 IfcParse::schema_definition::~schema_definition() {
@@ -157,115 +118,4 @@ IfcUtil::IfcBaseClass* IfcParse::schema_definition::instantiate(IfcEntityInstanc
         return (*factory_)(data);
     }
     return new IfcUtil::IfcLateBoundEntity(data->type(), data);
-}
-
-void IfcParse::register_schema(schema_definition* schema) {
-    schemas.insert({boost::to_upper_copy(schema->name()), schema});
-}
-
-const IfcParse::schema_definition* IfcParse::schema_by_name(const std::string& name) {
-    // TODO: initialize automatically somehow
-#ifdef HAS_SCHEMA_2x3
-    Ifc2x3::get_schema();
-#endif
-#ifdef HAS_SCHEMA_4
-    Ifc4::get_schema();
-#endif
-#ifdef HAS_SCHEMA_4x1
-    Ifc4x1::get_schema();
-#endif
-#ifdef HAS_SCHEMA_4x2
-    Ifc4x2::get_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3_rc1
-    Ifc4x3_rc1::get_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3_rc2
-    Ifc4x3_rc2::get_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3_rc3
-    Ifc4x3_rc3::get_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3_rc4
-    Ifc4x3_rc4::get_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3
-    Ifc4x3::get_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3_tc1
-    Ifc4x3_tc1::get_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3_add1
-    Ifc4x3_add1::get_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3_add2
-    Ifc4x3_add2::get_schema();
-#endif
-
-    std::map<std::string, const IfcParse::schema_definition*>::const_iterator iter = schemas.find(boost::to_upper_copy(name));
-    if (iter == schemas.end()) {
-        throw IfcParse::IfcException("No schema named " + name);
-    }
-    return iter->second;
-}
-
-std::vector<std::string> IfcParse::schema_names() {
-    // Load schema modules
-    try {
-        IfcParse::schema_by_name("IFC2X3");
-    } catch (IfcParse::IfcException&) {
-    }
-
-    // Populate vector with map keys
-    std::vector<std::string> return_value;
-    for (auto& pair : schemas) {
-        return_value.push_back(pair.first);
-    }
-
-    return return_value;
-}
-
-void IfcParse::clear_schemas() {
-#ifdef HAS_SCHEMA_2x3
-    Ifc2x3::clear_schema();
-#endif
-#ifdef HAS_SCHEMA_4
-    Ifc4::clear_schema();
-#endif
-#ifdef HAS_SCHEMA_4x1
-    Ifc4x1::clear_schema();
-#endif
-#ifdef HAS_SCHEMA_4x2
-    Ifc4x2::clear_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3_rc1
-    Ifc4x3_rc1::clear_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3_rc2
-    Ifc4x3_rc2::clear_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3_rc3
-    Ifc4x3_rc3::clear_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3_rc4
-    Ifc4x3_rc4::clear_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3
-    Ifc4x3::clear_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3_tc1
-    Ifc4x3_tc1::clear_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3_add1
-    Ifc4x3_add1::clear_schema();
-#endif
-#ifdef HAS_SCHEMA_4x3_add2
-    Ifc4x3_add2::clear_schema();
-#endif
-
-    // clear any remaining registered schemas
-    // we pop schemas until map is empty, because map iteration is invalidated after each erasure
-    while (!schemas.empty()) {
-        delete schemas.begin()->second;
-    }
 }

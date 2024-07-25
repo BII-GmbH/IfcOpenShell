@@ -360,7 +360,7 @@ void set_children_of_relation(IfcUtil::IfcBaseClass* t, aggregate_of_instance::p
 template <typename Schema>
 class IFC_PARSE_API IfcHierarchyHelper : public IfcParse::IfcFile {
   public:
-    IfcHierarchyHelper() : IfcParse::IfcFile(&Schema::get_schema()) {}
+    IfcHierarchyHelper() : IfcParse::IfcFile(Schema::get_schema()) {}
 
     template <class T>
     T* addTriplet(double x, double y, double z) {
@@ -468,7 +468,7 @@ class IFC_PARSE_API IfcHierarchyHelper : public IfcParse::IfcFile {
                 data->setArgument(related_index, attr);
             }
 
-            T* t = (T*)Schema::get_schema().instantiate(data);
+            T* t = (T*)Schema::get_schema()->instantiate(data);
             addEntity(t);
         }
     }
