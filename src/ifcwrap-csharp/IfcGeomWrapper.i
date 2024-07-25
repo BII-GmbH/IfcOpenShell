@@ -38,8 +38,6 @@
 	%newobject New;
 	static ifcopenshell::geometry::taxonomy::matrix4* New(std::array<double,4> Col0, std::array<double,4> Col1, std::array<double,4> Col2,std::array<double,4> Col3)
 	{
-		//auto o = Eigen::Vector3d& o, const Eigen::Vector3d& z, const Eigen::Vector3d&
-
 		auto mat = Eigen::Matrix4d();
 		mat <<
 			Col0[0], Col1[0], Col2[0], Col3[0],

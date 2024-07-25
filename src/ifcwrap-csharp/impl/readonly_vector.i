@@ -1,19 +1,30 @@
-// Adapted from std_vector.i in the swig source code at
+// Adapted from std_vector.i in the swig Library code at
 // https://github.com/swig/swig/blob/v3.0.12/Lib/std/std_vector.i
+//
+// Swig library code is licensed under these terms:
+// The SWIG library and examples, under the Lib and Examples top level 
+// directories, are distributed under the following terms:
+//
+//   You may copy, modify, distribute, and make derivative works based on
+//   this software, in source code or object code form, without
+//   restriction. If you distribute the software to others, you may do
+//   so according to the terms of your choice. This software is offered as
+//   is, without warranty of any kind.
+//
 //
 // Q: Why does this exist?
 // A: We want to be able to use the vector as IReadOnlyList<T> in C#. However, the default std_vector.i wrapper implements IList<T>, 
 // which for some reason does not implement IReadOnlyList. Since at the moment we do not require mutability, this is fine for now.
 
 /* -----------------------------------------------------------------------------
- * std_vector.i
+ * readonly_vector.i
  *
- * SWIG typemaps for std::vector<T>
+ * Custom SWIG typemaps for std::vector<T>
  * C# implementation
- * The C# wrapper is made to look and feel like a C# System.Collections.Generic.List<> collection.
+ * The C# wrapper is made to look and feel like a C# System.Collections.Generic.IReadOnlyList<> collection.
  *
  * Note that IEnumerable<> is implemented in the proxy class which is useful for using LINQ with 
- * C++ std::vector wrappers. The IList<> interface is also implemented to provide enhanced functionality
+ * C++ std::vector wrappers. The IReadOnlyList<> interface is also implemented to provide enhanced functionality
  * whenever we are confident that the required C++ operator== is available. This is the case for when 
  * T is a primitive type or a pointer. If T does define an operator==, then use the SWIG_STD_VECTOR_ENHANCED
  * macro to obtain this enhanced functionality, for example:
@@ -25,7 +36,6 @@
  * ----------------------------------------------------------------------------- */
 
 // Warning: Use the typemaps here in the expectation that the macros they are in will change name.
-
 
 %include <std_common.i>
 
@@ -71,7 +81,7 @@
     return new $csclassnameEnumerator(this);
   }
 
-  // Type-safe enumerator
+  /// Type-safe enumerator.
   /// Note that the IEnumerator documentation requires an InvalidOperationException to be thrown
   /// whenever the collection is modified. This has been done for changes in the size of the
   /// collection but not when one of the elements of the collection is modified as it is a bit
