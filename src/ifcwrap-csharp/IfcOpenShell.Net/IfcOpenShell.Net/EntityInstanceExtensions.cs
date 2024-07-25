@@ -356,9 +356,11 @@ namespace IfcOpenShell.Net {
                 // }
                 return new ArgumentResult.FromAggregateOfInstance(inverse);
             }
-            // TODO WS for maintainer: Our testing so far suggests that we do not need this branch at the moment. If that changes, this
-            // needs to be adapted from the python implementation in __getattr__ in ifcopenshell/entity_instance.py
-            throw new System.NotImplementedException();
+            
+            // NOTE WS: This branch _was_ encountered by models now, but i absolutely do
+            // not understand what the python implementation is doing here.
+            // Needs to be adapted from the python implementation in __getattr__ in ifcopenshell/entity_instance.py
+            // throw new System.NotImplementedException();
 
             // is it a derived attribute?
             var schema_name = instance.Is(true).Split('.')[0];
