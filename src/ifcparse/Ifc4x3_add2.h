@@ -17,7 +17,7 @@
 
 struct Ifc4x3_add2 {
 
-IFC_PARSE_API static const IfcParse::schema_definition& get_schema();
+IFC_PARSE_API static std::shared_ptr<IfcParse::schema_definition> get_schema();
 
 IFC_PARSE_API static void clear_schema();
 

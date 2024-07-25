@@ -1112,7 +1112,7 @@ class apply_individual_instance_visitor {
     {}
 
     apply_individual_instance_visitor(IfcEntityInstanceData* data)
-        : data_(data) 
+        : data_(data)
     {}
 
     template <typename T>
@@ -1166,7 +1166,7 @@ void IfcUtil::IfcBaseClass::set_attribute_value(size_t i, const T& t) {
         // Register inverse indices in file
         register_inverse_visitor visitor(*file_, this);
         apply_individual_instance_visitor(new_attribute, (int) i).apply(visitor);
-    
+
         // Register new attribute guid in guid map
         if (i == 0 && (file_->ifcroot_type() != nullptr) && this->declaration().is(*file_->ifcroot_type())) {
             try {
@@ -1217,7 +1217,7 @@ IfcFile::IfcFile(IfcParse::IfcSpfStream* s) {
     initialize_(s);
 }
 
-IfcFile::IfcFile(const IfcParse::schema_definition* schema)
+IfcFile::IfcFile(std::shared_ptr<IfcParse::schema_definition> schema)
     : schema_(schema),
       ifcroot_type_(schema_->declaration_by_name("IfcRoot")),
       MaxId(0),
@@ -1234,7 +1234,7 @@ void IfcFile::initialize_(IfcParse::IfcSpfStream* s) {
     MaxId = 0;
     tokens = 0;
     stream = 0;
-    schema_ = 0;
+    schema_ = {};
 
     // setDefaultHeaderValues();
 
@@ -1578,7 +1578,7 @@ IfcUtil::IfcBaseClass* IfcFile::addEntity(IfcUtil::IfcBaseClass* entity, int id)
         throw IfcParse::IfcException("An instance with id " + boost::lexical_cast<std::string>(id) + " is already part of this file");
     }
 
-    if (entity->declaration().schema() != schema()) {
+    if (entity->declaration().schema() != schema().get()) {
         throw IfcParse::IfcException("Unabled to add instance from " + entity->declaration().schema()->name() + " schema to file with " + schema()->name() + " schema");
     }
 
@@ -1681,7 +1681,7 @@ IfcUtil::IfcBaseClass* IfcFile::addEntity(IfcUtil::IfcBaseClass* entity, int id)
                     }
                     new_instances->push(list);
                 }
-                
+
                 new_entity->data().storage_.set(i, new_instances);
             } else if ((decl != nullptr) && decl->is(*schema()->declaration_by_name("IfcLengthMeasure"))) {
                 if (boost::math::isnan(conversion_factor)) {
