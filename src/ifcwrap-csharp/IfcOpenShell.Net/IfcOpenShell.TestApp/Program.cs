@@ -14,7 +14,7 @@ var i = Console.Read();
 // random test files that i found on my PC - paths probably wont work for you
 const string fileName = "sampleHouse.IFC";
 
-var model = ifcopenshell_net.open(fileName);
+var model = IfcFile.open(fileName);
 
 var settings = new Settings();
 settings.Set("generate-uvs", true);

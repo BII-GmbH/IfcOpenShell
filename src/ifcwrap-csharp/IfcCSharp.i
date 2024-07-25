@@ -368,9 +368,9 @@ namespace std {
 	%template(NAME##Argument) TypedArgument<TYPE>;
 %enddef
 
-// TODO: LOGICAL (whatever that is)
-// TODO: BINARY
-// TODO: BINARY List
+// TODO WS for maintainer when actually needed: LOGICAL (whatever that is)
+// TODO WS for maintainer when actually needed: BINARY
+// TODO WS for maintainer when actually needed: BINARY List
 TRY_GET_AS(std::string, String, type == IfcUtil::Argument_ENUMERATION || type == IfcUtil::Argument_STRING)
 TRY_GET_AS(int, Int, type == IfcUtil::Argument_INT)
 TRY_GET_AS(bool, Bool, type == IfcUtil::Argument_BOOL)

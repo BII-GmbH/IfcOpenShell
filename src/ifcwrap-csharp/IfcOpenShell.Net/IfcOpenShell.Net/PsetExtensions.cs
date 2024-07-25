@@ -72,6 +72,7 @@ namespace IfcOpenShell.Net
 
             if (pset != null)
             {
+                // ignore results if they do not match the filter criteria passed in using the method arguments
                 if(onlyPsets && !pset.Is("IfcPropertySet"))
                 {
                     pset = null;
@@ -85,29 +86,30 @@ namespace IfcOpenShell.Net
             {
                 // branch has not been encountered in our testing.
                 // If this is needed in the future look at ifcopenshell-python/util/element.py:get_pset
-                throw new NotImplementedException();
+                throw new NotImplementedException("Filtering for a specific property name is not implemented in the C#-wrapper yet");
             }
 
             if (pset == null && typePset == null)
             {
-                // python returns null here - i don't like null, so return empty list instead
+                // python returns null here - i don't like null, so return empty dictionary instead
                 return new Dictionary<string, ArgumentResult>();
             }
             if (propertyName == null)
             {
                 if (typePset != null)
                 {
-                    // Currently unreachable because the branch in line 83 is the only way this can be reached
+                    // Currently unreachable because the unimplemented branch in line 83 would be hit first &
+                    // the logic in that branch in the python implementation is the only way for this to be reached.
                     // branch has not been encountered in our testing.
                     // If this is needed in the future look at ifcopenshell-python/util/element.py:get_pset
-                    throw new NotImplementedException();
+                    throw new NotImplementedException("Filtering for a specific property name is not implemented in the C#-wrapper yet - 2 -");
                 }
 
                 return pset.getPropertyDefinition(verbose:verbose);
             }
             var value = pset.getPropertyDefinition(propertyName: propertyName, verbose: verbose);
             
-            if(value != null && typePset != null)
+            if(value == null && typePset != null)
             {
                 return typePset;
             }
@@ -297,17 +299,19 @@ namespace IfcOpenShell.Net
                     }
                     case "IfcPropertyBoundedValue":
                         // implementing this type is really easy, except for return type magic because we suddenly need to wrap a dictionary<string, EntityInstance>
-                        throw new NotImplementedException();
+                        throw new NotImplementedException($"Getting Properties for property of type {ifcClass} is not supported in the C# wrapper yet");
                         break;
                     case "IfcPropertyTableValue":
                         // implementing this type is really easy, except for return type magic because we suddenly need to wrap a dictionary<string, EntityInstance>
-                        throw new NotImplementedException();
+                        throw new NotImplementedException($"Getting Properties for property of type {ifcClass} is not supported in the C# wrapper yet");
                         break;
                     case "IfcComplexProperty":
                         // implementing this type is not that complicated, except for return type magic because we suddenly need to wrap a dictionary<string, EntityInstance>
-                        throw new NotImplementedException();
+                        throw new NotImplementedException($"Getting Properties for property of type {ifcClass} is not supported in the C# wrapper yet");
                         break;
-                    default: break;
+                    default: 
+                        // if its not any of these types, silently ignore, just like the python version
+                        break;
                 }
             }
             return result;
@@ -339,7 +343,7 @@ namespace IfcOpenShell.Net
 
                     if (quantity.TryGetAttributeAsEntityList("HasQuantities", out var subQuantities))
                     {
-                        throw new NotImplementedException();
+                        throw new NotImplementedException($"{nameof(getQuantity)}: IfcPhysicalComplexQuantity.HasQuantities not implemented in the C# wrapper yet");
                     }
                 }
                 // python impl also returns inside the loop
@@ -376,7 +380,7 @@ namespace IfcOpenShell.Net
 
                     if (quantity.TryGetAttributeAsEntityList("HasQuantities", out var subQuantities))
                     {
-                        throw new NotImplementedException("IfcPhysicalComplexQuantity.HasQuantities not implemented");
+                        throw new NotImplementedException($"{nameof(getQuantity)}: IfcPhysicalComplexQuantity.HasQuantities not implemented in the C# wrapper yet");
                     }
                 }
             }

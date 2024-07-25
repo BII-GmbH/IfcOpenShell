@@ -265,7 +265,8 @@ namespace IfcOpenShell.Net
             {
                 symbol += prefixSymbol(unit.GetAttributeAsString("Prefix"));
             }
-            var unitName = unit.GetAttributeAsString("Name")?.Replace("METER","METRE") ?? string.Empty;
+            var unitName = unit.GetAttributeAsString("Name")?
+                .Replace("METER","METRE") ?? string.Empty;
             // (derived) si units are spelled uppercase, non-si units are lowercase 
             if(!siUnitNames.Contains(unitName))
             {
