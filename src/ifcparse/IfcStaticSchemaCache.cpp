@@ -1,8 +1,10 @@
-#include "IfcStaticData.h"
+#include "IfcStaticSchemaCache.h"
 
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+
+#include <iostream>
 
 #include "IfcException.h"
 
@@ -44,8 +46,15 @@
 #include "Ifc4x3_add2.h"
 #endif
 
+#include <thread>
+
+std::shared_mutex IfcParse::IfcStaticSchemaCache::instance_mutex;
+std::unique_ptr<IfcParse::IfcStaticSchemaCache> IfcParse::IfcStaticSchemaCache::s_instance;
+
 std::shared_ptr<IfcParse::schema_definition> IfcParse::IfcStaticSchemaCache::try_get_schema(const std::string& name) {
-    std::shared_lock<std::shared_mutex> lock(instance_mutex);
+    std::cout << std::this_thread::get_id() << " Waiting for read lock" << std::endl;
+	std::shared_lock<std::shared_mutex> lock(instance_mutex);
+	std::cout << std::this_thread::get_id() << " Read Lock aquired" << std::endl;
     // do read
     if(!s_instance) return {};
 
@@ -68,6 +77,7 @@ std::shared_ptr<IfcParse::schema_definition> IfcParse::IfcStaticSchemaCache::get
     // we could not find the entry - create it - but we need a write lock for that
 
     std::lock_guard<std::shared_mutex> lock(instance_mutex);
+	std::cout << std::this_thread::get_id() << " Write lock aquired" << std::endl;
     // we successfully got a write lock - now check if we need to create the entire data or only the schema entry
     if(!s_instance) {
         s_instance = std::unique_ptr<IfcStaticSchemaCache>(new IfcStaticSchemaCache());
@@ -130,10 +140,31 @@ std::shared_ptr<IfcParse::schema_definition> IfcParse::IfcStaticSchemaCache::get
     return schema;
 }
 
-void IfcParse::register_schema(schema_definition* schema) {
-    //IfcParse::IfcStaticSchemaCache::get_or_create_schema schemas.insert({boost::to_upper_copy(schema->name()), schema});
+void IfcParse::IfcStaticSchemaCache::register_schema(std::shared_ptr<schema_definition> schema, bool replaceIfLoaded) {
+	if(!schema) return;
+	auto schemaName = schema->name();
+    // try get existing cached entry
+    auto result = try_get_schema(schemaName);
+    if(result && result == schema) {
+        return;
+    }
+    // we could not find the entry - insert it - but we need a write lock for that
 
-    throw IfcParse::IfcException("register_schema is not implemented");
+    std::lock_guard<std::shared_mutex> lock(instance_mutex);
+	std::cout << std::this_thread::get_id() << " Registering new schema" << std::endl;
+    // we successfully got a write lock - now check if we need to create the entire data or only the schema entry
+    if(!s_instance) {
+        s_instance = std::unique_ptr<IfcStaticSchemaCache>(new IfcStaticSchemaCache());
+    }
+	auto it = s_instance->schemas.find(schemaName);
+	if(!replaceIfLoaded && it != s_instance->schemas.end()) {
+		return;
+	}
+	s_instance->schemas[schemaName] = schema;
+}
+
+void IfcParse::register_schema(std::shared_ptr<schema_definition> schema, bool replaceIfLoaded) {
+	IfcParse::IfcStaticSchemaCache::register_schema(schema, replaceIfLoaded);
 }
 
 std::shared_ptr<IfcParse::schema_definition> IfcParse::schema_by_name(const std::string& name) {
@@ -141,29 +172,48 @@ std::shared_ptr<IfcParse::schema_definition> IfcParse::schema_by_name(const std:
 }
 
 std::vector<std::string> IfcParse::schema_names() {
-
-    throw IfcParse::IfcException("register_schema is not implemented");
-
-// Load schema modules
-//    try {
-//        IfcParse::schema_by_name("IFC2X3");
-//    } catch (IfcParse::IfcException&) {
-//    }
-
-    // Populate vector with map keys
-//    std::vector<std::string> return_value;
-//    for (auto& pair : schemas) {
-//        return_value.push_back(pair.first);
-//    }
-
-//    return return_value;
+	std::vector<std::string> schemaNames;
+	#ifdef HAS_SCHEMA_2x3
+        schemaNames.push_back(Ifc2x3::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4
+        schemaNames.push_back(Ifc4::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x1
+        schemaNames.push_back(Ifc4x1::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x2
+        schemaNames.push_back(Ifc4x2::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3_rc1
+        schemaNames.push_back(Ifc4x3_rc1::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3_rc2
+        schemaNames.push_back(Ifc4x3_rc2::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3_rc3
+        schemaNames.push_back(Ifc4x3_rc3::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3_rc4
+        schemaNames.push_back(Ifc4x3_rc4::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3
+        schemaNames.push_back(Ifc4x3::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3_tc1
+        schemaNames.push_back(Ifc4x3_tc1::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3_add1
+        schemaNames.push_back(Ifc4x3_add1::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3_add2
+        schemaNames.push_back(Ifc4x3_add2::Identifier);
+    #endif
+	return schemaNames;
 }
 
 void IfcParse::clear_schemas() {
     throw IfcParse::IfcException("register_schema is not implemented");
-#ifdef HAS_SCHEMA_2x3
-    Ifc2x3::clear_schema();
-#endif
 #ifdef HAS_SCHEMA_4
     Ifc4::clear_schema();
 #endif

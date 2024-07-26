@@ -44,7 +44,7 @@ struct Ifc2x3 {
 
 IFC_PARSE_API static std::shared_ptr<IfcParse::schema_definition> get_schema();
 
-IFC_PARSE_API static void clear_schema();
+static std::shared_ptr<IfcParse::schema_definition> create_schema();
 
 static const char* const Identifier;
 
