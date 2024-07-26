@@ -255,7 +255,7 @@ IfcGeom::BRepElement* ifcopenshell::geometry::Converter::create_brep_for_represe
 		guid,
 		context_string,
 		place,
-		boost::shared_ptr<IfcGeom::Representation::BRep>(shape),
+		std::shared_ptr<IfcGeom::Representation::BRep>(shape),
 		product
 	);
 

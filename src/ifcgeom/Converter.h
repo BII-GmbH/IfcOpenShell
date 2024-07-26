@@ -15,7 +15,7 @@ namespace ifcopenshell { namespace geometry {
 
 	class Converter {
 	public:
-		typedef boost::shared_ptr<IfcGeom::Representation::BRep> brep_ptr;
+		typedef std::shared_ptr<IfcGeom::Representation::BRep> brep_ptr;
 	private:
 		std::string geometry_library_;
 		ifcopenshell::geometry::abstract_mapping* mapping_;

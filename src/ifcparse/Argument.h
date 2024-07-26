@@ -25,7 +25,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <boost/logic/tribool.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -55,11 +55,11 @@ class IFC_PARSE_API Argument {
     virtual operator std::vector<double>() const;
     virtual operator std::vector<std::string>() const;
     virtual operator std::vector<boost::dynamic_bitset<>>() const;
-    virtual operator boost::shared_ptr<aggregate_of_instance>() const;
+    virtual operator std::shared_ptr<aggregate_of_instance>() const;
 
     virtual operator std::vector<std::vector<int>>() const;
     virtual operator std::vector<std::vector<double>>() const;
-    virtual operator boost::shared_ptr<aggregate_of_aggregate_of_instance>() const;
+    virtual operator std::shared_ptr<aggregate_of_aggregate_of_instance>() const;
 
     virtual bool isNull() const = 0;
     virtual unsigned int size() const = 0;

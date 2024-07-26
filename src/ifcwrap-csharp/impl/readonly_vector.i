@@ -1,0 +1,295 @@
+// Adapted from std_vector.i in the swig Library code at
+// https://github.com/swig/swig/blob/v3.0.12/Lib/std/std_vector.i
+//
+// Swig library code is licensed under these terms:
+// The SWIG library and examples, under the Lib and Examples top level 
+// directories, are distributed under the following terms:
+//
+//   You may copy, modify, distribute, and make derivative works based on
+//   this software, in source code or object code form, without
+//   restriction. If you distribute the software to others, you may do
+//   so according to the terms of your choice. This software is offered as
+//   is, without warranty of any kind.
+//
+//
+// Q: Why does this exist?
+// A: We want to be able to use the vector as IReadOnlyList<T> in C#. However, the default std_vector.i wrapper implements IList<T>, 
+// which for some reason does not implement IReadOnlyList. Since at the moment we do not require mutability, this is fine for now.
+
+/* -----------------------------------------------------------------------------
+ * readonly_vector.i
+ *
+ * Custom SWIG typemaps for std::vector<T>
+ * C# implementation
+ * The C# wrapper is made to look and feel like a C# System.Collections.Generic.IReadOnlyList<> collection.
+ *
+ * Note that IEnumerable<> is implemented in the proxy class which is useful for using LINQ with 
+ * C++ std::vector wrappers. The IReadOnlyList<> interface is also implemented to provide enhanced functionality
+ * whenever we are confident that the required C++ operator== is available. This is the case for when 
+ * T is a primitive type or a pointer. If T does define an operator==, then use the SWIG_STD_VECTOR_ENHANCED
+ * macro to obtain this enhanced functionality, for example:
+ *
+ *   SWIG_STD_VECTOR_ENHANCED(SomeNamespace::Klass)
+ *   %template(VectKlass) std::vector<SomeNamespace::Klass>;
+ *
+ * Warning: heavy macro usage in this file. Use swig -E to get a sane view on the real file contents!
+ * ----------------------------------------------------------------------------- */
+
+// Warning: Use the typemaps here in the expectation that the macros they are in will change name.
+
+%include <std_common.i>
+
+// MACRO for use within the std::vector class body
+%define SWIG_STD_VECTOR_MINIMUM_INTERNAL(CSINTERFACE, CONST_REFERENCE, CTYPE...)
+%typemap(csinterfaces) std::vector< CTYPE > "global::System.IDisposable, global::System.Collections.IEnumerable\n    , global::System.Collections.Generic.CSINTERFACE<$typemap(cstype, CTYPE)>\n";
+%proxycode %{
+  public $csclassname(global::System.Collections.ICollection c) : this() {
+    if (c == null)
+      throw new global::System.ArgumentNullException("c");
+    foreach ($typemap(cstype, CTYPE) element in c) {
+      this.add(element);
+    }
+  }
+
+  public $typemap(cstype, CTYPE) this[int index]  {
+    get {
+      return getitem(index);
+    }
+  }
+
+  public int Capacity {
+    get {
+      return (int)capacity();
+    }
+  }
+
+  public int Count {
+    get {
+      return (int)size();
+    }
+  }
+
+  global::System.Collections.Generic.IEnumerator<$typemap(cstype, CTYPE)> global::System.Collections.Generic.IEnumerable<$typemap(cstype, CTYPE)>.GetEnumerator() {
+    return new $csclassnameEnumerator(this);
+  }
+
+  global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() {
+    return new $csclassnameEnumerator(this);
+  }
+
+  public $csclassnameEnumerator GetEnumerator() {
+    return new $csclassnameEnumerator(this);
+  }
+
+  /// Type-safe enumerator.
+  /// Note that the IEnumerator documentation requires an InvalidOperationException to be thrown
+  /// whenever the collection is modified. This has been done for changes in the size of the
+  /// collection but not when one of the elements of the collection is modified as it is a bit
+  /// tricky to detect unmanaged code that modifies the collection under our feet.
+  public sealed class $csclassnameEnumerator : global::System.Collections.IEnumerator
+    , global::System.Collections.Generic.IEnumerator<$typemap(cstype, CTYPE)>
+  {
+    private $csclassname collectionRef;
+    private int currentIndex;
+    private object currentObject;
+    private int currentSize;
+
+    public $csclassnameEnumerator($csclassname collection) {
+      collectionRef = collection;
+      currentIndex = -1;
+      currentObject = null;
+      currentSize = collectionRef.Count;
+    }
+
+    /// Type-safe iterator Current
+    public $typemap(cstype, CTYPE) Current {
+      get {
+        if (currentIndex == -1)
+          throw new global::System.InvalidOperationException("Enumeration not started.");
+        if (currentIndex > currentSize - 1)
+          throw new global::System.InvalidOperationException("Enumeration finished.");
+        if (currentObject == null)
+          throw new global::System.InvalidOperationException("Collection modified.");
+        return ($typemap(cstype, CTYPE))currentObject;
+      }
+    }
+
+    /// Type-unsafe IEnumerator.Current
+    object global::System.Collections.IEnumerator.Current {
+      get {
+        return Current;
+      }
+    }
+
+    public bool MoveNext() {
+      int size = collectionRef.Count;
+      bool moveOkay = (currentIndex+1 < size) && (size == currentSize);
+      if (moveOkay) {
+        currentIndex++;
+        currentObject = collectionRef[currentIndex];
+      } else {
+        currentObject = null;
+      }
+      return moveOkay;
+    }
+
+    public void Reset() {
+      currentIndex = -1;
+      currentObject = null;
+      if (collectionRef.Count != currentSize) {
+        throw new global::System.InvalidOperationException("Collection modified.");
+      }
+    }
+
+    public void Dispose() {
+        currentIndex = -1;
+        currentObject = null;
+    }
+  }
+%}
+
+  public:
+    typedef size_t size_type;
+    typedef CTYPE value_type;
+    typedef CONST_REFERENCE const_reference;
+    
+    // needed for the constructor taking in a collection - but as this is readonlylist, the method is set to private later on
+    %rename(add) push_back;
+    void push_back(CTYPE const& x);
+
+    size_type size() const;
+    size_type capacity() const;
+    %newobject GetRange(int index, int count);
+    %newobject Repeat(CTYPE const& value, int count);
+    vector();
+    vector(const vector &other);
+    %extend {
+      vector(int capacity) throw (std::out_of_range) {
+        std::vector< CTYPE >* pv = 0;
+        if (capacity >= 0) {
+          pv = new std::vector< CTYPE >();
+          pv->reserve(capacity);
+       } else {
+          throw std::out_of_range("capacity");
+       }
+       return pv;
+      }
+      CTYPE getitemcopy(int index) throw (std::out_of_range) {
+        if (index>=0 && index<(int)$self->size())
+          return (*$self)[index];
+        else
+          throw std::out_of_range("index");
+      }
+      CONST_REFERENCE getitem(int index) throw (std::out_of_range) {
+        if (index>=0 && index<(int)$self->size())
+          return (*$self)[index];
+        else
+          throw std::out_of_range("index");
+      }
+      
+      // Takes a deep copy of the elements unlike ArrayList.GetRange
+      std::vector< CTYPE > *GetRange(int index, int count) throw (std::out_of_range, std::invalid_argument) {
+        if (index < 0)
+          throw std::out_of_range("index");
+        if (count < 0)
+          throw std::out_of_range("count");
+        if (index >= (int)$self->size()+1 || index+count > (int)$self->size())
+          throw std::invalid_argument("invalid range");
+        return new std::vector< CTYPE >($self->begin()+index, $self->begin()+index+count);
+      }
+    }
+%enddef
+
+// Extra methods added to the collection class if operator== is defined for the class being wrapped
+// The class will then implement IList<>, which adds extra functionality
+%define SWIG_STD_VECTOR_EXTRA_OP_EQUALS_EQUALS(CTYPE...)
+    %extend {
+      bool Contains(CTYPE const& value) {
+        return std::find($self->begin(), $self->end(), value) != $self->end();
+      }
+      int IndexOf(CTYPE const& value) {
+        int index = -1;
+        std::vector< CTYPE >::iterator it = std::find($self->begin(), $self->end(), value);
+        if (it != $self->end())
+          index = (int)(it - $self->begin());
+        return index;
+      }
+      int LastIndexOf(CTYPE const& value) {
+        int index = -1;
+        std::vector< CTYPE >::reverse_iterator rit = std::find($self->rbegin(), $self->rend(), value);
+        if (rit != $self->rend())
+          index = (int)($self->rend() - 1 - rit);
+        return index;
+      }
+    }
+%enddef
+
+// Macros for std::vector class specializations/enhancements
+%define SWIG_STD_VECTOR_ENHANCED(CTYPE...)
+namespace std {
+  template<> class vector< CTYPE > {
+    SWIG_STD_VECTOR_MINIMUM_INTERNAL(IReadOnlyList, %arg(CTYPE const&), %arg(CTYPE))
+    SWIG_STD_VECTOR_EXTRA_OP_EQUALS_EQUALS(CTYPE)
+  };
+}
+%enddef
+
+// Legacy macros
+%define SWIG_STD_VECTOR_SPECIALIZE(CSTYPE, CTYPE...)
+#warning SWIG_STD_VECTOR_SPECIALIZE macro deprecated, please see csharp/std_vector.i and switch to SWIG_STD_VECTOR_ENHANCED
+SWIG_STD_VECTOR_ENHANCED(CTYPE)
+%enddef
+
+%define SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(CSTYPE, CTYPE...)
+#warning SWIG_STD_VECTOR_SPECIALIZE_MINIMUM macro deprecated, it is no longer required
+%enddef
+
+%{
+#include <vector>
+#include <algorithm>
+#include <stdexcept>
+%}
+
+%csmethodmodifiers std::vector::getitemcopy "private"
+%csmethodmodifiers std::vector::getitem "private"
+%csmethodmodifiers std::vector::setitem "private"
+%csmethodmodifiers std::vector::size "private"
+%csmethodmodifiers std::vector::capacity "private"
+%csmethodmodifiers std::vector::reserve "private"
+%csmethodmodifiers std::vector::push_back "private"
+
+namespace std {
+  // primary (unspecialized) class template for std::vector
+  // does not require operator== to be defined
+  template<class T> class vector {
+    SWIG_STD_VECTOR_MINIMUM_INTERNAL(IEnumerable, T const&, T)
+  };
+  // specialization for pointers
+  template<class T> class vector<T *> {
+    SWIG_STD_VECTOR_MINIMUM_INTERNAL(IReadOnlyList, T *const&, T *)
+    SWIG_STD_VECTOR_EXTRA_OP_EQUALS_EQUALS(T *)
+  };
+  // bool is specialized in the C++ standard - const_reference in particular
+  template<> class vector<bool> {
+    SWIG_STD_VECTOR_MINIMUM_INTERNAL(IReadOnlyList, bool, bool)
+    SWIG_STD_VECTOR_EXTRA_OP_EQUALS_EQUALS(bool)
+  };
+}
+
+// template specializations for std::vector
+// these provide extra collections methods as operator== is defined
+SWIG_STD_VECTOR_ENHANCED(char)
+SWIG_STD_VECTOR_ENHANCED(signed char)
+SWIG_STD_VECTOR_ENHANCED(unsigned char)
+SWIG_STD_VECTOR_ENHANCED(short)
+SWIG_STD_VECTOR_ENHANCED(unsigned short)
+SWIG_STD_VECTOR_ENHANCED(int)
+SWIG_STD_VECTOR_ENHANCED(unsigned int)
+SWIG_STD_VECTOR_ENHANCED(long)
+SWIG_STD_VECTOR_ENHANCED(unsigned long)
+SWIG_STD_VECTOR_ENHANCED(long long)
+SWIG_STD_VECTOR_ENHANCED(unsigned long long)
+SWIG_STD_VECTOR_ENHANCED(float)
+SWIG_STD_VECTOR_ENHANCED(double)
+SWIG_STD_VECTOR_ENHANCED(std::string) // also requires a %include <std_string.i>
+SWIG_STD_VECTOR_ENHANCED(std::wstring) // also requires a %include <std_wstring.i>

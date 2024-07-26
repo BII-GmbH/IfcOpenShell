@@ -51,7 +51,8 @@ call build-type-cfg.cmd %2
 IF NOT %ERRORLEVEL%==0 GOTO :Error
 
 echo.
-if not defined IFCOS_NUM_BUILD_PROCS set IFCOS_NUM_BUILD_PROCS=%NUMBER_OF_PROCESSORS%
+:: Subtract 4 from the total number of processors so the PC stays usable while compiling - value arbitrarily chosen
+if not defined IFCOS_NUM_BUILD_PROCS set /a IFCOS_NUM_BUILD_PROCS=%NUMBER_OF_PROCESSORS% - 4
 call cecho.cmd 0 13 "* IFCOS_NUM_BUILD_PROCS`t= %IFCOS_NUM_BUILD_PROCS%"
 echo.
 
