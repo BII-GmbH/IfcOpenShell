@@ -27,6 +27,7 @@ private:
 %ignore IfcParse::IfcFile::register_inverse;
 %ignore IfcParse::IfcFile::unregister_inverse;
 %ignore IfcParse::IfcFile::schema;
+%ignore IfcParse::register_schema;
 %ignore IfcParse::IfcFile::begin;
 %ignore IfcParse::IfcFile::end;
 
@@ -55,7 +56,6 @@ private:
 %rename(Declaration) declaration;
 %rename(DeclarationType) IfcParse::declaration;
 %rename("EntityInstance") IfcBaseClass;
-%rename("IfcFile") IfcFile;
 %rename("Add") addEntity;
 %rename("Remove") removeEntity;
 
@@ -159,7 +159,7 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 	}
 
 	std::string schema_name() const {
-		if ($self->schema() == 0) return "";
+		if ($self->schema()) return "";
 		return $self->schema()->name();
 	}
 
@@ -593,7 +593,7 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 	}
 
 	IfcUtil::IfcBaseClass* new_IfcBaseClass(const std::string& schema_identifier, const std::string& name) {
-		const IfcParse::schema_definition* schema = IfcParse::schema_by_name(schema_identifier);
+		auto schema = IfcParse::schema_by_name(schema_identifier);
 		const IfcParse::declaration* decl = schema->declaration_by_name(name);
 		IfcEntityInstanceData* data = new IfcEntityInstanceData(decl);
 

@@ -514,7 +514,7 @@ IFC_PARSE_API std::shared_ptr<schema_definition> schema_by_name(const std::strin
 
 IFC_PARSE_API std::vector<std::string> schema_names();
 
-IFC_PARSE_API void register_schema(schema_definition*);
+IFC_PARSE_API void register_schema(std::shared_ptr<schema_definition> schema, bool replaceIfLoaded=false);
 
 IFC_PARSE_API void clear_schemas();
 } // namespace IfcParse

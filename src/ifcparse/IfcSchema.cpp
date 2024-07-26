@@ -18,7 +18,7 @@
  ********************************************************************************/
 
 #include "IfcSchema.h"
-#include "IfcStaticData.h"
+#include "IfcStaticSchemaCache.h"
 #include "IfcBaseClass.h"
 
 #include <map>

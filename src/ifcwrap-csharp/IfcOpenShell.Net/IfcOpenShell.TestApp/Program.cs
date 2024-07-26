@@ -10,14 +10,22 @@ Console.WriteLine("Hello, World!");
 var i = Console.Read();
 
 //const string fileName = "I:\\MPAL VA Gleise + IRA-Bahnsteig_1023-1.IFC";
-const string fileName = "C:\\LocalDirs\\schnepp\\IfcOpenShell-Progress\\sampleHouse.IFC";
+const string fileName = "I:\\sampleHouse.IFC";
 
 
 var model = ifcopenshell_net.open(fileName);
 var settings = new Settings();
+
+foreach (var settingName in settings.SettingNames())
+{
+    Console.WriteLine("Setting: " + settingName);
+}
+
+
 settings.Set("generate-uvs", true);
 settings.Set("weld-vertices", false);
 settings.Set("no-normals", false);
+
 var iterator = new Iterator("opencascade", settings, model, Environment.ProcessorCount);
 //using var task = Task.Run(() =>
 //var task = async () =>

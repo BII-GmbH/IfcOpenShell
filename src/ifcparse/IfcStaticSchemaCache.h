@@ -36,6 +36,7 @@ class schema_definition;
 class IfcStaticSchemaCache {
 public:
     static std::shared_ptr<IfcParse::schema_definition> get_or_create_schema(const std::string& name);
+    static void register_schema(std::shared_ptr<schema_definition> schema, bool replaceIfLoaded=false);
     ~IfcStaticSchemaCache() = default;
 private:
     IfcStaticSchemaCache() = default;
