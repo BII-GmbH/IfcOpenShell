@@ -197,7 +197,7 @@ namespace IfcOpenShell.Net
             if (definition is null)
                 return null;
 
-            var ifcClass = definition.Is();
+            var ifcClass = definition.GetIfcTypeName();
 
             if (propertyName != null)
             {
@@ -262,7 +262,7 @@ namespace IfcOpenShell.Net
 
             foreach (var prop in properties)
             {
-                var ifcClass = prop.Is();
+                var ifcClass = prop.GetIfcTypeName();
                 var name = prop.TryGetAttributeAsString("Name", out var n) ? n : "Unknown";
 
                 // TODO: verbose setting

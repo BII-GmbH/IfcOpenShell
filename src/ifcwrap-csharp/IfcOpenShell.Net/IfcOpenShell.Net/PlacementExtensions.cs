@@ -76,7 +76,7 @@ namespace IfcOpenShell.Net
             var o = unitY;
             
             
-            var ifcClass = placement.Is();
+            var ifcClass = placement.GetIfcTypeName();
             switch (ifcClass)
             {
                 case "IfcAxis2Placement3D":
@@ -104,7 +104,7 @@ namespace IfcOpenShell.Net
                     }
                     else
                     {
-                        Console.WriteLine($"WARNING. Placement location of type {location.Is()} is not yet supported " +
+                        Console.WriteLine($"WARNING. Placement location of type {location.GetIfcTypeName()} is not yet supported " +
                                           $"and placement {placement} may be placed incorrectly.");
                         o = zero;
                     }

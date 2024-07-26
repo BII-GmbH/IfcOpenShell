@@ -50,7 +50,8 @@ private:
 %ignore IfcUtil::IfcBaseClass::is;
 // rename several methods in the generated C# code
 %rename("Is") is;
-%rename("Is") is_a;
+%rename("GetIfcTypeName") is_a;
+%rename("Is") is_a(const std::string&);
 
 %rename("ById") instance_by_id;
 %rename("ByType") instances_by_type;

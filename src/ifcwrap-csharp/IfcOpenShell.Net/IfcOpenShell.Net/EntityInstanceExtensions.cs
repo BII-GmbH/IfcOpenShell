@@ -76,7 +76,7 @@ namespace IfcOpenShell.Net {
             try
             {
                 if(includeIdentifier) result.Add("id", new ArgumentResult.FromInt(instance.id()));
-                result.Add("type", new ArgumentResult.FromString(instance.Is()));
+                result.Add("type", new ArgumentResult.FromString(instance.GetIfcTypeName()));
             }
             catch (Exception e)
             {
@@ -318,7 +318,7 @@ namespace IfcOpenShell.Net {
             if (instance == null) return null;
             if(key >= instance.Length())
             {
-                throw new IndexOutOfRangeException($"Attribute index {key} out of range for instance of type {instance.Is()}");
+                throw new IndexOutOfRangeException($"Attribute index {key} out of range for instance of type {instance.GetIfcTypeName()}");
             }
             return instance.get_argument(key).TryGetAsEntity();
         }
@@ -363,7 +363,7 @@ namespace IfcOpenShell.Net {
             // throw new System.NotImplementedException();
 
             // is it a derived attribute?
-            var schema_name = instance.Is(true).Split('.')[0];
+            var schema_name = instance.GetIfcTypeName(true).Split('.')[0];
             
             return null;
         }
