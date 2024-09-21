@@ -899,8 +899,9 @@ if(BUILD_CONVERT OR BUILD_IFCPYTHON)
 endif()
 
 # IfcParse
+#GLOB_RECURSE for source files to catch the files in the internal subdirectory too - do not include for the headers though since it is internal
 file(GLOB IFCPARSE_H_FILES_ALL ../src/ifcparse/*.h)
-file(GLOB IFCPARSE_CPP_FILES_ALL ../src/ifcparse/*.cpp)
+file(GLOB_RECURSE IFCPARSE_CPP_FILES_ALL ../src/ifcparse/*.cpp)
 
 foreach(file ${IFCPARSE_H_FILES_ALL})
     get_filename_component(filename "${file}" NAME)

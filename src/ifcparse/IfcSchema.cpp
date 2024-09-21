@@ -18,10 +18,49 @@
  ********************************************************************************/
 
 #include "IfcSchema.h"
-#include "IfcStaticSchemaCache.h"
+#include "internal/IfcStaticSchemaCache.h"
 #include "IfcBaseClass.h"
 
 #include <map>
+
+
+#ifdef HAS_SCHEMA_2x3
+#include "Ifc2x3.h"
+#endif
+#ifdef HAS_SCHEMA_4
+#include "Ifc4.h"
+#endif
+#ifdef HAS_SCHEMA_4x1
+#include "Ifc4x1.h"
+#endif
+#ifdef HAS_SCHEMA_4x2
+#include "Ifc4x2.h"
+#endif
+#ifdef HAS_SCHEMA_4x3_rc1
+#include "Ifc4x3_rc1.h"
+#endif
+#ifdef HAS_SCHEMA_4x3_rc2
+#include "Ifc4x3_rc2.h"
+#endif
+#ifdef HAS_SCHEMA_4x3_rc3
+#include "Ifc4x3_rc3.h"
+#endif
+#ifdef HAS_SCHEMA_4x3_rc4
+#include "Ifc4x3_rc4.h"
+#endif
+#ifdef HAS_SCHEMA_4x3
+#include "Ifc4x3.h"
+#endif
+#ifdef HAS_SCHEMA_4x3_tc1
+#include "Ifc4x3_tc1.h"
+#endif
+#ifdef HAS_SCHEMA_4x3_add1
+#include "Ifc4x3_add1.h"
+#endif
+#ifdef HAS_SCHEMA_4x3_add2
+#include "Ifc4x3_add2.h"
+#endif
+
 
 bool IfcParse::declaration::is(const std::string& name) const {
     const std::string* name_ptr = &name;
@@ -118,4 +157,96 @@ IfcUtil::IfcBaseClass* IfcParse::schema_definition::instantiate(const IfcParse::
         return (*factory_)(decl, std::move(data));
     }
     return new IfcUtil::IfcLateBoundEntity(decl, std::move(data));
+}
+
+void IfcParse::register_schema(std::shared_ptr<schema_definition> schema, bool replaceIfLoaded) {
+	IfcParse::internal::IfcStaticSchemaCache::register_schema(schema, replaceIfLoaded);
+}
+
+std::shared_ptr<IfcParse::schema_definition> IfcParse::schema_by_name(const std::string& name) {
+    return IfcParse::internal::IfcStaticSchemaCache::get_or_create_schema(name);
+}
+
+std::vector<std::string> IfcParse::schema_names() {
+	std::vector<std::string> schemaNames;
+	#ifdef HAS_SCHEMA_2x3
+        schemaNames.push_back(Ifc2x3::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4
+        schemaNames.push_back(Ifc4::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x1
+        schemaNames.push_back(Ifc4x1::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x2
+        schemaNames.push_back(Ifc4x2::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3_rc1
+        schemaNames.push_back(Ifc4x3_rc1::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3_rc2
+        schemaNames.push_back(Ifc4x3_rc2::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3_rc3
+        schemaNames.push_back(Ifc4x3_rc3::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3_rc4
+        schemaNames.push_back(Ifc4x3_rc4::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3
+        schemaNames.push_back(Ifc4x3::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3_tc1
+        schemaNames.push_back(Ifc4x3_tc1::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3_add1
+        schemaNames.push_back(Ifc4x3_add1::Identifier);
+    #endif
+    #ifdef HAS_SCHEMA_4x3_add2
+        schemaNames.push_back(Ifc4x3_add2::Identifier);
+    #endif
+	return schemaNames;
+}
+
+void IfcParse::clear_schemas() {
+    throw IfcParse::IfcException("clear_schema is not implemented");
+// #ifdef HAS_SCHEMA_4
+//     Ifc4::clear_schema();
+// #endif
+// #ifdef HAS_SCHEMA_4x1
+//     Ifc4x1::clear_schema();
+// #endif
+// #ifdef HAS_SCHEMA_4x2
+//     Ifc4x2::clear_schema();
+// #endif
+// #ifdef HAS_SCHEMA_4x3_rc1
+//     Ifc4x3_rc1::clear_schema();
+// #endif
+// #ifdef HAS_SCHEMA_4x3_rc2
+//     Ifc4x3_rc2::clear_schema();
+// #endif
+// #ifdef HAS_SCHEMA_4x3_rc3
+//     Ifc4x3_rc3::clear_schema();
+// #endif
+// #ifdef HAS_SCHEMA_4x3_rc4
+//     Ifc4x3_rc4::clear_schema();
+// #endif
+// #ifdef HAS_SCHEMA_4x3
+//     Ifc4x3::clear_schema();
+// #endif
+// #ifdef HAS_SCHEMA_4x3_tc1
+//     Ifc4x3_tc1::clear_schema();
+// #endif
+// #ifdef HAS_SCHEMA_4x3_add1
+//     Ifc4x3_add1::clear_schema();
+// #endif
+// #ifdef HAS_SCHEMA_4x3_add2
+//     Ifc4x3_add2::clear_schema();
+// #endif
+
+    // clear any remaining registered schemas
+    // we pop schemas until map is empty, because map iteration is invalidated after each erasure
+    //while (!schemas.empty()) {
+    //    delete schemas.begin()->second;
+    //}
 }
