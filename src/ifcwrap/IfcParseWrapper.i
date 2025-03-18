@@ -27,6 +27,7 @@ private:
 %ignore IfcParse::IfcFile::register_inverse;
 %ignore IfcParse::IfcFile::unregister_inverse;
 %ignore IfcParse::IfcFile::schema;
+%ignore IfcParse::register_schema;
 %ignore IfcParse::IfcFile::begin;
 %ignore IfcParse::IfcFile::end;
 
@@ -593,7 +594,7 @@ static IfcUtil::ArgumentType helper_fn_attribute_type(const IfcUtil::IfcBaseClas
 	}
 
 	IfcUtil::IfcBaseClass* new_IfcBaseClass(const std::string& schema_identifier, const std::string& name) {
-		const IfcParse::schema_definition* schema = IfcParse::schema_by_name(schema_identifier);
+		auto schema = IfcParse::schema_by_name(schema_identifier);
 		const IfcParse::declaration* decl = schema->declaration_by_name(name);
         IfcEntityInstanceData data(storage_t(decl->as_entity() ? decl->as_entity()->attribute_count() : 1));
 		auto inst = schema->instantiate(decl, std::move(data));
